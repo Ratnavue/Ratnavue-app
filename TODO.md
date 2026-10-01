@@ -794,3 +794,67 @@ unless noted.*
   formats (STL/DXF), real-time multi-user collaboration — see the
   "Explicitly out of scope" note in the original plan if reviving any of
   these.
+
+- **Design Studio v2 — radial symmetric editing + realistic rendering**
+  (requested 2026-10-02, to start next session). Still a 2D tool, not 3D
+  CAD (that line hasn't moved) — this raises the *fidelity* of the 2D
+  tool a lot, aiming at the MatrixGold/professional-jewelry-CAD feel
+  within that constraint. Four pieces, each independently buildable:
+
+  1. **Radial/center symmetry, live-mirrored** (the actual headline ask —
+     for designing a bangle/eternity band symmetrically). Different from
+     what v1 ships: v1's "Repeat around circle" bakes N independent
+     copies once, on demand. This instead divides the canvas into 6 or 8
+     equal pie-slice sectors around a center point, you design *one*
+     sector, and every other sector mirrors it **live** as you drag/
+     resize/recolor/rotate shapes in the master sector — a true
+     kaleidoscope/circular-array edit mode, not a one-shot copy. Needs a
+     new editing mode alongside (not replacing) the existing multi-pane
+     mode in `src/components/design-studio/` — probably a new
+     `symmetryCount: number | null` on the active pane (null = normal
+     mode, 6/8/etc = radial mode), with `PaneSVG.tsx` rendering the
+     master sector's shapes plus N−1 live-rotated `<g transform="rotate(...)">`
+     mirrors of the same shape list (reusing the rotation math already in
+     `src/lib/design-studio/shape-ops.ts`'s `radialRepeat`, but recomputed
+     every render instead of baked into new shape rows) and routing every
+     pointer edit back onto the one master shape array.
+  2. **Realistic gemstone rendering by cut** (round, princess, emerald,
+     oval, pear, marquise, cushion, etc.) — **don't build this from
+     scratch**: `src/components/gem-visualizer/` already does exactly
+     this (procedural, cut-aware, hydration-safe SVG rendering driven by
+     hue/clarity/carat — see `GemVisualizer.tsx`, `geometry.ts`'s
+     per-cut point generators, `render.ts`, `color.ts`, `inclusions.ts`),
+     built for the `/configurator` page and already reused in admin quote
+     previews (`QuoteGemPreview`). The "stone" shape type in
+     `src/lib/design-studio/types.ts`/`PaneSVG.tsx`'s `ShapeGlyph` should
+     render through this instead of a plain `<ellipse>`, keyed off the
+     existing `Cut` master-data model's `slug` (same ones the
+     configurator already offers) rather than inventing a new cut list.
+  3. **Realistic metal shades** — reuse the existing `MetalType` enum
+     already on `JewelryPiece` (`GOLD`, `WHITE_GOLD`, `ROSE_GOLD`,
+     `PLATINUM`, `SILVER`) for the palette, not new metal names. "Band"/
+     "prong"/"chain" shapes should render with an SVG `linearGradient`/
+     `radialGradient` per metal (a few stops of light/dark against each
+     metal's base tone) instead of today's flat `fill`, to actually read
+     as metallic rather than a flat-colored outline.
+  4. **Zoom/pan on the canvas** — `PaneSVG.tsx` currently has a fixed
+     `viewBox="0 0 400 400"`; needs zoom (wheel + pinch, and +/− buttons
+     for accessibility) and pan (drag with an empty-canvas background,
+     distinct from the existing click-to-deselect behavior on that same
+     background), implemented as viewBox scaling/translation state per
+     pane.
+
+  Also requested, smaller/ongoing: **tooltips/guided hints** throughout
+  the toolbar (the shape/template buttons already have bare `title=`
+  attributes — this wants real, more discoverable tooltips, and
+  possibly a first-run walkthrough) so the tool stays approachable
+  despite the added capability above. Verification should include the
+  same end-to-end Playwright pass v1 got (see the original Design Studio
+  plan's Verification section) plus specifically: 6 and 8-way symmetry
+  produces correctly mirrored output, each cut's realistic glyph renders
+  without hydration mismatches (the existing GemVisualizer code already
+  solved this once — follow its `r()` fixed-precision-rounding pattern
+  for any new trig-derived SVG attributes), and zoom/pan doesn't break
+  existing shape selection/drag math (`PaneSVG.tsx`'s `toLocal()`
+  client-to-viewBox conversion will need to account for the active
+  zoom/pan transform).
