@@ -28,6 +28,7 @@ export function SiteChrome({
   trustBarMessages,
   showPromotions,
   showAuction,
+  showDesignStudio,
   cartItemCount,
   promotionsThemeIsDark,
   locale,
@@ -47,6 +48,11 @@ export function SiteChrome({
   showPromotions: boolean;
   /** Same idea as showPromotions, for the /auction page's visibility. */
   showAuction: boolean;
+  /** Whether an admin has turned the Design Studio (/design-studio) LIVE
+   * for customers — unlike showPromotions/showAuction this is strictly
+   * LIVE-only (no Coming Soon teaser exists for this page), see
+   * Navbar's own comment. */
+  showDesignStudio: boolean;
   /** Retail (shopping) cart item count for the nav's cart badge — 0 when
    * signed out. Same "compute where it's cheap" reasoning as `year`. */
   cartItemCount: number;
@@ -73,6 +79,7 @@ export function SiteChrome({
         user={user}
         showPromotions={showPromotions}
         showAuction={showAuction}
+        showDesignStudio={showDesignStudio}
         cartItemCount={cartItemCount}
         promotionsThemeIsDark={promotionsThemeIsDark}
         locale={locale}

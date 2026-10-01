@@ -80,7 +80,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const auctionKey = marketVisibilityKey("auction", market);
   const [session, visibilities, seasonalContent, locale] = await Promise.all([
     auth(),
-    getCachedPageVisibilities([seasonalKey, auctionKey]),
+    getCachedPageVisibilities([seasonalKey, auctionKey, "design-studio"]),
     getCachedSeasonalContent(market),
     getLocale(),
   ]);
@@ -122,6 +122,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               trustBarMessages={trustBarMessages}
               showPromotions={visibilities[seasonalKey] !== "HIDDEN"}
               showAuction={visibilities[auctionKey] !== "HIDDEN"}
+              showDesignStudio={visibilities["design-studio"] === "LIVE"}
               cartItemCount={cartItemCount}
               promotionsThemeIsDark={promotionsThemeIsDark}
               locale={locale as AppLocale}

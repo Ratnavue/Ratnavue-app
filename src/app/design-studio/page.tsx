@@ -12,7 +12,12 @@ export const metadata: Metadata = {
 
 export default async function CustomerDesignStudioPage() {
   const visibility = await getPageVisibility("design-studio");
-  if (visibility === "HIDDEN") notFound();
+  // Unlike /promotions or /auction, this page has no themed "Coming Soon"
+  // teaser — there's nothing to show for that state but the real, working
+  // editor, which would defeat the point of choosing it. So Coming Soon
+  // behaves the same as Hidden here specifically: only Live actually
+  // unlocks the page (see Navbar's matching showDesignStudio condition).
+  if (visibility !== "LIVE") notFound();
 
   const session = await auth();
 

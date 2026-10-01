@@ -32,7 +32,11 @@ export default async function AdminDesignStudioPage({ searchParams }: PageProps<
 
       <div className="mt-6 rounded-xl border border-border-subtle bg-surface p-5">
         <PageVisibilityControl pageKey="design-studio" currentState={visibility} />
-        <p className="mt-2 text-xs text-charcoal/50">Controls whether customers can reach this tool at /design-studio. This admin page is unaffected either way.</p>
+        <p className="mt-2 text-xs text-charcoal/50">
+          Controls whether customers can reach this tool at /design-studio and see it in the main nav. This admin
+          page is unaffected either way. There&apos;s no themed teaser for Coming Soon here, so it behaves the same
+          as Hidden — only Live actually unlocks it for customers.
+        </p>
       </div>
 
       <div className="mt-6">

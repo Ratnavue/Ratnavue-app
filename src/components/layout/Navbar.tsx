@@ -29,6 +29,7 @@ const BASE_NAV_LINKS = [
 
 const PROMOTIONS_LINK = { href: "/promotions", key: "promotions" } as const;
 const AUCTION_LINK = { href: "/auction", key: "auctions" } as const;
+const DESIGN_STUDIO_LINK = { href: "/design-studio", key: "designStudio" } as const;
 
 // Solidify almost as soon as the page moves, on the home page specifically
 // — its hero's own headline sits well within the first ~150px, so a
@@ -64,6 +65,7 @@ export function Navbar({
   user,
   showPromotions,
   showAuction,
+  showDesignStudio,
   cartItemCount,
   promotionsThemeIsDark,
   locale,
@@ -76,6 +78,12 @@ export function Navbar({
   /** Same idea as showPromotions, for the /auction page (PageVisibility
    * key "auction"). */
   showAuction: boolean;
+  /** True only when the Design Studio (PageVisibility key "design-studio")
+   * is Live — unlike showPromotions/showAuction, Coming Soon doesn't light
+   * this up too, since /design-studio has no themed teaser for that state
+   * (it would just render the real, working editor) — see
+   * src/app/design-studio/page.tsx's own comment on its gate. */
+  showDesignStudio: boolean;
   /** Retail (shopping) cart item count — 0 when signed out, in which
    * case the icon itself is still shown (it just links to sign in). */
   cartItemCount: number;
@@ -96,6 +104,7 @@ export function Navbar({
     ...BASE_NAV_LINKS.slice(0, 4),
     ...(showAuction ? [AUCTION_LINK] : []),
     ...(showPromotions ? [PROMOTIONS_LINK] : []),
+    ...(showDesignStudio ? [DESIGN_STUDIO_LINK] : []),
     ...BASE_NAV_LINKS.slice(4),
   ];
   // With the optional Auctions and Promotions links showing there are seven
@@ -108,7 +117,7 @@ export function Navbar({
   // from 1024px (lg). Narrower than its own threshold the hamburger menu
   // takes over (it used to switch at 768px, which wrapped the link labels
   // onto two lines).
-  const wide = showAuction || showPromotions;
+  const wide = showAuction || showPromotions || showDesignStudio;
   const isHome = pathname === "/";
   const isTransparentRoute =
     TRANSPARENT_NAV_ROUTES.includes(pathname) ||
