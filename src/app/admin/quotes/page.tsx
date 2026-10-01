@@ -9,6 +9,7 @@ import { resolveGemColor } from "@/components/gem-visualizer/color";
 import { getQuoteGemVisual } from "@/lib/quote-visual";
 import { BackLink } from "@/components/admin/BackLink";
 import { AdminSearchBox } from "@/components/admin/AdminSearchBox";
+import { CARD_TABLE, CARD_THEAD, CARD_TBODY, CARD_TR, CARD_TD, CARD_FIRST, CARD_SECOND, CARD_TD_ACTIONS } from "@/components/admin/responsive-table";
 
 const STATUSES = ["SUBMITTED", "UNDER_REVIEW", "QUOTED", "ACCEPTED", "DECLINED", "EXPIRED"];
 const PAGE_SIZE = 20;
@@ -77,9 +78,9 @@ export default async function AdminQuotesPage({ searchParams }: PageProps<"/admi
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-xl border border-border-subtle bg-surface">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/50">
+        <table className={CARD_TABLE}>
+          <thead className={CARD_THEAD}>
+            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/65">
               <th className="px-4 py-3">Item</th>
               <th className="px-4 py-3">Customer</th>
               <th className="px-4 py-3">Qty</th>
@@ -90,13 +91,13 @@ export default async function AdminQuotesPage({ searchParams }: PageProps<"/admi
               <th className="px-4 py-3">Documents</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className={CARD_TBODY}>
             {quotes.map((q, i) => {
               const visual = getQuoteGemVisual(q);
               const unread = unreadCounts[i];
               return (
-              <tr key={q.id} className="border-b border-border-subtle last:border-0 hover:bg-ivory-soft">
-                <td className="px-4 py-3">
+              <tr key={q.id} className={CARD_TR}>
+                <td className={CARD_FIRST}>
                   <Link href={`/admin/quotes/${q.id}`} className="flex items-center gap-2 text-charcoal hover:text-gold">
                     {visual && (
                       <span
@@ -114,13 +115,13 @@ export default async function AdminQuotesPage({ searchParams }: PageProps<"/admi
                     )}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-charcoal/70">{q.user.email}</td>
-                <td className="px-4 py-3 text-charcoal/70">{q.quantity}</td>
-                <td className="px-4 py-3 text-charcoal/70">{q.quotedPrice != null ? formatPrice(q.quotedPrice) : "—"}</td>
-                <td className="px-4 py-3 text-charcoal/70">{q.createdAt.toLocaleDateString()}</td>
-                <td className="px-4 py-3">{q.noteFlaggedForPrice ? <span className="text-amber-700">⚠ Price?</span> : "—"}</td>
-                <td className="px-4 py-3"><QuoteStatusBadge status={q.status} /></td>
-                <td className="px-4 py-3">
+                <td data-label="Customer" className={`${CARD_TD} text-charcoal/70 max-lg:flex-col max-lg:items-start max-lg:gap-0 max-lg:text-left max-lg:[overflow-wrap:anywhere]`}>{q.user.email}</td>
+                <td data-label="Qty" className={`${CARD_TD} text-charcoal/70`}>{q.quantity}</td>
+                <td data-label="Price" className={`${CARD_TD} text-charcoal/70`}>{q.quotedPrice != null ? formatPrice(q.quotedPrice) : "—"}</td>
+                <td data-label="Submitted" className={`${CARD_TD} text-charcoal/70`}>{q.createdAt.toLocaleDateString()}</td>
+                <td data-label="Flagged" className={CARD_TD}>{q.noteFlaggedForPrice ? <span className="text-amber-700">⚠ Price?</span> : "—"}</td>
+                <td data-label="Status" className={CARD_SECOND}><QuoteStatusBadge status={q.status} /></td>
+                <td className={CARD_TD_ACTIONS}>
                   {q.quotedPrice != null ? (
                     <div className="flex items-center gap-3">
                       <Link
@@ -148,7 +149,7 @@ export default async function AdminQuotesPage({ searchParams }: PageProps<"/admi
               );
             })}
             {quotes.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-charcoal/50">No quote requests found.</td></tr>
+              <tr className="max-lg:block"><td colSpan={8} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No quote requests found.</td></tr>
             )}
           </tbody>
         </table>

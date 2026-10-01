@@ -4,6 +4,7 @@ import { CreateShippingZoneForm } from "@/components/admin/CreateShippingZoneFor
 import { ShippingWeightTierRow } from "@/components/admin/ShippingWeightTierRow";
 import { CreateShippingWeightTierForm } from "@/components/admin/CreateShippingWeightTierForm";
 import { BackLink } from "@/components/admin/BackLink";
+import { CARD_TABLE, CARD_THEAD, CARD_TBODY } from "@/components/admin/responsive-table";
 
 export default async function AdminShippingZonesPage() {
   const [zones, weightTiers] = await Promise.all([getShippingZones(), getShippingWeightTiers()]);
@@ -23,9 +24,9 @@ export default async function AdminShippingZonesPage() {
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-xl border border-border-subtle bg-surface">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/50">
+        <table className={CARD_TABLE}>
+          <thead className={CARD_THEAD}>
+            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/65">
               <th className="px-4 py-3">Zone</th>
               <th className="px-4 py-3">Countries</th>
               <th className="px-4 py-3">Rate</th>
@@ -33,10 +34,10 @@ export default async function AdminShippingZonesPage() {
               <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className={CARD_TBODY}>
             {zones.map((z) => <ShippingZoneRow key={z.id} zone={z} />)}
             {zones.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-charcoal/50">No shipping zones yet.</td></tr>
+              <tr className="max-lg:block"><td colSpan={5} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No shipping zones yet.</td></tr>
             )}
           </tbody>
         </table>
@@ -54,19 +55,19 @@ export default async function AdminShippingZonesPage() {
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-xl border border-border-subtle bg-surface">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/50">
+        <table className={CARD_TABLE}>
+          <thead className={CARD_THEAD}>
+            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/65">
               <th className="px-4 py-3">Tier</th>
               <th className="px-4 py-3">Rate</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className={CARD_TBODY}>
             {weightTiers.map((t) => <ShippingWeightTierRow key={t.id} tier={t} />)}
             {weightTiers.length === 0 && (
-              <tr><td colSpan={4} className="px-4 py-8 text-center text-charcoal/50">No weight tiers yet.</td></tr>
+              <tr className="max-lg:block"><td colSpan={4} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No weight tiers yet.</td></tr>
             )}
           </tbody>
         </table>

@@ -6,6 +6,7 @@ import { updateShippingWeightTier, deleteShippingWeightTier } from "@/actions/sh
 import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { Input, Label } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
+import { CARD_TR, CARD_TD, CARD_FIRST, CARD_SECOND, CARD_TD_ACTIONS } from "@/components/admin/responsive-table";
 
 interface WeightTier {
   id: string;
@@ -28,11 +29,11 @@ export function ShippingWeightTierRow({ tier }: { tier: WeightTier }) {
 
   if (!editing) {
     return (
-      <tr className="border-b border-border-subtle last:border-0">
-        <td className="px-4 py-3 text-charcoal">{tier.label}</td>
-        <td className="px-4 py-3 text-charcoal/70">Rs. {tier.ratePerOrderLKR.toLocaleString()}</td>
-        <td className="px-4 py-3 text-charcoal/70">{tier.active ? "Active" : "Inactive"}</td>
-        <td className="px-4 py-3 space-x-3">
+      <tr className={CARD_TR}>
+        <td className={`${CARD_FIRST} text-charcoal`}>{tier.label}</td>
+        <td data-label="Rate" className={`${CARD_TD} text-charcoal/70`}>Rs. {tier.ratePerOrderLKR.toLocaleString()}</td>
+        <td data-label="Status" className={`${CARD_SECOND} text-charcoal/70`}>{tier.active ? "Active" : "Inactive"}</td>
+        <td className={`${CARD_TD_ACTIONS} space-x-3`}>
           <button className="text-xs text-gold underline" onClick={() => setEditing(true)}>Edit</button>
           <button
             className="text-xs text-red-700 underline"
@@ -59,8 +60,8 @@ export function ShippingWeightTierRow({ tier }: { tier: WeightTier }) {
   }
 
   return (
-    <tr className="border-b border-border-subtle bg-ivory-soft last:border-0">
-      <td colSpan={4} className="px-4 py-4">
+    <tr className="border-b border-border-subtle bg-ivory-soft last:border-0 max-lg:block">
+      <td colSpan={4} className="px-4 py-4 max-lg:block">
         <form action={handleSave} className="grid gap-3 sm:grid-cols-4 sm:items-end">
           <div>
             <Label htmlFor={`wt-label-${tier.id}`}>Label</Label>

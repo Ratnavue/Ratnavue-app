@@ -5,6 +5,7 @@ import { formatPrice } from "@/lib/utils";
 import { Pagination } from "@/components/ui/Pagination";
 import { BackLink } from "@/components/admin/BackLink";
 import { AdminSearchBox } from "@/components/admin/AdminSearchBox";
+import { CARD_TABLE, CARD_THEAD, CARD_TBODY, CARD_TR, CARD_TD, CARD_FIRST, CARD_TD_ACTIONS } from "@/components/admin/responsive-table";
 
 const PAGE_SIZE = 20;
 
@@ -41,9 +42,9 @@ export default async function AdminInvoicesPage({ searchParams }: PageProps<"/ad
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-xl border border-border-subtle bg-surface">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/50">
+        <table className={CARD_TABLE}>
+          <thead className={CARD_THEAD}>
+            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/65">
               <th className="px-4 py-3">Invoice #</th>
               <th className="px-4 py-3">Item</th>
               <th className="px-4 py-3">Customer</th>
@@ -52,19 +53,19 @@ export default async function AdminInvoicesPage({ searchParams }: PageProps<"/ad
               <th className="px-4 py-3">Documents</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className={CARD_TBODY}>
             {invoices.map((inv) => (
-              <tr key={inv.id} className="border-b border-border-subtle last:border-0 hover:bg-ivory-soft">
-                <td className="px-4 py-3">
+              <tr key={inv.id} className={CARD_TR}>
+                <td className={`${CARD_FIRST} font-mono`}>
                   <Link href={`/admin/invoices/${inv.id}`} className="text-charcoal hover:text-gold">{inv.invoiceNumber}</Link>
                 </td>
-                <td className="px-4 py-3 text-charcoal/70">
+                <td data-label="Item" className={`${CARD_TD} text-charcoal/70`}>
                   {inv.quoteRequest.gemstone?.name ?? inv.quoteRequest.jewelry?.name ?? "Configured gem"}
                 </td>
-                <td className="px-4 py-3 text-charcoal/70">{inv.user.email}</td>
-                <td className="px-4 py-3 text-charcoal/70">{formatPrice(inv.amount)}</td>
-                <td className="px-4 py-3 text-charcoal/70">{inv.issuedAt.toLocaleDateString()}</td>
-                <td className="px-4 py-3">
+                <td data-label="Customer" className={`${CARD_TD} text-charcoal/70 max-lg:flex-col max-lg:items-start max-lg:gap-0 max-lg:text-left max-lg:[overflow-wrap:anywhere]`}>{inv.user.email}</td>
+                <td data-label="Amount" className={`${CARD_TD} text-charcoal/70`}>{formatPrice(inv.amount)}</td>
+                <td data-label="Issued" className={`${CARD_TD} text-charcoal/70`}>{inv.issuedAt.toLocaleDateString()}</td>
+                <td className={CARD_TD_ACTIONS}>
                   <Link
                     href={`/admin/invoices/${inv.id}`}
                     title="Print invoice"
@@ -76,7 +77,7 @@ export default async function AdminInvoicesPage({ searchParams }: PageProps<"/ad
               </tr>
             ))}
             {invoices.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-charcoal/50">No invoices yet.</td></tr>
+              <tr className="max-lg:block"><td colSpan={6} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No invoices yet.</td></tr>
             )}
           </tbody>
         </table>

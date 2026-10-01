@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { ClarityRow } from "@/components/admin/ClarityRow";
 import { CreateClarityForm } from "@/components/admin/CreateClarityForm";
 import { BackLink } from "@/components/admin/BackLink";
+import { CARD_TABLE, CARD_THEAD, CARD_TBODY } from "@/components/admin/responsive-table";
 
 export default async function AdminClarityPage() {
   const grades = await prisma.clarityGrade.findMany({ orderBy: { sortOrder: "asc" } });
@@ -19,16 +20,16 @@ export default async function AdminClarityPage() {
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-xl border border-border-subtle bg-surface">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/50">
+        <table className={CARD_TABLE}>
+          <thead className={CARD_THEAD}>
+            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/65">
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Description</th>
               <th className="px-4 py-3">Order</th>
               <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className={CARD_TBODY}>
             {grades.map((g) => <ClarityRow key={g.id} grade={g} />)}
           </tbody>
         </table>

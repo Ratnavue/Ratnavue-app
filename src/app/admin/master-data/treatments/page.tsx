@@ -3,6 +3,7 @@ import { createTreatment, toggleTreatmentActive } from "@/actions/master-data";
 import { CreateSimpleForm } from "@/components/admin/CreateSimpleForm";
 import { ToggleActiveButton } from "@/components/admin/ToggleActiveButton";
 import { BackLink } from "@/components/admin/BackLink";
+import { CARD_TABLE, CARD_THEAD, CARD_TBODY, CARD_TR, CARD_FIRST, CARD_SECOND, CARD_TD_ACTIONS } from "@/components/admin/responsive-table";
 
 export default async function AdminTreatmentsPage() {
   const treatments = await prisma.treatment.findMany({ orderBy: { sortOrder: "asc" } });
@@ -18,20 +19,20 @@ export default async function AdminTreatmentsPage() {
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-xl border border-border-subtle bg-surface">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/50">
+        <table className={CARD_TABLE}>
+          <thead className={CARD_THEAD}>
+            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/65">
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className={CARD_TBODY}>
             {treatments.map((t) => (
-              <tr key={t.id} className="border-b border-border-subtle last:border-0">
-                <td className="px-4 py-3 text-charcoal">{t.name}</td>
-                <td className="px-4 py-3 text-charcoal/70">{t.active ? "Active" : "Inactive"}</td>
-                <td className="px-4 py-3">
+              <tr key={t.id} className={CARD_TR}>
+                <td className={`${CARD_FIRST} text-charcoal`}>{t.name}</td>
+                <td data-label="Status" className={`${CARD_SECOND} text-charcoal/70`}>{t.active ? "Active" : "Inactive"}</td>
+                <td className={CARD_TD_ACTIONS}>
                   <ToggleActiveButton active={t.active} onToggle={toggleTreatmentActive.bind(null, t.id)} />
                 </td>
               </tr>

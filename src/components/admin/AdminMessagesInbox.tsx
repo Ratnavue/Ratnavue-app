@@ -8,6 +8,7 @@ import { ChatPanel } from "@/components/chat/ChatPanel";
 import { pollChatMessages, getHasOpenCartForRequest, type ChatMessageView } from "@/actions/chat";
 import type { ChatRequestType } from "@/lib/chat";
 import { cn } from "@/lib/utils";
+import { CARD_TABLE, CARD_THEAD, CARD_TBODY, CARD_TR, CARD_TD, CARD_FIRST, CARD_SECOND } from "@/components/admin/responsive-table";
 
 export interface InboxRow {
   requestType: ChatRequestType;
@@ -67,9 +68,9 @@ export function AdminMessagesInbox({ rows: initialRows, currentAdminId }: { rows
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px] lg:items-start">
       <div className="overflow-x-auto rounded-xl border border-border-subtle bg-surface">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/50">
+        <table className={CARD_TABLE}>
+          <thead className={CARD_THEAD}>
+            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/65">
               <th className="px-4 py-3">Customer</th>
               <th className="px-4 py-3">Type</th>
               <th className="px-4 py-3">Item</th>
@@ -77,16 +78,16 @@ export function AdminMessagesInbox({ rows: initialRows, currentAdminId }: { rows
               <th className="px-4 py-3">Status</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className={CARD_TBODY}>
             {rows.map((r) => {
               const active = selected && rowKey(selected) === rowKey(r);
               return (
                 <tr
                   key={rowKey(r)}
                   onClick={() => select(r)}
-                  className={cn("cursor-pointer border-b border-border-subtle last:border-0 hover:bg-ivory-soft", active && "bg-ivory-soft")}
+                  className={cn(CARD_TR, "cursor-pointer", active && "bg-ivory-soft")}
                 >
-                  <td className="px-4 py-3">
+                  <td className={CARD_FIRST}>
                     <div className="flex items-center gap-2 text-charcoal">
                       {r.customerName}
                       {r.unread > 0 && (
@@ -97,24 +98,24 @@ export function AdminMessagesInbox({ rows: initialRows, currentAdminId }: { rows
                     </div>
                     <p className="text-xs text-charcoal/45">{r.customerEmail}</p>
                   </td>
-                  <td className="px-4 py-3 text-charcoal/70">{r.requestType === "quote" ? "Quote" : r.requestType === "sourcing" ? "Sourcing" : "Support"}</td>
-                  <td className="px-4 py-3 text-charcoal/70">{r.itemLabel}</td>
-                  <td className="px-4 py-3 text-charcoal/70">
+                  <td data-label="Type" className={`${CARD_TD} text-charcoal/70`}>{r.requestType === "quote" ? "Quote" : r.requestType === "sourcing" ? "Sourcing" : "Support"}</td>
+                  <td data-label="Item" className={`${CARD_TD} text-charcoal/70`}>{r.itemLabel}</td>
+                  <td data-label="Last message" className={`${CARD_TD} text-charcoal/70 max-lg:flex-col max-lg:items-start max-lg:gap-0 max-lg:text-left`}>
                     {r.lastMessagePreview ? (
                       <>
-                        <p className="max-w-xs truncate">{r.lastMessagePreview}</p>
+                        <p className="max-w-xs truncate max-lg:max-w-none">{r.lastMessagePreview}</p>
                         <p className="text-xs text-charcoal/45">{r.lastMessageAt?.toLocaleString()}</p>
                       </>
                     ) : (
                       <span className="text-charcoal/40">Attachment only</span>
                     )}
                   </td>
-                  <td className="px-4 py-3">{r.status ? <QuoteStatusBadge status={r.status} /> : <span className="text-charcoal/30">—</span>}</td>
+                  <td data-label="Status" className={CARD_SECOND}>{r.status ? <QuoteStatusBadge status={r.status} /> : <span className="text-charcoal/30">—</span>}</td>
                 </tr>
               );
             })}
             {rows.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-charcoal/50">No conversations found.</td></tr>
+              <tr className="max-lg:block"><td colSpan={5} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No conversations found.</td></tr>
             )}
           </tbody>
         </table>

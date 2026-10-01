@@ -8,6 +8,7 @@ import { updateCertLab, deleteCertLab, toggleCertLabActive, uploadCertLabLogo, r
 import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { Input, Label, FieldError } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
+import { CARD_TR, CARD_TD, CARD_FIRST, CARD_SECOND, CARD_TD_ACTIONS } from "@/components/admin/responsive-table";
 
 interface CertLab {
   id: string;
@@ -38,11 +39,11 @@ export function CertLabRow({ lab }: { lab: CertLab }) {
 
   if (!editing) {
     return (
-      <tr className="border-b border-border-subtle last:border-0">
-        <td className="px-4 py-3">
+      <tr className={CARD_TR}>
+        <td data-label="Logo" className={CARD_TD}>
           <LogoThumb name={lab.name} src={lab.logoUrl} />
         </td>
-        <td className="px-4 py-3 text-charcoal">
+        <td className={`${CARD_FIRST} text-charcoal`}>
           {lab.websiteUrl ? (
             <a href={lab.websiteUrl} target="_blank" rel="noopener noreferrer" className="underline decoration-charcoal/25 underline-offset-2 hover:text-gold">
               {lab.name}
@@ -51,11 +52,11 @@ export function CertLabRow({ lab }: { lab: CertLab }) {
             lab.name
           )}
         </td>
-        <td className="max-w-xs truncate px-4 py-3 font-mono text-xs text-charcoal/70" title={lab.verifyUrlTemplate ?? undefined}>
+        <td data-label="Verification URL" className={`${CARD_TD} max-w-xs truncate font-mono text-xs text-charcoal/70 max-lg:max-w-none max-lg:[overflow-wrap:anywhere] max-lg:whitespace-normal`} title={lab.verifyUrlTemplate ?? undefined}>
           {lab.verifyUrlTemplate || <span className="text-charcoal/35">— no public lookup —</span>}
         </td>
-        <td className="px-4 py-3 text-charcoal/70">{lab.active ? "Active" : "Inactive"}</td>
-        <td className="px-4 py-3 space-x-3">
+        <td data-label="Status" className={`${CARD_SECOND} text-charcoal/70`}>{lab.active ? "Active" : "Inactive"}</td>
+        <td className={`${CARD_TD_ACTIONS} space-x-3`}>
           <button className="text-xs text-gold underline" onClick={() => setEditing(true)}>Edit</button>
           <button
             className="text-xs text-charcoal/60 underline"
@@ -81,8 +82,8 @@ export function CertLabRow({ lab }: { lab: CertLab }) {
   }
 
   return (
-    <tr className="border-b border-border-subtle bg-ivory-soft last:border-0">
-      <td colSpan={5} className="px-4 py-4">
+    <tr className="border-b border-border-subtle bg-ivory-soft last:border-0 max-lg:block">
+      <td colSpan={5} className="px-4 py-4 max-lg:block">
         <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
           <LogoUploader labId={lab.id} logoUrl={lab.logoUrl} name={lab.name} />
           <form action={handleSave} className="grid gap-3 sm:grid-cols-2">

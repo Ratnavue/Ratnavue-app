@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { CreateCertLabForm } from "@/components/admin/CreateCertLabForm";
 import { CertLabRow } from "@/components/admin/CertLabRow";
 import { BackLink } from "@/components/admin/BackLink";
+import { CARD_TABLE, CARD_THEAD, CARD_TBODY } from "@/components/admin/responsive-table";
 
 export default async function AdminCertificationLabsPage() {
   const labs = await prisma.certificationLab.findMany({ orderBy: { sortOrder: "asc" } });
@@ -21,9 +22,9 @@ export default async function AdminCertificationLabsPage() {
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-xl border border-border-subtle bg-surface">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/50">
+        <table className={CARD_TABLE}>
+          <thead className={CARD_THEAD}>
+            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/65">
               <th className="px-4 py-3">Logo</th>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Verification URL</th>
@@ -31,7 +32,7 @@ export default async function AdminCertificationLabsPage() {
               <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className={CARD_TBODY}>
             {labs.map((lab) => <CertLabRow key={lab.id} lab={lab} />)}
           </tbody>
         </table>

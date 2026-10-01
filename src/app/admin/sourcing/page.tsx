@@ -7,6 +7,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { cn } from "@/lib/utils";
 import { BackLink } from "@/components/admin/BackLink";
 import { AdminSearchBox } from "@/components/admin/AdminSearchBox";
+import { CARD_TABLE, CARD_THEAD, CARD_TBODY, CARD_TR, CARD_TD, CARD_FIRST, CARD_SECOND } from "@/components/admin/responsive-table";
 
 const STATUSES = ["SUBMITTED", "UNDER_REVIEW", "QUOTED", "ACCEPTED", "DECLINED", "EXPIRED"];
 const PAGE_SIZE = 20;
@@ -62,9 +63,9 @@ export default async function AdminSourcingPage({ searchParams }: PageProps<"/ad
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-xl border border-border-subtle bg-surface">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/50">
+        <table className={CARD_TABLE}>
+          <thead className={CARD_THEAD}>
+            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/65">
               <th className="px-4 py-3">Request</th>
               <th className="px-4 py-3">Customer</th>
               <th className="px-4 py-3">Submitted</th>
@@ -72,12 +73,12 @@ export default async function AdminSourcingPage({ searchParams }: PageProps<"/ad
               <th className="px-4 py-3">Status</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className={CARD_TBODY}>
             {requests.map((r, i) => {
               const unread = unreadCounts[i];
               return (
-              <tr key={r.id} className="border-b border-border-subtle last:border-0 hover:bg-ivory-soft">
-                <td className="px-4 py-3">
+              <tr key={r.id} className={CARD_TR}>
+                <td className={CARD_FIRST}>
                   <Link href={`/admin/sourcing/${r.id}`} className="flex items-center gap-2 text-charcoal hover:text-gold">
                     {r.mineralDescription}
                     {unread > 0 && (
@@ -87,15 +88,15 @@ export default async function AdminSourcingPage({ searchParams }: PageProps<"/ad
                     )}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-charcoal/70">{r.user.email}</td>
-                <td className="px-4 py-3 text-charcoal/70">{r.createdAt.toLocaleDateString()}</td>
-                <td className="px-4 py-3">{r.noteFlaggedForPrice ? <span className="text-amber-700">⚠ Price?</span> : "—"}</td>
-                <td className="px-4 py-3"><QuoteStatusBadge status={r.status} /></td>
+                <td data-label="Customer" className={`${CARD_TD} text-charcoal/70 max-lg:flex-col max-lg:items-start max-lg:gap-0 max-lg:text-left max-lg:[overflow-wrap:anywhere]`}>{r.user.email}</td>
+                <td data-label="Submitted" className={`${CARD_TD} text-charcoal/70`}>{r.createdAt.toLocaleDateString()}</td>
+                <td data-label="Flagged" className={CARD_TD}>{r.noteFlaggedForPrice ? <span className="text-amber-700">⚠ Price?</span> : "—"}</td>
+                <td data-label="Status" className={CARD_SECOND}><QuoteStatusBadge status={r.status} /></td>
               </tr>
               );
             })}
             {requests.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-charcoal/50">No sourcing requests found.</td></tr>
+              <tr className="max-lg:block"><td colSpan={5} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No sourcing requests found.</td></tr>
             )}
           </tbody>
         </table>

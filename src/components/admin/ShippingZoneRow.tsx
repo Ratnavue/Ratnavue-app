@@ -6,6 +6,7 @@ import { updateShippingZone, deleteShippingZone } from "@/actions/shipping-zones
 import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { Input, Label } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
+import { CARD_TR, CARD_TD, CARD_FIRST, CARD_SECOND, CARD_TD_ACTIONS } from "@/components/admin/responsive-table";
 
 interface ShippingZone {
   id: string;
@@ -31,15 +32,15 @@ export function ShippingZoneRow({ zone }: { zone: ShippingZone }) {
 
   if (!editing) {
     return (
-      <tr className="border-b border-border-subtle last:border-0">
-        <td className="px-4 py-3 text-charcoal">
+      <tr className={CARD_TR}>
+        <td className={`${CARD_FIRST} text-charcoal`}>
           {zone.label}
           {zone.isFallback && <span className="ml-2 rounded-full bg-charcoal/5 px-2 py-0.5 text-[11px] text-charcoal/50">Fallback</span>}
         </td>
-        <td className="px-4 py-3 text-charcoal/70">{zone.isFallback ? "Any unlisted country" : zone.countries.join(", ") || "—"}</td>
-        <td className="px-4 py-3 text-charcoal/70">Rs. {zone.ratePerOrderLKR.toLocaleString()}</td>
-        <td className="px-4 py-3 text-charcoal/70">{zone.active ? "Active" : "Inactive"}</td>
-        <td className="px-4 py-3 space-x-3">
+        <td data-label="Countries" className={`${CARD_TD} text-charcoal/70`}>{zone.isFallback ? "Any unlisted country" : zone.countries.join(", ") || "—"}</td>
+        <td data-label="Rate" className={`${CARD_TD} text-charcoal/70`}>Rs. {zone.ratePerOrderLKR.toLocaleString()}</td>
+        <td data-label="Status" className={`${CARD_SECOND} text-charcoal/70`}>{zone.active ? "Active" : "Inactive"}</td>
+        <td className={`${CARD_TD_ACTIONS} space-x-3`}>
           <button className="text-xs text-gold underline" onClick={() => setEditing(true)}>Edit</button>
           <button
             className="text-xs text-red-700 underline"
@@ -56,8 +57,8 @@ export function ShippingZoneRow({ zone }: { zone: ShippingZone }) {
   }
 
   return (
-    <tr className="border-b border-border-subtle bg-ivory-soft last:border-0">
-      <td colSpan={5} className="px-4 py-4">
+    <tr className="border-b border-border-subtle bg-ivory-soft last:border-0 max-lg:block">
+      <td colSpan={5} className="px-4 py-4 max-lg:block">
         <form action={handleSave} className="grid gap-3 sm:grid-cols-4 sm:items-end">
           <div>
             <Label htmlFor={`label-${zone.id}`}>Label</Label>

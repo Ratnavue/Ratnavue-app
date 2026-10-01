@@ -6,6 +6,7 @@ import { updateClarityGrade, deleteClarityGrade } from "@/actions/master-data";
 import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { Input, Textarea, FieldError } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
+import { CARD_TR, CARD_TD, CARD_FIRST, CARD_TD_ACTIONS } from "@/components/admin/responsive-table";
 
 interface Grade {
   id: string;
@@ -38,11 +39,11 @@ export function ClarityRow({ grade }: { grade: Grade }) {
 
   if (!editing) {
     return (
-      <tr className="border-b border-border-subtle last:border-0">
-        <td className="px-4 py-3 text-charcoal">{grade.name}</td>
-        <td className="px-4 py-3 text-charcoal/70">{grade.description}</td>
-        <td className="px-4 py-3 text-charcoal/70">{grade.sortOrder}</td>
-        <td className="px-4 py-3 space-x-3">
+      <tr className={CARD_TR}>
+        <td className={`${CARD_FIRST} text-charcoal`}>{grade.name}</td>
+        <td data-label="Description" className={`${CARD_TD} text-charcoal/70`}>{grade.description}</td>
+        <td data-label="Order" className={`${CARD_TD} text-charcoal/70`}>{grade.sortOrder}</td>
+        <td className={`${CARD_TD_ACTIONS} space-x-3`}>
           <button className="text-xs text-gold underline" onClick={() => setEditing(true)}>Edit</button>
           <button
             className="text-xs text-red-700 underline"
@@ -59,8 +60,8 @@ export function ClarityRow({ grade }: { grade: Grade }) {
   }
 
   return (
-    <tr className="border-b border-border-subtle bg-ivory-soft last:border-0">
-      <td colSpan={4} className="px-4 py-4">
+    <tr className="border-b border-border-subtle bg-ivory-soft last:border-0 max-lg:block">
+      <td colSpan={4} className="px-4 py-4 max-lg:block">
         {/* No sm:items-end — see CreateClarityForm for why: it bottom-aligns
             grid items, and the Description textarea's extra height drags
             the shorter Name/Sort Order inputs down out of line with it. */}

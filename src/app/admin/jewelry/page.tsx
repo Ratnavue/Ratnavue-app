@@ -13,6 +13,7 @@ import { StoreFilterTabs, parseStoreFilter } from "@/components/admin/StoreFilte
 import { AdminSearchBox } from "@/components/admin/AdminSearchBox";
 import { CatalogBulkSelectionProvider, CatalogRowCheckbox, CatalogBulkToolbar } from "@/components/admin/CatalogBulkSelection";
 import { formatPrice } from "@/lib/utils";
+import { CARD_TABLE, CARD_THEAD, CARD_TBODY, CARD_TR, CARD_TD, CARD_FIRST, CARD_SECOND } from "@/components/admin/responsive-table";
 
 const PAGE_SIZE = 20;
 
@@ -77,9 +78,9 @@ export default async function AdminJewelryPage({ searchParams }: PageProps<"/adm
       <CatalogBulkSelectionProvider>
         <CatalogBulkToolbar kind="jewelry" />
         <div className="mt-4 overflow-x-auto rounded-xl border border-border-subtle bg-surface">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/50">
+          <table className={CARD_TABLE}>
+            <thead className={CARD_THEAD}>
+              <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/65">
                 <th className="w-10 px-4 py-3">
                   <span className="sr-only">Select</span>
                 </th>
@@ -95,40 +96,40 @@ export default async function AdminJewelryPage({ searchParams }: PageProps<"/adm
                 <th className="px-4 py-3">Published</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className={CARD_TBODY}>
               {pieces.map((piece) => (
-                <tr key={piece.id} className="border-b border-border-subtle last:border-0 hover:bg-ivory-soft">
-                  <td className="px-4 py-3">
+                <tr key={piece.id} className={CARD_TR}>
+                  <td data-label="Select" className={CARD_TD}>
                     <CatalogRowCheckbox id={piece.id} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label="Featured" className={CARD_TD}>
                     <ToggleFeaturedButton
                       featured={piece.isFeatured}
                       store={piece.market === "lk" ? "Sri Lanka home page" : "homepage"}
                       onToggle={toggleJewelryFeatured.bind(null, piece.id)}
                     />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className={CARD_FIRST}>
                     <Link href={`/admin/jewelry/${piece.id}`} className="text-charcoal hover:text-gold">{piece.name}</Link>
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label="Store" className={CARD_TD}>
                     <Badge className={piece.market === "lk" ? "border-gold/40 bg-gold/15 text-charcoal" : "border-border-subtle bg-charcoal/5 text-charcoal/70"}>
                       {piece.market === "lk" ? "Sri Lanka" : "International"}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 text-charcoal/70">{piece.pieceType}</td>
-                  <td className="px-4 py-3 text-charcoal/70">{piece.metalType}</td>
-                  <td className="px-4 py-3 text-charcoal/70">
+                  <td data-label="Type" className={`${CARD_TD} text-charcoal/70`}>{piece.pieceType}</td>
+                  <td data-label="Metal" className={`${CARD_TD} text-charcoal/70`}>{piece.metalType}</td>
+                  <td data-label="Retail price" className={`${CARD_TD} text-charcoal/70`}>
                     {piece.market === "lk"
                       ? piece.lkrRetailPrice != null ? formatPrice(piece.lkrRetailPrice, "LKR") : "—"
                       : piece.retailPrice != null ? formatPrice(piece.retailPrice) : "—"}
                   </td>
-                  <td className="px-4 py-3"><StockBadge status={piece.stockStatus} /></td>
-                  <td className="px-4 py-3 text-charcoal/70">{piece.isPublished ? "Yes" : "No"}</td>
+                  <td data-label="Status" className={CARD_SECOND}><StockBadge status={piece.stockStatus} /></td>
+                  <td data-label="Published" className={`${CARD_TD} text-charcoal/70`}>{piece.isPublished ? "Yes" : "No"}</td>
                 </tr>
               ))}
               {pieces.length === 0 && (
-                <tr><td colSpan={9} className="px-4 py-8 text-center text-charcoal/50">No jewelry pieces yet.</td></tr>
+                <tr className="max-lg:block"><td colSpan={9} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No jewelry pieces yet.</td></tr>
               )}
             </tbody>
           </table>

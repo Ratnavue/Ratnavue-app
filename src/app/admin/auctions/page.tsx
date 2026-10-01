@@ -9,6 +9,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { Button } from "@/components/ui/Button";
 import { AdminSearchBox } from "@/components/admin/AdminSearchBox";
 import { formatPrice } from "@/lib/utils";
+import { CARD_TABLE, CARD_THEAD, CARD_TBODY, CARD_TR, CARD_TD, CARD_FIRST, CARD_SECOND } from "@/components/admin/responsive-table";
 
 const PAGE_SIZE = 30;
 
@@ -61,9 +62,9 @@ export default async function AdminAuctionsPage({ searchParams }: PageProps<"/ad
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-xl border border-border-subtle bg-surface">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/50">
+        <table className={CARD_TABLE}>
+          <thead className={CARD_THEAD}>
+            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/65">
               <th className="px-4 py-3">Item</th>
               <th className="px-4 py-3">Reserve</th>
               <th className="px-4 py-3">High Bid</th>
@@ -71,26 +72,26 @@ export default async function AdminAuctionsPage({ searchParams }: PageProps<"/ad
               <th className="px-4 py-3">State</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className={CARD_TBODY}>
             {auctions.map((auction) => {
               const state = getAuctionDisplayState(auction);
               const top = highestBid(auction.bids);
               return (
-                <tr key={auction.id} className="border-b border-border-subtle last:border-0 hover:bg-ivory-soft">
-                  <td className="px-4 py-3">
+                <tr key={auction.id} className={CARD_TR}>
+                  <td className={CARD_FIRST}>
                     <Link href={`/admin/auctions/${auction.id}`} className="text-charcoal hover:text-gold hover:underline">
                       {auctionItemLabel(auction)}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-charcoal/70">{formatPrice(auction.reservePrice)}</td>
-                  <td className="px-4 py-3 text-charcoal/70">{top != null ? formatPrice(top) : "No bids"}</td>
-                  <td className="px-4 py-3 text-charcoal/70">{auction.endsAt.toLocaleString()}</td>
-                  <td className="px-4 py-3"><AuctionStateBadge state={state} /></td>
+                  <td data-label="Reserve" className={`${CARD_TD} text-charcoal/70`}>{formatPrice(auction.reservePrice)}</td>
+                  <td data-label="High bid" className={`${CARD_TD} text-charcoal/70`}>{top != null ? formatPrice(top) : "No bids"}</td>
+                  <td data-label="Ends" className={`${CARD_TD} text-charcoal/70`}>{auction.endsAt.toLocaleString()}</td>
+                  <td data-label="State" className={CARD_SECOND}><AuctionStateBadge state={state} /></td>
                 </tr>
               );
             })}
             {auctions.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-charcoal/50">No auctions yet.</td></tr>
+              <tr className="max-lg:block"><td colSpan={5} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No auctions yet.</td></tr>
             )}
           </tbody>
         </table>

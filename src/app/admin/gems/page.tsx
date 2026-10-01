@@ -13,6 +13,7 @@ import { StoreFilterTabs, parseStoreFilter } from "@/components/admin/StoreFilte
 import { AdminSearchBox } from "@/components/admin/AdminSearchBox";
 import { CatalogBulkSelectionProvider, CatalogRowCheckbox, CatalogBulkToolbar } from "@/components/admin/CatalogBulkSelection";
 import { formatPrice } from "@/lib/utils";
+import { CARD_TABLE, CARD_THEAD, CARD_TBODY, CARD_TR, CARD_TD, CARD_FIRST, CARD_SECOND } from "@/components/admin/responsive-table";
 
 const PAGE_SIZE = 20;
 
@@ -80,9 +81,9 @@ export default async function AdminGemsPage({ searchParams }: PageProps<"/admin/
       <CatalogBulkSelectionProvider>
         <CatalogBulkToolbar kind="gemstone" />
         <div className="mt-4 overflow-x-auto rounded-xl border border-border-subtle bg-surface">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/50">
+          <table className={CARD_TABLE}>
+            <thead className={CARD_THEAD}>
+              <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/65">
                 <th className="w-10 px-4 py-3">
                   <span className="sr-only">Select</span>
                 </th>
@@ -99,13 +100,13 @@ export default async function AdminGemsPage({ searchParams }: PageProps<"/admin/
                 <th className="px-4 py-3">Published</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className={CARD_TBODY}>
               {gems.map((gem) => (
-                <tr key={gem.id} className="border-b border-border-subtle last:border-0 hover:bg-ivory-soft">
-                  <td className="px-4 py-3">
+                <tr key={gem.id} className={CARD_TR}>
+                  <td data-label="Select" className={CARD_TD}>
                     <CatalogRowCheckbox id={gem.id} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label="Featured" className={CARD_TD}>
                     {!staff && (
                       <ToggleFeaturedButton
                         featured={gem.isFeatured}
@@ -114,28 +115,28 @@ export default async function AdminGemsPage({ searchParams }: PageProps<"/admin/
                       />
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className={CARD_FIRST}>
                     <Link href={`/admin/gems/${gem.id}`} className="text-charcoal hover:text-gold">{gem.name}</Link>
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label="Store" className={CARD_TD}>
                     <Badge className={gem.market === "lk" ? "border-gold/40 bg-gold/15 text-charcoal" : "border-border-subtle bg-charcoal/5 text-charcoal/70"}>
                       {gem.market === "lk" ? "Sri Lanka" : "International"}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 text-charcoal/70">{gem.mineral.name}</td>
-                  <td className="px-4 py-3 text-charcoal/70">{gem.cut.name}</td>
-                  <td className="px-4 py-3 text-charcoal/70">{gem.caratWeight} ct</td>
-                  <td className="px-4 py-3 text-charcoal/70">
+                  <td data-label="Mineral" className={`${CARD_TD} text-charcoal/70`}>{gem.mineral.name}</td>
+                  <td data-label="Cut" className={`${CARD_TD} text-charcoal/70`}>{gem.cut.name}</td>
+                  <td data-label="Carat" className={`${CARD_TD} text-charcoal/70`}>{gem.caratWeight} ct</td>
+                  <td data-label="Retail price" className={`${CARD_TD} text-charcoal/70`}>
                     {gem.market === "lk"
                       ? gem.lkrRetailPrice != null ? formatPrice(gem.lkrRetailPrice, "LKR") : "—"
                       : gem.retailPrice != null ? formatPrice(gem.retailPrice) : "—"}
                   </td>
-                  <td className="px-4 py-3"><StockBadge status={gem.stockStatus} /></td>
-                  <td className="px-4 py-3 text-charcoal/70">{gem.isPublished ? "Yes" : "No"}</td>
+                  <td data-label="Status" className={CARD_SECOND}><StockBadge status={gem.stockStatus} /></td>
+                  <td data-label="Published" className={`${CARD_TD} text-charcoal/70`}>{gem.isPublished ? "Yes" : "No"}</td>
                 </tr>
               ))}
               {gems.length === 0 && (
-                <tr><td colSpan={10} className="px-4 py-8 text-center text-charcoal/50">No gemstones yet.</td></tr>
+                <tr className="max-lg:block"><td colSpan={10} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No gemstones yet.</td></tr>
               )}
             </tbody>
           </table>

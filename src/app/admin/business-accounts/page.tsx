@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Pagination } from "@/components/ui/Pagination";
 import { BackLink } from "@/components/admin/BackLink";
 import { AdminSearchBox } from "@/components/admin/AdminSearchBox";
+import { CARD_TABLE, CARD_THEAD, CARD_TBODY, CARD_TR, CARD_TD, CARD_FIRST } from "@/components/admin/responsive-table";
 
 const PAGE_SIZE = 20;
 
@@ -37,9 +38,9 @@ export default async function AdminBusinessAccountsPage({ searchParams }: PagePr
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-xl border border-border-subtle bg-surface">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/50">
+        <table className={CARD_TABLE}>
+          <thead className={CARD_THEAD}>
+            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/65">
               <th className="px-4 py-3">Business</th>
               <th className="px-4 py-3">Owner</th>
               <th className="px-4 py-3">Members</th>
@@ -47,20 +48,20 @@ export default async function AdminBusinessAccountsPage({ searchParams }: PagePr
               <th className="px-4 py-3">Created</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className={CARD_TBODY}>
             {accounts.map((b) => (
-              <tr key={b.id} className="border-b border-border-subtle last:border-0 hover:bg-ivory-soft">
-                <td className="px-4 py-3 text-charcoal">{b.name}</td>
-                <td className="px-4 py-3">
+              <tr key={b.id} className={CARD_TR}>
+                <td className={`${CARD_FIRST} text-charcoal`}>{b.name}</td>
+                <td data-label="Owner" className={CARD_TD}>
                   <Link href={`/admin/customers/${b.ownerId}`} className="text-charcoal hover:text-gold">{b.owner.name ?? b.owner.email}</Link>
                 </td>
-                <td className="px-4 py-3 text-charcoal/70">{b._count.members}</td>
-                <td className="px-4 py-3 text-charcoal/70">{b._count.orders}</td>
-                <td className="px-4 py-3 text-charcoal/70">{b.createdAt.toLocaleDateString()}</td>
+                <td data-label="Members" className={`${CARD_TD} text-charcoal/70`}>{b._count.members}</td>
+                <td data-label="Orders" className={`${CARD_TD} text-charcoal/70`}>{b._count.orders}</td>
+                <td data-label="Created" className={`${CARD_TD} text-charcoal/70`}>{b.createdAt.toLocaleDateString()}</td>
               </tr>
             ))}
             {accounts.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-charcoal/50">No business accounts yet.</td></tr>
+              <tr className="max-lg:block"><td colSpan={5} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No business accounts yet.</td></tr>
             )}
           </tbody>
         </table>

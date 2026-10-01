@@ -8,6 +8,7 @@ import { AdminSearchBox } from "@/components/admin/AdminSearchBox";
 import { getPageContent, DEFAULT_CART_CONTENT } from "@/lib/page-content";
 import { cartTotal } from "@/lib/discount-codes";
 import { cn, formatPrice } from "@/lib/utils";
+import { CARD_TABLE, CARD_THEAD, CARD_TBODY, CARD_TR, CARD_TD, CARD_FIRST, CARD_SECOND } from "@/components/admin/responsive-table";
 
 const PAGE_SIZE = 20;
 
@@ -74,9 +75,9 @@ export default async function AdminCartsPage({ searchParams }: PageProps<"/admin
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-xl border border-border-subtle bg-surface">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/50">
+        <table className={CARD_TABLE}>
+          <thead className={CARD_THEAD}>
+            <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wide text-charcoal/65">
               <th className="px-4 py-3">Customer</th>
               <th className="px-4 py-3">Items</th>
               <th className="px-4 py-3">Total</th>
@@ -85,24 +86,24 @@ export default async function AdminCartsPage({ searchParams }: PageProps<"/admin
               <th className="px-4 py-3">Invoice</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className={CARD_TBODY}>
             {carts.map((cart) => {
               const total = cartTotal(cart.items, cart.discountAmount);
               return (
-                <tr key={cart.id} className="border-b border-border-subtle last:border-0 hover:bg-ivory-soft">
-                  <td className="px-4 py-3">
+                <tr key={cart.id} className={CARD_TR}>
+                  <td className={`${CARD_FIRST} max-lg:[overflow-wrap:anywhere]`}>
                     <Link href={`/admin/carts/${cart.id}`} className="text-charcoal hover:text-gold">{cart.user.email}</Link>
                   </td>
-                  <td className="px-4 py-3 text-charcoal/70">{cart.items.length}</td>
-                  <td className="px-4 py-3 text-charcoal/70">{formatPrice(total)}</td>
-                  <td className="px-4 py-3 text-charcoal/70">{cart.submittedAt?.toLocaleDateString()}</td>
-                  <td className="px-4 py-3"><PaymentStatusBadge status={cart.paymentStatus} /></td>
-                  <td className="px-4 py-3 text-charcoal/70">{cart.invoice ? cart.invoice.invoiceNumber : "—"}</td>
+                  <td data-label="Items" className={`${CARD_TD} text-charcoal/70`}>{cart.items.length}</td>
+                  <td data-label="Total" className={`${CARD_TD} text-charcoal/70`}>{formatPrice(total)}</td>
+                  <td data-label="Submitted" className={`${CARD_TD} text-charcoal/70`}>{cart.submittedAt?.toLocaleDateString()}</td>
+                  <td data-label="Payment" className={CARD_SECOND}><PaymentStatusBadge status={cart.paymentStatus} /></td>
+                  <td data-label="Invoice" className={`${CARD_TD} text-charcoal/70`}>{cart.invoice ? cart.invoice.invoiceNumber : "—"}</td>
                 </tr>
               );
             })}
             {carts.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-charcoal/50">No submitted carts found.</td></tr>
+              <tr className="max-lg:block"><td colSpan={6} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No submitted carts found.</td></tr>
             )}
           </tbody>
         </table>

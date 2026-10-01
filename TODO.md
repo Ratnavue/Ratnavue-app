@@ -762,11 +762,15 @@ unless noted.*
   this exact tension was considered once for mobile; it may need the same
   treatment extended to short desktop windows.
 
-- **Admin tables on phones** — Orders, Staff, Discount Codes and Wholesale
-  Applications now turn into stacked cards below the `lg` breakpoint
+- **Admin tables on phones** — every admin list page (Orders, Staff,
+  Discount Codes, Wholesale Applications, Gems, Jewelry, Customers, Quotes,
+  Sourcing, Auctions, Carts, Invoices, Business Accounts, Referrals,
+  Messages, Shipping Zones/Weight Tiers, and every Master Data table —
+  Minerals, Clarity, Cuts, Origins, Treatments, Certification Labs) now
+  turns into stacked cards below the `lg` breakpoint
   (`src/components/admin/responsive-table.ts`), so status and action
-  buttons are reachable without sideways scrolling. The remaining admin
-  lists (gems, jewelry, customers, quotes, sourcing, auctions, carts,
-  invoices, referrals, business accounts, shipping zones, master data)
-  still scroll horizontally inside their card — convert them with the same
-  helper when they're reported.
+  buttons are reachable without sideways scrolling. Also fixed the
+  Messages page's search bar, which overlapped the sort buttons on a
+  phone. Swept every admin route at 320–375px width to confirm zero
+  horizontal page/table overflow. New admin list tables should use the
+  same `CARD_*` helpers from the start.

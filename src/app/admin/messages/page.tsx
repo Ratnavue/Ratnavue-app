@@ -147,17 +147,17 @@ export default async function AdminMessagesPage({ searchParams }: PageProps<"/ad
       </div>
       <p className="mt-1 text-sm text-charcoal/60">Every quote, sourcing request, and support chat with an active conversation, in one place.</p>
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <form action="/admin/messages" method="get" className="flex items-center gap-2">
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <form action="/admin/messages" method="get" className="flex min-w-0 items-center gap-2">
           {sort === "unread" && <input type="hidden" name="sort" value="unread" />}
           <input
             type="search"
             name="q"
             defaultValue={q}
             placeholder="Search by customer, item, or message..."
-            className="w-64 rounded-full border border-border-subtle bg-surface px-4 py-2 text-sm focus:border-gold focus:outline-none"
+            className="w-full min-w-0 rounded-full border border-border-subtle bg-surface px-4 py-2 text-sm focus:border-gold focus:outline-none sm:w-64"
           />
-          <button type="submit" className="rounded-full border border-border-subtle px-4 py-2 text-sm text-charcoal/70 hover:border-charcoal/40">
+          <button type="submit" className="shrink-0 rounded-full border border-border-subtle px-4 py-2 text-sm text-charcoal/70 hover:border-charcoal/40">
             Search
           </button>
         </form>
