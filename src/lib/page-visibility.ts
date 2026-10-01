@@ -18,6 +18,10 @@ export const PAGE_VISIBILITY_KEYS = [
   // page, so /lk has none until an admin turns them on.
   "lk:seasonal",
   "lk:auction",
+  // The customer-facing Design Studio (/design-studio) — the admin side
+  // (/admin/design-studio) is unaffected by this key and always available
+  // to admin/staff with the "requests" area. See actions/design-studio.ts.
+  "design-studio",
 ] as const;
 export type PageVisibilityKey = (typeof PAGE_VISIBILITY_KEYS)[number];
 

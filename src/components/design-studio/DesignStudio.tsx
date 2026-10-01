@@ -1,0 +1,364 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { CircleCheck } from "lucide-react";
+import { StudioCanvas } from "./StudioCanvas";
+import { StudioToolbar } from "./StudioToolbar";
+import { emptyStudioState, newPane, newShape, MAX_PANES, type Shape, type ShapeType, type StudioState } from "@/lib/design-studio/types";
+import { cloneShapes, paneCenter, radialRepeat } from "@/lib/design-studio/shape-ops";
+import { exportPanesToPngBlob } from "@/lib/design-studio/export";
+import { saveDesign, uploadDesignThumbnail, submitDesignStudioRequest, listMyDesigns, type MyDesignSummary } from "@/actions/design-studio";
+import { Input, Label, Textarea, FieldError } from "@/components/ui/Field";
+import { Button } from "@/components/ui/Button";
+
+export interface InitialDesign {
+  id: string;
+  name: string;
+  data: StudioState;
+  thumbnailUrl: string | null;
+  quoteRequestId: string | null;
+}
+
+interface DesignStudioProps {
+  mode: "admin" | "customer";
+  initialDesign?: InitialDesign | null;
+  /** Customer mode only — whether there's a signed-in session to submit
+   * with (mirrors how /configurator passes this through today). Admin
+   * mode is always reached signed-in (the route itself requires it). */
+  isAuthenticated?: boolean;
+}
+
+const AUTOSAVE_DELAY_MS = 2000;
+
+export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: DesignStudioProps) {
+  const router = useRouter();
+  // Not component state — nothing renders off it directly, and doSave needs
+  // to read whichever value is current at the moment it actually runs
+  // (not whatever was in scope when it was scheduled), which a useState
+  // closure can't give it. See saveChain's own comment for why that
+  // staleness specifically matters here.
+  const designIdRef = useRef<string | null>(initialDesign?.id ?? null);
+  const [name, setName] = useState(initialDesign?.name ?? "Untitled design");
+  const [studio, setStudio] = useState<StudioState>(initialDesign?.data ?? emptyStudioState());
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [clipboard, setClipboard] = useState<Shape[] | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+
+  const [description, setDescription] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(!!initialDesign?.quoteRequestId);
+
+  const [myDesigns, setMyDesigns] = useState<MyDesignSummary[] | null>(null);
+
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const mounted = useRef(false);
+  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Serializes every save (debounced autosave and explicit Save/Submit
+  // clicks alike) through one queue — without this, a manual save firing
+  // while an autosave from a moment earlier is still in flight can each
+  // read a stale `designId` (still null) and create two separate rows
+  // instead of one being created then the other updated.
+  const saveChain = useRef<Promise<unknown>>(Promise.resolve());
+
+  const activePane = studio.panes.find((p) => p.id === studio.activePaneId) ?? studio.panes[0];
+
+  useEffect(() => {
+    if (mode !== "admin") return;
+    listMyDesigns().then(setMyDesigns).catch(() => setMyDesigns([]));
+  }, [mode]);
+
+  // Debounced autosave of the editor state (not the thumbnail — that's
+  // only regenerated on an explicit Save, see doSave below) a couple of
+  // seconds after the last edit, rather than on every shape nudge.
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = setTimeout(() => {
+      void doSave(false);
+    }, AUTOSAVE_DELAY_MS);
+    return () => {
+      if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- doSave closes over state that changes every render; re-running on `studio`/`name` alone is the intent.
+  }, [studio, name]);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Delete" && e.key !== "Backspace") return;
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      if (selectedIds.length === 0) return;
+      e.preventDefault();
+      deleteSelection();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deleteSelection closes over current state each render; this listener is cheap to re-attach.
+  }, [selectedIds, studio]);
+
+  function updatePane(paneId: string, updater: (shapes: Shape[]) => Shape[]) {
+    setStudio((prev) => ({ ...prev, panes: prev.panes.map((p) => (p.id === paneId ? { ...p, shapes: updater(p.shapes) } : p)) }));
+  }
+
+  function handleActivate(paneId: string) {
+    setStudio((prev) => (prev.activePaneId === paneId ? prev : { ...prev, activePaneId: paneId }));
+    setSelectedIds([]);
+  }
+
+  function handleAddShape(type: ShapeType) {
+    const shape = newShape(type);
+    updatePane(studio.activePaneId, (shapes) => [...shapes, shape]);
+    setSelectedIds([shape.id]);
+  }
+
+  function handleApplyTemplate(shapes: Shape[]) {
+    updatePane(studio.activePaneId, () => shapes);
+    setSelectedIds([]);
+  }
+
+  function handleAddPane() {
+    if (studio.panes.length >= MAX_PANES) return;
+    const pane = newPane(`View ${studio.panes.length + 1}`);
+    setStudio((prev) => ({ panes: [...prev.panes, pane], activePaneId: pane.id }));
+    setSelectedIds([]);
+  }
+
+  function handleRemovePane() {
+    if (studio.panes.length <= 1) return;
+    setStudio((prev) => {
+      const panes = prev.panes.filter((p) => p.id !== studio.activePaneId);
+      return { panes, activePaneId: panes[0].id };
+    });
+    setSelectedIds([]);
+  }
+
+  function handleCopy() {
+    if (!activePane) return;
+    const shapes = activePane.shapes.filter((s) => selectedIds.includes(s.id));
+    if (shapes.length) setClipboard(shapes);
+  }
+
+  function handlePaste() {
+    if (!clipboard) return;
+    const copies = cloneShapes(clipboard);
+    updatePane(studio.activePaneId, (shapes) => [...shapes, ...copies]);
+    setSelectedIds(copies.map((c) => c.id));
+  }
+
+  function deleteSelection() {
+    if (!activePane || selectedIds.length === 0) return;
+    const group = new Set(activePane.shapes.filter((s) => selectedIds.includes(s.id) && s.groupId).map((s) => s.groupId));
+    updatePane(studio.activePaneId, (shapes) => shapes.filter((s) => !selectedIds.includes(s.id) && !(s.groupId && group.has(s.groupId))));
+    setSelectedIds([]);
+  }
+
+  function handleRadialRepeat(count: number) {
+    if (!activePane || selectedIds.length === 0) return;
+    const selected = activePane.shapes.filter((s) => selectedIds.includes(s.id));
+    const center = paneCenter(activePane, { x: 200, y: 200 });
+    const copies = radialRepeat(selected, center, count);
+    updatePane(studio.activePaneId, (shapes) => [...shapes, ...copies]);
+    setSelectedIds(copies.map((c) => c.id));
+  }
+
+  function handleMoveShapes(paneId: string, updates: { id: string; x: number; y: number }[]) {
+    updatePane(paneId, (shapes) => shapes.map((s) => {
+      const found = updates.find((u) => u.id === s.id);
+      return found ? { ...s, x: found.x, y: found.y } : s;
+    }));
+  }
+
+  function handleResizeShape(paneId: string, id: string, w: number, h: number) {
+    updatePane(paneId, (shapes) => shapes.map((s) => (s.id === id ? { ...s, w, h } : s)));
+  }
+
+  function handleRotateShape(paneId: string, id: string, rotation: number) {
+    updatePane(paneId, (shapes) => shapes.map((s) => (s.id === id ? { ...s, rotation } : s)));
+  }
+
+  async function doSaveInner(withThumbnail: boolean): Promise<string | null> {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const result = await saveDesign(designIdRef.current, name, studio);
+      if (!result.ok) {
+        setSaveError(result.error);
+        return null;
+      }
+      designIdRef.current = result.id;
+
+      if (withThumbnail && canvasRef.current) {
+        try {
+          const blob = await exportPanesToPngBlob(canvasRef.current);
+          const formData = new FormData();
+          formData.set("thumbnail", new File([blob], "design.png", { type: "image/png" }));
+          const uploaded = await uploadDesignThumbnail(result.id, formData);
+          if (!uploaded.ok) setSaveError(uploaded.error);
+        } catch (err) {
+          // A failed thumbnail export shouldn't block saving the sketch
+          // data itself, but a caller relying on the thumbnail (customer
+          // submit) needs to know it didn't happen.
+          setSaveError(err instanceof Error ? err.message : "Could not export the sketch.");
+        }
+      }
+      setLastSavedAt(new Date());
+      return result.id;
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Every save — the debounced autosave and explicit Save/Submit clicks
+  // alike — runs through this one queue, so a manual save that lands while
+  // an autosave from a moment earlier is still in flight waits its turn
+  // instead of racing it (see saveChain's own comment).
+  function doSave(withThumbnail: boolean): Promise<string | null> {
+    const run = saveChain.current.then(() => doSaveInner(withThumbnail));
+    saveChain.current = run.catch(() => undefined);
+    return run;
+  }
+
+  async function handleSubmit() {
+    setSubmitError(null);
+    if (!isAuthenticated) {
+      setSubmitError("Please sign in to submit a custom design request.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const id = await doSave(true);
+      if (!id) {
+        setSubmitError(saveError ?? "Could not save the sketch.");
+        return;
+      }
+      const result = await submitDesignStudioRequest(id, description);
+      if (!result.ok) {
+        setSubmitError(result.error);
+        return;
+      }
+      setSubmitted(true);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (submitted) {
+    return (
+      <div className="flex items-start gap-3 rounded-2xl border border-border-subtle bg-surface p-6">
+        <CircleCheck className="mt-0.5 shrink-0 text-emerald-700" size={20} />
+        <div>
+          <p className="text-sm font-medium text-charcoal">Request sent</p>
+          <p className="mt-1 text-sm text-charcoal/70">Our design team will review your sketch and reach out by email with next steps.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {mode === "admin" && (
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <Label htmlFor="design-name">Design name</Label>
+            <Input id="design-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
+          </div>
+          <p className="shrink-0 pt-5 text-xs text-charcoal/50">
+            {saving ? "Saving..." : lastSavedAt ? `Saved ${lastSavedAt.toLocaleTimeString()}` : "Not saved yet"}
+          </p>
+        </div>
+      )}
+
+      <StudioToolbar
+        selectionCount={selectedIds.length}
+        paneCount={studio.panes.length}
+        onAddShape={handleAddShape}
+        onApplyTemplate={handleApplyTemplate}
+        onAddPane={handleAddPane}
+        onRemovePane={handleRemovePane}
+        onCopy={handleCopy}
+        onPaste={handlePaste}
+        onDelete={deleteSelection}
+        onRadialRepeat={handleRadialRepeat}
+        onSave={() => doSave(true)}
+        saving={saving}
+        canPaste={!!clipboard}
+      />
+      <FieldError>{saveError ?? undefined}</FieldError>
+
+      <div ref={canvasRef}>
+        <StudioCanvas
+          panes={studio.panes}
+          activePaneId={studio.activePaneId}
+          selectedIds={selectedIds}
+          onActivate={handleActivate}
+          onSelect={setSelectedIds}
+          onMoveShapes={handleMoveShapes}
+          onResizeShape={handleResizeShape}
+          onRotateShape={handleRotateShape}
+        />
+      </div>
+
+      {mode === "admin" && myDesigns !== null && myDesigns.length > 0 && (
+        <div>
+          <p className="mb-2 text-xs uppercase tracking-wide text-charcoal/50">My designs</p>
+          <div className="flex flex-wrap gap-3">
+            {myDesigns.map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => router.push(`/admin/design-studio?design=${d.id}`)}
+                className="w-28 rounded-lg border border-border-subtle p-1.5 text-left hover:border-gold/40"
+                title={d.name}
+              >
+                <span className="flex h-20 w-full items-center justify-center overflow-hidden rounded bg-[#faf7f2]">
+                  {d.thumbnailUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- small admin-only thumbnail list, not worth Next/Image overhead here
+                    <img src={d.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-[10px] text-charcoal/30">No preview</span>
+                  )}
+                </span>
+                <span className="mt-1 block truncate text-xs text-charcoal/70">{d.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {mode === "customer" && (
+        <div className="rounded-xl border border-border-subtle bg-surface p-5">
+          <Label htmlFor="design-description">Describe what you&apos;re going for</Label>
+          <Textarea
+            id="design-description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            minLength={10}
+            maxLength={2000}
+            rows={4}
+            placeholder="A signet ring with a dark garnet centre stone, engraved initials, oxidized silver band..."
+          />
+          <FieldError>{submitError ?? undefined}</FieldError>
+          {!isAuthenticated ? (
+            <p className="mt-3 text-sm text-charcoal/70">
+              <a href="/account/login" className="text-gold-deep underline">
+                Sign in
+              </a>{" "}
+              to submit this sketch as a custom design request.
+            </p>
+          ) : (
+            <Button type="button" variant="gold" size="lg" className="mt-3" disabled={submitting} onClick={handleSubmit}>
+              {submitting ? "Sending..." : "Submit Custom Request"}
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

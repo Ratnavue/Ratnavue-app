@@ -23,6 +23,7 @@ export default async function AdminQuoteDetailPage({ params }: PageProps<"/admin
         gemstone: { include: { cut: true, mineral: true, clarityGrade: true } },
         jewelry: true,
         invoice: true,
+        jewelryDesign: { select: { id: true } },
       },
     }),
     auth(),
@@ -103,7 +104,14 @@ export default async function AdminQuoteDetailPage({ params }: PageProps<"/admin
 
           {referenceImages.length > 0 && (
             <div className="rounded-xl border border-border-subtle bg-surface p-5">
-              <p className="text-xs uppercase tracking-wide text-charcoal/45">Reference Images</p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs uppercase tracking-wide text-charcoal/45">Reference Images</p>
+                {quote.jewelryDesign && (
+                  <Link href={`/admin/design-studio?design=${quote.jewelryDesign.id}`} className="text-xs text-gold-deep underline hover:text-charcoal">
+                    View/edit design
+                  </Link>
+                )}
+              </div>
               <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {referenceImages.map((src) => (
                   <a key={src} href={src} target="_blank" rel="noreferrer" className="relative block aspect-square overflow-hidden rounded-lg border border-border-subtle">

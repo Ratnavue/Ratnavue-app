@@ -17,6 +17,7 @@ const NAV = [
   { href: "/admin/messages", label: "Messages" },
   { href: "/admin/quotes", label: "Quote Requests" },
   { href: "/admin/sourcing", label: "Sourcing Requests" },
+  { href: "/admin/design-studio", label: "Design Studio" },
   { href: "/admin/carts", label: "Submitted Carts" },
   { href: "/admin/discount-codes", label: "Discount Codes" },
   { href: "/admin/bundles", label: "Bundles" },

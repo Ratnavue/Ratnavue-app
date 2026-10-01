@@ -774,3 +774,23 @@ unless noted.*
   phone. Swept every admin route at 320–375px width to confirm zero
   horizontal page/table overflow. New admin list tables should use the
   same `CARD_*` helpers from the start.
+
+- **Design Studio** (2D jewelry sketch tool) — shipped. A 2D SVG canvas at
+  `/admin/design-studio` (always available to admin/staff with the
+  "requests" area) and `/design-studio` (customer-facing, gated behind the
+  `"design-studio"` PageVisibility key — HIDDEN by default, flip it LIVE
+  from the tool's own admin page to let customers reach it). Split the
+  canvas into up to 4 panes, add band/stone/prong/line/chain/text shapes,
+  copy a selection between panes, repeat a selection evenly around a
+  circle (for a ring's stone/prong pattern), and start from one of 9
+  templates (`src/lib/design-studio/templates.ts`). A customer's finished
+  sketch submits through the same pipeline as the existing "Commission a
+  Custom Piece" form (`QuoteRequest`, `productType: "CUSTOM"`) with a
+  rendered PNG as its reference image, and stays linked
+  (`JewelryDesign.quoteRequestId`) so admin can reopen the editable
+  version from that quote's detail page. New model: `JewelryDesign`
+  (migration `20261001120000_add_jewelry_designs`). Deliberately not
+  built: undo/redo, true 3D/parametric modeling, manufacturing export
+  formats (STL/DXF), real-time multi-user collaboration — see the
+  "Explicitly out of scope" note in the original plan if reviving any of
+  these.

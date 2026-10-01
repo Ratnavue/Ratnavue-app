@@ -25,6 +25,7 @@ export function AlternativeCollectionPage({
   liveKeys,
   slugsByKey,
   isSignedIn,
+  designStudioEnabled,
 }: {
   theme: SubcultureDef;
   content: SubcultureContent;
@@ -37,6 +38,10 @@ export function AlternativeCollectionPage({
    * prompt — same convention as /sourcing's SourcingForm, since a
    * submitted request needs an account to review/reply against. */
   isSignedIn: boolean;
+  /** Whether an admin has turned the Design Studio (/design-studio) LIVE
+   * for customers — see lib/page-visibility.ts's "design-studio" key.
+   * Shows an alternative "sketch it yourself" link under this same form. */
+  designStudioEnabled: boolean;
 }) {
   const hasHero = Boolean(content.heroImage);
 
@@ -175,6 +180,13 @@ export function AlternativeCollectionPage({
             </div>
           )}
         </Reveal>
+        {designStudioEnabled && (
+          <Reveal delay={0.15} className="mt-4">
+            <a href="/design-studio" className={cn("text-sm underline decoration-current/40 underline-offset-4 hover:decoration-current", theme.bodyClass)}>
+              Or sketch it yourself in the Design Studio →
+            </a>
+          </Reveal>
+        )}
       </section>
 
       {/* ---------- Cross-collection discovery ---------- */}

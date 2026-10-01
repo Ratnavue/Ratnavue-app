@@ -159,6 +159,7 @@ model User {
   passwordResetTokens  PasswordResetToken[]
   wishlistItems        WishlistItem[]
   reviews              Review[]
+  jewelryDesigns       JewelryDesign[]
   // Orders this user (a staff/admin account) reverted from PAID back to
   // unpaid — see Order.paymentReversedBy.
   ordersReverted       Order[]              @relation("OrderPaymentReversedBy")
@@ -715,6 +716,12 @@ model QuoteRequest {
   // getOrCreateChatThread) — not eagerly for every request.
   chatThread ChatThread?
 
+  // Set when this request was produced by the Design Studio (sketched,
+  // not just photo-uploaded) — lets the admin reopen the editable design
+  // instead of only seeing its flat thumbnail in referenceImages. See
+  // JewelryDesign.quoteRequestId.
+  jewelryDesign JewelryDesign?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -741,6 +748,48 @@ model Invoice {
   issuedAt DateTime @default(now())
 
   createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum DesignSource {
+  ADMIN
+  CUSTOMER
+}
+
+// A sketch made in the Design Studio (the 2D "split the canvas, copy a
+// segment, repeat it around a band" jewelry layout tool) — see
+// src/lib/design-studio/types.ts for the shape of `data`. Staff use this
+// freely; a customer only reaches it when an admin has turned the
+// "design-studio" PageVisibility key LIVE (src/lib/page-visibility.ts).
+model JewelryDesign {
+  id     String @id @default(cuid())
+  userId String?
+  user   User?  @relation(fields: [userId], references: [id])
+
+  name String @default("Untitled design")
+
+  // The full editor state (panes, each pane's shapes) as JSON — the same
+  // "just store the JSON" approach QuoteRequest.configuredSpec already
+  // uses for the gem configurator.
+  data Json
+
+  // PNG snapshot of the canvas at last save, uploaded via
+  // lib/media.ts's saveUploadedMedia — used as this design's thumbnail
+  // and as the QuoteRequest.referenceImages entry once submitted.
+  thumbnailUrl String?
+
+  source DesignSource @default(ADMIN)
+
+  // Set once a customer submits this design as a custom-design request
+  // (see actions/design-studio.ts's submitDesignStudioRequest) — lets the
+  // admin reopen the *editable* design from that quote's detail page
+  // instead of just its flat reference-image thumbnail.
+  quoteRequestId String?       @unique
+  quoteRequest   QuoteRequest? @relation(fields: [quoteRequestId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
 }

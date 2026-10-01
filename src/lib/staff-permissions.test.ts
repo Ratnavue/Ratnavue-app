@@ -8,6 +8,7 @@ describe("staffAreaForPath", () => {
     expect(staffAreaForPath("/admin/gems/new")).toBe("catalog");
     expect(staffAreaForPath("/admin/jewelry/abc")).toBe("catalog");
     expect(staffAreaForPath("/admin/quotes/abc")).toBe("requests");
+    expect(staffAreaForPath("/admin/design-studio")).toBe("requests");
     expect(staffAreaForPath("/admin/support/user-1")).toBe("requests");
     expect(staffAreaForPath("/admin/reviews")).toBe("reviews");
     expect(staffAreaForPath("/admin/content/home")).toBe("content");
@@ -61,7 +62,14 @@ describe("staffCanAccessPath / firstStaffPath / nav", () => {
 
   it("builds nav links only for enabled areas", () => {
     expect(staffNavLinks(["reviews"]).map((l) => l.href)).toEqual(["/admin/reviews"]);
-    expect(staffNavLinks(["catalog", "requests"]).map((l) => l.href)).toEqual(["/admin/gems", "/admin/jewelry", "/admin/messages", "/admin/quotes", "/admin/sourcing"]);
+    expect(staffNavLinks(["catalog", "requests"]).map((l) => l.href)).toEqual([
+      "/admin/gems",
+      "/admin/jewelry",
+      "/admin/messages",
+      "/admin/quotes",
+      "/admin/sourcing",
+      "/admin/design-studio",
+    ]);
   });
 
   it("parseStaffPermissions drops unknown values", () => {

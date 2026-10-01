@@ -76,7 +76,13 @@ export default async function SubcultureCollectionPage({ params }: PageProps<"/c
   // doc comment: defaults to HIDDEN until an admin turns a page on).
   if (visibility === "HIDDEN") notFound();
 
-  const [allRows, visibilities, session, market] = await Promise.all([getCollectionItems(key), getPageVisibilities([...SUBCULTURE_KEYS]), auth(), getMarket()]);
+  const [allRows, visibilities, session, market, designStudioVisibility] = await Promise.all([
+    getCollectionItems(key),
+    getPageVisibilities([...SUBCULTURE_KEYS]),
+    auth(),
+    getMarket(),
+    getPageVisibility("design-studio"),
+  ]);
   // The international and Sri Lanka catalogs never overlap, so a collection
   // shows only the items that belong to the visitor's own storefront — with
   // that storefront's prices (rupees on /lk).
@@ -128,6 +134,7 @@ export default async function SubcultureCollectionPage({ params }: PageProps<"/c
         liveKeys={liveKeys}
         slugsByKey={slugsByKey}
         isSignedIn={!!session?.user}
+        designStudioEnabled={designStudioVisibility === "LIVE"}
       />
     </>
   );

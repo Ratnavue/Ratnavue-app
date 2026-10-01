@@ -19,7 +19,7 @@ const AREA_PATHS: Record<StaffArea, string[]> = {
   orders: ["/admin/orders"],
   catalog: ["/admin/gems", "/admin/jewelry"],
   content: ["/admin/content"],
-  requests: ["/admin/messages", "/admin/quotes", "/admin/sourcing", "/admin/support"],
+  requests: ["/admin/messages", "/admin/quotes", "/admin/sourcing", "/admin/support", "/admin/design-studio"],
   reviews: ["/admin/reviews"],
 };
 
@@ -66,7 +66,12 @@ export function staffNavLinks(permissions: readonly string[]): { href: string; l
     links.push({ href: "/admin/content/home", label: "Home Page" }, { href: "/admin/content/about", label: "About Page" });
   }
   if (permissions.includes("requests")) {
-    links.push({ href: "/admin/messages", label: "Messages" }, { href: "/admin/quotes", label: "Quote Requests" }, { href: "/admin/sourcing", label: "Sourcing Requests" });
+    links.push(
+      { href: "/admin/messages", label: "Messages" },
+      { href: "/admin/quotes", label: "Quote Requests" },
+      { href: "/admin/sourcing", label: "Sourcing Requests" },
+      { href: "/admin/design-studio", label: "Design Studio" },
+    );
   }
   if (permissions.includes("reviews")) links.push({ href: "/admin/reviews", label: "Reviews" });
   return links;
