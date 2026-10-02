@@ -601,6 +601,54 @@ shipped (`lib/analytics.ts`, `computeProfit`).*
   feature); earrings/rings/other piece types; rolling out beyond
   whatever items get real models next.
 
+  **Real-device feedback (2026-10-02, tried on an actual phone) — two
+  problems, both expected given what shipped was explicitly a pilot, but
+  both need real fixes before this is customer-facing:**
+  1. **Tracking doesn't reliably find the face/neck to anchor the piece.**
+     This pilot only ever used `PoseLandmarker`'s two *shoulder*
+     landmarks (11/12) as a proxy for "where the neck is" — shoulders are
+     a much coarser, less reliable signal than the neck/jaw area itself,
+     and the position/scale constants in `src/lib/ar/neck-anchor.ts`
+     (`NECK_OFFSET_FRACTION`, `REFERENCE_SHOULDER_WIDTH`) were explicitly
+     "tuned by eye, not measured" placeholders (see that file's own
+     comments) — never actually calibrated against a real phone. Likely
+     fix, worth trying in this order:
+     - Switch to (or add) MediaPipe's **`FaceLandmarker`** instead of/
+       alongside `PoseLandmarker` — it gives 478 face points including
+       jaw/chin, a far more direct anchor for "where a necklace sits"
+       than inferring it from shoulder width.
+     - Recalibrate `NECK_OFFSET_FRACTION`/`REFERENCE_SHOULDER_WIDTH` (or
+       their face-landmark equivalents) against real recorded video of a
+       person, not guessed — the unit tests in `neck-anchor.test.ts`
+       check the *math* is internally consistent, not that the tuning
+       constants are visually correct, which is exactly the gap that
+       showed up here.
+     - Check `delegate: "GPU"` in `ArTryOnOverlay.tsx`'s
+       `PoseLandmarker.createFromOptions` call is actually succeeding on
+       real phone hardware rather than silently failing/falling back —
+       add a visible diagnostic (or at least a console log) for which
+       delegate actually initialized, since the current code has no way
+       to tell from the outside.
+     - Consider lowering `minPoseDetectionConfidence`/
+       `minPosePresenceConfidence` from MediaPipe's 0.5 defaults if the
+       tracker is simply failing to detect a valid pose often enough in
+       normal lighting/framing, rather than detecting one in the wrong
+       place.
+  2. **The placeholder 3D model doesn't look like real jewelry** — a
+     torus "chain" + octahedron "pendant" (see `ArModelUploader`'s
+     uploaded file on the pilot pendant) was always meant as a pipeline
+     stand-in, not something to actually evaluate the *feature* by, but
+     it's not good enough even for that — it reads as abstract shapes,
+     not a necklace. Needs a genuinely realistic replacement before
+     further testing is useful: either (a) commission/scan a real 3D
+     model of the actual `18K Gold Ruby Pendant` (the real fix, and the
+     content-production work this whole feature was always going to
+     need — see the "hard prerequisite" note above), or (b) in the
+     meantime, source one well-made reference GLB necklace/pendant model
+     (a decent free/CC0 one, properly chain-and-stone-shaped, not
+     primitives) just to separate "is the placeholder bad" from "is the
+     tracking bad" while problem 1 above is being fixed.
+
 ## Growth & trust (competitor research, 2026-09-24)
 
 *Sourced from a competitor pass over James Allen/Blue Nile, Angara,
