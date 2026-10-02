@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { cloneShapes, paneCenter, radialRepeat } from "./shape-ops";
+import { cloneShapes, paneCenter, radialRepeat, wedgeMidpoint } from "./shape-ops";
 import type { Shape } from "./types";
 
 function stone(overrides: Partial<Shape> = {}): Shape {
@@ -81,5 +81,27 @@ describe("radialRepeat", () => {
   it("rotates each copy by its share of the full turn", () => {
     const copies = radialRepeat([stone({ rotation: 0 })], { x: 200, y: 200 }, 4);
     expect(copies.map((c) => c.rotation)).toEqual([0, 90, 180, 270]);
+  });
+});
+
+describe("wedgeMidpoint", () => {
+  it("sits at the given radius from center", () => {
+    const p = wedgeMidpoint({ x: 200, y: 200 }, 8, 90);
+    expect(Math.hypot(p.x - 200, p.y - 200)).toBeCloseTo(90, 5);
+  });
+
+  it("sits at half the wedge angle, clockwise from straight up", () => {
+    // 4-way symmetry: wedge 0 spans 0°–90°, so its midpoint is 45°
+    // clockwise from (center.x, center.y - radius) — i.e. up-and-right.
+    const p = wedgeMidpoint({ x: 0, y: 0 }, 4, 100);
+    expect(p.x).toBeCloseTo(100 * Math.sin((45 * Math.PI) / 180), 5);
+    expect(p.y).toBeCloseTo(-100 * Math.cos((45 * Math.PI) / 180), 5);
+  });
+
+  it("never lands exactly on center, so a shape placed there is still visible once mirrored", () => {
+    for (const count of [4, 6, 8, 12]) {
+      const p = wedgeMidpoint({ x: 200, y: 200 }, count, 90);
+      expect(p.x === 200 && p.y === 200).toBe(false);
+    }
   });
 });

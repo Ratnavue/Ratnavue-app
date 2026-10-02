@@ -24,12 +24,28 @@ export interface Shape {
   /** Shapes created together by a radial repeat share one groupId, so the
    * whole ring of copies can be selected/deleted as a unit afterward. */
   groupId?: string;
+  /** "stone" shapes only — when set, PaneSVG renders this shape through
+   * the real gem-visualizer (src/lib/design-studio/gems.ts) instead of a
+   * flat ellipse. fill/stroke above are ignored for a shape with this
+   * set (the visualizer derives its own gradient from hue/darkness). */
+  gem?: { cutSlug: string; hue: number; darkness: number; saturation: number; claritySlug: string; caratWeight: number };
+  /** "band"/"prong"/"line"/"chain" shapes only — when set, PaneSVG renders
+   * a metallic gradient (src/lib/design-studio/metals.ts) instead of the
+   * flat `fill` above. */
+  metal?: import("./metals").MetalKey;
 }
 
 export interface Pane {
   id: string;
   label: string;
   shapes: Shape[];
+  /** Live radial symmetry: when set to N (e.g. 6 or 8), `shapes` above is
+   * only the one "master" wedge — PaneSVG renders it plus N−1 rotated
+   * mirror copies on every render (not baked into separate shape rows the
+   * way "Repeat around circle" is), so editing the master updates every
+   * mirror instantly. undefined/1 means no symmetry (the normal mode
+   * every pane started with before this existed). */
+  symmetry?: number;
 }
 
 export interface StudioState {

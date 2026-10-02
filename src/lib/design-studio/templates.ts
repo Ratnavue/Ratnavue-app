@@ -5,11 +5,35 @@
 
 import { newShape, PANE_SIZE, type Shape, type ShapeType } from "./types";
 import { radialRepeat } from "./shape-ops";
+import { GEM_COLOR_PRESETS, DEFAULT_CLARITY_SLUG, type GemColorPreset } from "./gems";
+import { DEFAULT_METAL } from "./metals";
 
 const CENTER = { x: PANE_SIZE / 2, y: PANE_SIZE / 2 };
+const COLORLESS = GEM_COLOR_PRESETS[0];
+const BLUE_SAPPHIRE = GEM_COLOR_PRESETS[1];
 
 function shape(type: ShapeType, overrides: Partial<Shape> = {}): Shape {
-  return { ...newShape(type, CENTER), ...overrides };
+  const base = newShape(type, CENTER);
+  // A newly inserted band/prong/line/chain gets the default metal, same
+  // as the toolbar's own "add shape" buttons — so a template's band looks
+  // the same gold as anything the user adds after it, not flat charcoal.
+  if (type === "band" || type === "prong" || type === "line" || type === "chain") base.metal = DEFAULT_METAL;
+  return { ...base, ...overrides };
+}
+
+/** A realistic "stone" shape (see PaneSVG's gem rendering) rather than a
+ * flat ellipse — sized from carat the same way the toolbar's Gem panel
+ * does (see DesignStudio's gemSizePx), so a template's stones look like
+ * what you'd get by picking the same cut/color/carat there. */
+function gemShape(center: { x: number; y: number }, cutSlug: string, preset: GemColorPreset, carat: number): Shape {
+  const size = 18 + Math.min(1, Math.sqrt(Math.max(0.25, carat) / 3)) * 50;
+  return shape("stone", {
+    x: center.x,
+    y: center.y,
+    w: size,
+    h: size,
+    gem: { cutSlug, hue: preset.hue, darkness: preset.darkness, saturation: preset.saturation, claritySlug: DEFAULT_CLARITY_SLUG, caratWeight: carat },
+  });
 }
 
 export type TemplateCategory = "ring" | "earring-pendant" | "bracelet-necklace";
@@ -34,10 +58,7 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
     id: "solitaire",
     label: "Solitaire",
     category: "ring",
-    build: () => [
-      shape("band"),
-      shape("stone", { x: 200, y: 90, w: 40, h: 40 }),
-    ],
+    build: () => [shape("band"), gemShape({ x: 200, y: 90 }, "round-brilliant", BLUE_SAPPHIRE, 2.5)],
   },
   {
     id: "pave-band",
@@ -45,7 +66,7 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
     category: "ring",
     build: () => {
       const band = shape("band");
-      const seed = shape("stone", { x: 200, y: 90, w: 16, h: 16 });
+      const seed = gemShape({ x: 200, y: 90 }, "round-brilliant", COLORLESS, 0.15);
       return [band, ...radialRepeat([seed], { x: band.x, y: band.y }, 16)];
     },
   },
@@ -55,7 +76,7 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
     category: "ring",
     build: () => {
       const band = shape("band");
-      const seed = shape("stone", { x: 200, y: 88, w: 14, h: 14 });
+      const seed = gemShape({ x: 200, y: 88 }, "round-brilliant", COLORLESS, 0.1);
       return [band, ...radialRepeat([seed], { x: band.x, y: band.y }, 28)];
     },
   },
@@ -65,28 +86,25 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
     category: "ring",
     build: () => [
       shape("band"),
-      shape("stone", { x: 200, y: 86, w: 38, h: 38 }),
-      shape("stone", { x: 150, y: 100, w: 22, h: 22 }),
-      shape("stone", { x: 250, y: 100, w: 22, h: 22 }),
+      gemShape({ x: 200, y: 86 }, "round-brilliant", BLUE_SAPPHIRE, 2.2),
+      gemShape({ x: 150, y: 100 }, "round-brilliant", COLORLESS, 0.5),
+      gemShape({ x: 250, y: 100 }, "round-brilliant", COLORLESS, 0.5),
     ],
   },
   {
     id: "stud",
     label: "Stud",
     category: "earring-pendant",
-    build: () => [
-      shape("stone", { x: 200, y: 170, w: 48, h: 48 }),
-      shape("prong", { x: 200, y: 210, w: 6, h: 24 }),
-    ],
+    build: () => [gemShape({ x: 200, y: 170 }, "round-brilliant", BLUE_SAPPHIRE, 3.5), shape("prong", { x: 200, y: 210, w: 6, h: 24 })],
   },
   {
     id: "drop-earring",
     label: "Drop Earring",
     category: "earring-pendant",
     build: () => [
-      shape("stone", { x: 200, y: 90, w: 20, h: 20 }),
+      gemShape({ x: 200, y: 90 }, "round-brilliant", COLORLESS, 0.3),
       shape("chain", { x: 200, y: 160, w: 4, h: 110, rotation: 0 }),
-      shape("stone", { x: 200, y: 260, w: 36, h: 48 }),
+      gemShape({ x: 200, y: 260 }, "pear", BLUE_SAPPHIRE, 2),
     ],
   },
   {
@@ -94,8 +112,8 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
     label: "Halo Pendant",
     category: "earring-pendant",
     build: () => {
-      const center = shape("stone", { x: 200, y: 220, w: 44, h: 44 });
-      const haloSeed = shape("stone", { x: 200, y: 180, w: 12, h: 12 });
+      const center = gemShape({ x: 200, y: 220 }, "round-brilliant", BLUE_SAPPHIRE, 3);
+      const haloSeed = gemShape({ x: 200, y: 180 }, "round-brilliant", COLORLESS, 0.1);
       const loop = shape("chain", { x: 200, y: 140, w: 24, h: 24, rotation: 0 });
       return [loop, center, ...radialRepeat([haloSeed], { x: center.x, y: center.y }, 12)];
     },
@@ -110,7 +128,7 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
       const spacing = (PANE_SIZE - 140) / (stoneCount - 1);
       const stones: Shape[] = [];
       for (let i = 0; i < stoneCount; i++) {
-        stones.push(shape("stone", { x: startX + spacing * i, y: 200, w: 18, h: 18 }));
+        stones.push(gemShape({ x: startX + spacing * i, y: 200 }, "round-brilliant", COLORLESS, 0.2));
       }
       return [shape("chain", { x: 200, y: 200, w: PANE_SIZE - 100, h: 6 }), ...stones];
     },
@@ -122,7 +140,7 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
     build: () => [
       shape("chain", { x: 200, y: 70, w: 280, h: 6 }),
       shape("line", { x: 200, y: 140, w: 4, h: 90 }),
-      shape("stone", { x: 200, y: 230, w: 40, h: 52 }),
+      gemShape({ x: 200, y: 230 }, "pear", BLUE_SAPPHIRE, 2.5),
     ],
   },
 ];

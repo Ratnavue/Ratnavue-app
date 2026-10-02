@@ -54,3 +54,19 @@ export function radialRepeat(shapes: Shape[], center: { x: number; y: number }, 
   }
   return copies;
 }
+
+/** The midpoint of live-symmetry wedge 0 (the master slice, spanning
+ * angle 0 to 360/count — same clockwise, rotate()-around-center
+ * convention as radialRepeat above and PaneSVG's SymmetryGuides), at the
+ * given distance from center. Used as the spawn point for a newly added
+ * shape when symmetry is on, so it lands visibly inside the editable
+ * wedge instead of exactly on the pivot (where all its mirrors would
+ * stack invisibly on top of each other — a shape sitting exactly at the
+ * rotation center doesn't move when rotated). */
+export function wedgeMidpoint(center: { x: number; y: number }, count: number, radius: number): { x: number; y: number } {
+  const angleDeg = 360 / count / 2;
+  const rad = (angleDeg * Math.PI) / 180;
+  const dx = 0;
+  const dy = -radius;
+  return { x: center.x + dx * Math.cos(rad) - dy * Math.sin(rad), y: center.y + dx * Math.sin(rad) + dy * Math.cos(rad) };
+}

@@ -6,11 +6,23 @@ import { CircleCheck } from "lucide-react";
 import { StudioCanvas } from "./StudioCanvas";
 import { StudioToolbar } from "./StudioToolbar";
 import { emptyStudioState, newPane, newShape, MAX_PANES, type Shape, type ShapeType, type StudioState } from "@/lib/design-studio/types";
-import { cloneShapes, paneCenter, radialRepeat } from "@/lib/design-studio/shape-ops";
+import { cloneShapes, paneCenter, radialRepeat, wedgeMidpoint } from "@/lib/design-studio/shape-ops";
 import { exportPanesToPngBlob } from "@/lib/design-studio/export";
 import { saveDesign, uploadDesignThumbnail, submitDesignStudioRequest, listMyDesigns, type MyDesignSummary } from "@/actions/design-studio";
 import { Input, Label, Textarea, FieldError } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
+import { STANDARD_CUTS } from "@/lib/gem-constants";
+import { DEFAULT_CLARITY_SLUG, type GemColorPreset } from "@/lib/design-studio/gems";
+import { caratToRenderScale } from "@/components/gem-visualizer/size";
+import { DEFAULT_METAL, type MetalKey } from "@/lib/design-studio/metals";
+
+const METAL_SHAPE_TYPES: ShapeType[] = ["band", "prong", "line", "chain"];
+/** 18–68px diameter across the usable carat range — big enough to read as
+ * a stone against a ~220px band, small enough that a few don't crowd a
+ * 400-unit pane. */
+function gemSizePx(carat: number): number {
+  return 18 + caratToRenderScale(carat) * 50;
+}
 
 export interface InitialDesign {
   id: string;
@@ -54,6 +66,13 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
 
   const [myDesigns, setMyDesigns] = useState<MyDesignSummary[] | null>(null);
 
+  // Defaults applied to the next inserted gem/metal shape — and, when
+  // exactly one eligible shape is already selected, live-restyle that
+  // shape too instead (see handlePickGemColor/handlePickMetal below).
+  const [gemCutSlug, setGemCutSlug] = useState(STANDARD_CUTS[0].slug);
+  const [gemCarat, setGemCarat] = useState(1);
+  const [metalKey, setMetalKey] = useState<MetalKey>(DEFAULT_METAL);
+
   const canvasRef = useRef<HTMLDivElement>(null);
   const mounted = useRef(false);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -65,6 +84,9 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
   const saveChain = useRef<Promise<unknown>>(Promise.resolve());
 
   const activePane = studio.panes.find((p) => p.id === studio.activePaneId) ?? studio.panes[0];
+  const singleSelected = selectedIds.length === 1 ? activePane?.shapes.find((s) => s.id === selectedIds[0]) : undefined;
+  const gemApplicable = singleSelected?.type === "stone";
+  const metalApplicable = !!singleSelected && METAL_SHAPE_TYPES.includes(singleSelected.type);
 
   useEffect(() => {
     if (mode !== "admin") return;
@@ -112,10 +134,54 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
     setSelectedIds([]);
   }
 
+  /** Where a newly added (non-band) shape should spawn — the pane center
+   * normally, or a point inside the live-symmetry master wedge when one's
+   * active, so it's visibly distinct once mirrored rather than landing
+   * exactly on the pivot (see wedgeMidpoint's own comment). A band always
+   * centers on the pane regardless, since it IS the circle itself. */
+  function spawnPoint(type: ShapeType): { x: number; y: number } | undefined {
+    if (type === "band" || !activePane?.symmetry || activePane.symmetry <= 1) return undefined;
+    const center = paneCenter(activePane, { x: 200, y: 200 });
+    return wedgeMidpoint(center, activePane.symmetry, 90);
+  }
+
   function handleAddShape(type: ShapeType) {
-    const shape = newShape(type);
+    const shape = newShape(type, spawnPoint(type));
+    if (METAL_SHAPE_TYPES.includes(type)) shape.metal = metalKey;
     updatePane(studio.activePaneId, (shapes) => [...shapes, shape]);
     setSelectedIds([shape.id]);
+  }
+
+  /** Click a color swatch in the Gem panel: restyles the selected gem if
+   * one is selected, otherwise inserts a new one with the toolbar's
+   * current cut/carat. Cut and carat changes alone don't insert/restyle
+   * by themselves (see StudioToolbar) — only a color click commits. */
+  function handlePickGemColor(preset: GemColorPreset) {
+    const size = gemSizePx(gemCarat);
+    const gem = { cutSlug: gemCutSlug, hue: preset.hue, darkness: preset.darkness, saturation: preset.saturation, claritySlug: DEFAULT_CLARITY_SLUG, caratWeight: gemCarat };
+    if (singleSelected?.type === "stone") {
+      updatePane(studio.activePaneId, (shapes) => shapes.map((s) => (s.id === singleSelected.id ? { ...s, gem, w: size, h: size } : s)));
+      return;
+    }
+    const shape: Shape = { ...newShape("stone", spawnPoint("stone")), w: size, h: size, gem };
+    updatePane(studio.activePaneId, (shapes) => [...shapes, shape]);
+    setSelectedIds([shape.id]);
+  }
+
+  /** Click a metal swatch: sets the default for the next band/prong/line/
+   * chain shape added, and restyles the selected shape too if it's one of
+   * those types. */
+  function handlePickMetal(metal: MetalKey) {
+    setMetalKey(metal);
+    if (singleSelected && METAL_SHAPE_TYPES.includes(singleSelected.type)) {
+      updatePane(studio.activePaneId, (shapes) => shapes.map((s) => (s.id === singleSelected.id ? { ...s, metal } : s)));
+    }
+  }
+
+  /** Live radial symmetry for the active pane — see Pane.symmetry's own
+   * comment. null turns it off. */
+  function handleSetSymmetry(count: number | null) {
+    setStudio((prev) => ({ ...prev, panes: prev.panes.map((p) => (p.id === prev.activePaneId ? { ...p, symmetry: count ?? undefined } : p)) }));
   }
 
   function handleApplyTemplate(shapes: Shape[]) {
@@ -289,6 +355,17 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
         onSave={() => doSave(true)}
         saving={saving}
         canPaste={!!clipboard}
+        symmetry={activePane?.symmetry}
+        onSetSymmetry={handleSetSymmetry}
+        metalKey={metalKey}
+        onPickMetal={handlePickMetal}
+        metalApplicable={metalApplicable}
+        gemCutSlug={gemCutSlug}
+        onSetGemCut={setGemCutSlug}
+        gemCarat={gemCarat}
+        onSetGemCarat={setGemCarat}
+        onPickGemColor={handlePickGemColor}
+        gemApplicable={gemApplicable}
       />
       <FieldError>{saveError ?? undefined}</FieldError>
 
