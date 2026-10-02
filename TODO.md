@@ -549,6 +549,46 @@ shipped (`lib/analytics.ts`, `computeProfit`).*
   duplicate-name submission. Fixed, and a regression test now
   specifically reproduces the duplicate-field submission.
 
+- **Mobile AR try-on for necklaces/pendants** (requested 2026-10-02) — let
+  a customer on their phone see a necklace, or a necklace-with-pendant
+  (`PieceType.NECKLACE` / `PENDANT`), actually sitting on their own neck
+  via the camera, not just a product photo. Mobile-only (needs a phone
+  camera); not started. The real work here splits into two quite
+  different problems, worth being upfront about before committing to one:
+
+  1. **Live camera try-on (what was actually asked for)** — the phone's
+     camera stays on, the app finds the customer's neck/collarbone in
+     real time, and renders the 3D piece anchored there as they move.
+     This needs a face/pose landmark tracker running in the browser —
+     MediaPipe's Face Landmarker or Pose Landmarker (Google, free,
+     runs client-side via WebAssembly, so the video itself never leaves
+     the phone — worth keeping that property, given the privacy
+     sensitivity of "always-on camera pointed at your face/neck") — feeding
+     neck-anchor coordinates to a Three.js/WebGL overlay that renders the
+     3D model on top of the live feed. This is a real engineering build,
+     not a plugin: a new route or modal, camera-permission UX, a tracking
+     pipeline, and a render loop kept in sync with it.
+  2. **"Place it in your space" AR (the easier, more common pattern)** —
+     `<model-viewer>` (Google's web component) gives AR Quick Look on iOS
+     and Scene Viewer on Android essentially for free from one GLB model
+     (plus a USDZ for iOS), but it anchors to a *surface* the camera sees
+     (a table, the floor) — not to a tracked body part. Cheap to add, but
+     it is not "see it on your neck," so flag this distinction before
+     building the wrong one.
+
+  Either path has the same hard prerequisite the catalog doesn't have
+  today: **a 3D model per item**. The whole catalog is photos right now
+  (`MediaAsset`) — there's no 3D pipeline, and commissioning/scanning a
+  3D model for every necklace and pendant SKU is a real content-production
+  effort, separate from and likely larger than the engineering build
+  itself. Realistic options to weigh when this is picked up: commission
+  3D models only for a small pilot set of best-selling necklaces/pendants
+  first rather than the whole catalog; or evaluate a commercial AR-
+  commerce SDK (e.g. 8th Wall, or a jewelry-specific try-on vendor) that
+  bundles tracking + rendering + sometimes photo-to-3D model generation,
+  trading a recurring vendor cost for a much smaller build. Needs a
+  product decision on budget/scope before engineering work starts.
+
 ## Growth & trust (competitor research, 2026-09-24)
 
 *Sourced from a competitor pass over James Allen/Blue Nile, Angara,
