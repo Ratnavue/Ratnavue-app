@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Circle, Minus, Link2, GripVertical, Type, Copy, ClipboardPaste, RotateCw, Trash2, Plus, X, Save, Gem as GemIcon, Info } from "lucide-react";
+import { Circle, Minus, Link2, GripVertical, Type, Copy, ClipboardPaste, RotateCw, Trash2, Plus, X, Save, Gem as GemIcon, Info, Undo2, Redo2 } from "lucide-react";
 import type { Shape, ShapeType } from "@/lib/design-studio/types";
 import { TEMPLATE_CATEGORY_LABELS, templatesByCategory, type TemplateCategory } from "@/lib/design-studio/templates";
 import { STANDARD_CUTS } from "@/lib/gem-constants";
@@ -65,6 +65,10 @@ interface StudioToolbarProps {
   onSetGemCarat: (carat: number) => void;
   onPickGemColor: (preset: GemColorPreset) => void;
   gemApplicable: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export function StudioToolbar({
@@ -92,6 +96,10 @@ export function StudioToolbar({
   onSetGemCarat,
   onPickGemColor,
   gemApplicable,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
 }: StudioToolbarProps) {
   const [repeatCount, setRepeatCount] = useState(8);
   const [templateOpen, setTemplateOpen] = useState(false);
@@ -104,9 +112,10 @@ export function StudioToolbar({
         <div className="flex items-start gap-2 rounded-lg border border-gold/30 bg-gold/10 px-3 py-2 text-xs text-charcoal/75">
           <Info size={14} className="mt-0.5 shrink-0 text-gold-deep" />
           <p className="flex-1">
-            Drag a shape to move it. Select it, then drag the gold corner handle to resize or the blue handle above
-            it to rotate. Hover any button below for what it does — select a shape first for Copy, Delete, Metal and
-            Gem color to apply to it instead of just setting the default for new ones.
+            Drag a shape to move it, or select it and use the arrow keys to nudge it precisely (hold Shift for 10 at
+            a time). Drag the gold corner handle to resize or the blue handle above it to rotate. Ctrl/Cmd+Z undoes,
+            Ctrl/Cmd+Shift+Z redoes. Hover any button below for what it does — select a shape first for Copy, Delete,
+            Metal and Gem color to apply to it instead of just setting the default for new ones.
           </p>
           <button type="button" onClick={() => setHintOpen(false)} className="shrink-0 text-charcoal/40 hover:text-charcoal" title="Dismiss">
             <X size={14} />
@@ -115,6 +124,19 @@ export function StudioToolbar({
       )}
 
       <div className="flex flex-wrap items-start gap-4 rounded-xl border border-border-subtle bg-surface p-3">
+        <div className="flex flex-wrap gap-1.5">
+          <ToolButton title="Undo (Ctrl/Cmd+Z)" onClick={onUndo} disabled={!canUndo}>
+            <Undo2 size={16} />
+            Undo
+          </ToolButton>
+          <ToolButton title="Redo (Ctrl/Cmd+Shift+Z)" onClick={onRedo} disabled={!canRedo}>
+            <Redo2 size={16} />
+            Redo
+          </ToolButton>
+        </div>
+
+        <div className="h-10 w-px bg-border-subtle max-sm:hidden" />
+
         <div className="flex flex-wrap gap-1.5">
           {SHAPE_BUTTONS.map(({ type, label, icon: Icon, title }) => (
             <ToolButton key={type} title={title} onClick={() => onAddShape(type)}>

@@ -13,6 +13,8 @@ interface StudioCanvasProps {
   onMoveShapes: (paneId: string, updates: { id: string; x: number; y: number }[]) => void;
   onResizeShape: (paneId: string, id: string, w: number, h: number) => void;
   onRotateShape: (paneId: string, id: string, rotation: number) => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
 }
 
 // Grid arrangement is purely derived from how many panes exist — never a
@@ -24,7 +26,7 @@ function gridClass(count: number): string {
   return "grid-cols-1 sm:grid-cols-2";
 }
 
-export function StudioCanvas({ panes, activePaneId, selectedIds, onActivate, onSelect, onMoveShapes, onResizeShape, onRotateShape }: StudioCanvasProps) {
+export function StudioCanvas({ panes, activePaneId, selectedIds, onActivate, onSelect, onMoveShapes, onResizeShape, onRotateShape, onDragStart, onDragEnd }: StudioCanvasProps) {
   return (
     <div className={cn("grid gap-4", gridClass(panes.length))}>
       {panes.map((pane) => (
@@ -38,6 +40,8 @@ export function StudioCanvas({ panes, activePaneId, selectedIds, onActivate, onS
           onMoveShapes={(updates) => onMoveShapes(pane.id, updates)}
           onResizeShape={(id, w, h) => onResizeShape(pane.id, id, w, h)}
           onRotateShape={(id, rotation) => onRotateShape(pane.id, id, rotation)}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
         />
       ))}
     </div>

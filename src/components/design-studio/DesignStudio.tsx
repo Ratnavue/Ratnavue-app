@@ -76,6 +76,23 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
   const canvasRef = useRef<HTMLDivElement>(null);
   const mounted = useRef(false);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Undo/redo. Refs (not state) because every mutation needs to push onto
+  // this synchronously without waiting for a re-render — exposed to the
+  // toolbar's enabled/disabled state via historyVersion, bumped on every
+  // push/undo/redo so a read of historyRef.current during render reflects
+  // what just happened. Snapshots are whole StudioState objects, not deep
+  // clones: every mutation in this file is already immutable (fresh
+  // objects/arrays via spread/.map()/.filter()), so an old `studio`
+  // reference is never mutated out from under a history entry.
+  const historyRef = useRef<{ past: StudioState[]; future: StudioState[] }>({ past: [], future: [] });
+  // The state immediately before the drag currently in progress (if any)
+  // — see handleDragStart/handleDragEnd. A drag fires many setStudio
+  // calls (one per pointermove); only the state from *before* it started
+  // becomes a single undo step, once it ends.
+  const dragSnapshotRef = useRef<StudioState | null>(null);
+  const [historyVersion, setHistoryVersion] = useState(0);
+  const HISTORY_LIMIT = 50;
   // Serializes every save (debounced autosave and explicit Save/Submit
   // clicks alike) through one queue — without this, a manual save firing
   // while an autosave from a moment earlier is still in flight can each
@@ -84,6 +101,12 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
   const saveChain = useRef<Promise<unknown>>(Promise.resolve());
 
   const activePane = studio.panes.find((p) => p.id === studio.activePaneId) ?? studio.panes[0];
+  // historyRef is a ref (mutated synchronously, outside React's state
+  // flow), so reading it here only reflects the latest push/undo/redo
+  // because every one of those also bumps historyVersion — the dependency
+  // on it below is what makes these recompute, not just decoration.
+  const canUndo = historyVersion >= 0 && historyRef.current.past.length > 0;
+  const canRedo = historyVersion >= 0 && historyRef.current.future.length > 0;
   const singleSelected = selectedIds.length === 1 ? activePane?.shapes.find((s) => s.id === selectedIds[0]) : undefined;
   const gemApplicable = singleSelected?.type === "stone";
   const metalApplicable = !!singleSelected && METAL_SHAPE_TYPES.includes(singleSelected.type);
@@ -113,20 +136,105 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key !== "Delete" && e.key !== "Backspace") return;
       const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
-      if (selectedIds.length === 0) return;
-      e.preventDefault();
-      deleteSelection();
+      const typing = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA");
+
+      // Ctrl/Cmd+Z to undo, Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y to redo — even
+      // while typing in the name/description field is fine here, since
+      // those fields have their own native undo and this only acts on
+      // the canvas's own history.
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        if (e.shiftKey) handleRedo();
+        else handleUndo();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+        e.preventDefault();
+        handleRedo();
+        return;
+      }
+
+      if (typing) return;
+
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (selectedIds.length === 0) return;
+        e.preventDefault();
+        deleteSelection();
+        return;
+      }
+
+      if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        if (selectedIds.length === 0) return;
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        const dx = e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
+        const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
+        nudgeSelected(dx, dy);
+      }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- deleteSelection closes over current state each render; this listener is cheap to re-attach.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- every handler here closes over current state each render; this listener is cheap to re-attach.
   }, [selectedIds, studio]);
+
+  /** Arrow-key nudge — 1 unit, or 10 with Shift — for precise placement
+   * beyond what dragging by eye can manage. Each nudge is its own undo
+   * step, same granularity as every other discrete edit. */
+  function nudgeSelected(dx: number, dy: number) {
+    if (!activePane) return;
+    commitHistory(studio);
+    updatePane(studio.activePaneId, (shapes) => shapes.map((s) => (selectedIds.includes(s.id) ? { ...s, x: s.x + dx, y: s.y + dy } : s)));
+  }
 
   function updatePane(paneId: string, updater: (shapes: Shape[]) => Shape[]) {
     setStudio((prev) => ({ ...prev, panes: prev.panes.map((p) => (p.id === paneId ? { ...p, shapes: updater(p.shapes) } : p)) }));
+  }
+
+  /** Records `prevState` (the state right before the mutation about to
+   * happen) as one undo step. Called at the top of every discrete
+   * mutating handler, before it changes `studio` — drags are the
+   * exception (see handleDragStart/handleDragEnd, which commit once per
+   * whole drag instead of once per pointermove). */
+  function commitHistory(prevState: StudioState) {
+    const h = historyRef.current;
+    h.past.push(prevState);
+    if (h.past.length > HISTORY_LIMIT) h.past.shift();
+    h.future = [];
+    setHistoryVersion((v) => v + 1);
+  }
+
+  function handleUndo() {
+    const h = historyRef.current;
+    const previous = h.past.pop();
+    if (!previous) return;
+    h.future.push(studio);
+    setStudio(previous);
+    setSelectedIds([]);
+    setHistoryVersion((v) => v + 1);
+  }
+
+  function handleRedo() {
+    const h = historyRef.current;
+    const next = h.future.pop();
+    if (!next) return;
+    h.past.push(studio);
+    setStudio(next);
+    setSelectedIds([]);
+    setHistoryVersion((v) => v + 1);
+  }
+
+  /** Called from PaneSVG when a shape drag (move/resize/rotate) begins —
+   * captures the pre-drag state so the whole drag becomes one undo step
+   * when it ends, not one per pointermove. */
+  function handleDragStart() {
+    dragSnapshotRef.current = studio;
+  }
+
+  function handleDragEnd() {
+    const before = dragSnapshotRef.current;
+    dragSnapshotRef.current = null;
+    if (before && before !== studio) commitHistory(before);
   }
 
   function handleActivate(paneId: string) {
@@ -146,6 +254,7 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
   }
 
   function handleAddShape(type: ShapeType) {
+    commitHistory(studio);
     const shape = newShape(type, spawnPoint(type));
     if (METAL_SHAPE_TYPES.includes(type)) shape.metal = metalKey;
     updatePane(studio.activePaneId, (shapes) => [...shapes, shape]);
@@ -157,6 +266,7 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
    * current cut/carat. Cut and carat changes alone don't insert/restyle
    * by themselves (see StudioToolbar) — only a color click commits. */
   function handlePickGemColor(preset: GemColorPreset) {
+    commitHistory(studio);
     const size = gemSizePx(gemCarat);
     const gem = { cutSlug: gemCutSlug, hue: preset.hue, darkness: preset.darkness, saturation: preset.saturation, claritySlug: DEFAULT_CLARITY_SLUG, caratWeight: gemCarat };
     if (singleSelected?.type === "stone") {
@@ -174,6 +284,7 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
   function handlePickMetal(metal: MetalKey) {
     setMetalKey(metal);
     if (singleSelected && METAL_SHAPE_TYPES.includes(singleSelected.type)) {
+      commitHistory(studio);
       updatePane(studio.activePaneId, (shapes) => shapes.map((s) => (s.id === singleSelected.id ? { ...s, metal } : s)));
     }
   }
@@ -181,16 +292,19 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
   /** Live radial symmetry for the active pane — see Pane.symmetry's own
    * comment. null turns it off. */
   function handleSetSymmetry(count: number | null) {
+    commitHistory(studio);
     setStudio((prev) => ({ ...prev, panes: prev.panes.map((p) => (p.id === prev.activePaneId ? { ...p, symmetry: count ?? undefined } : p)) }));
   }
 
   function handleApplyTemplate(shapes: Shape[]) {
+    commitHistory(studio);
     updatePane(studio.activePaneId, () => shapes);
     setSelectedIds([]);
   }
 
   function handleAddPane() {
     if (studio.panes.length >= MAX_PANES) return;
+    commitHistory(studio);
     const pane = newPane(`View ${studio.panes.length + 1}`);
     setStudio((prev) => ({ panes: [...prev.panes, pane], activePaneId: pane.id }));
     setSelectedIds([]);
@@ -198,6 +312,7 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
 
   function handleRemovePane() {
     if (studio.panes.length <= 1) return;
+    commitHistory(studio);
     setStudio((prev) => {
       const panes = prev.panes.filter((p) => p.id !== studio.activePaneId);
       return { panes, activePaneId: panes[0].id };
@@ -213,6 +328,7 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
 
   function handlePaste() {
     if (!clipboard) return;
+    commitHistory(studio);
     const copies = cloneShapes(clipboard);
     updatePane(studio.activePaneId, (shapes) => [...shapes, ...copies]);
     setSelectedIds(copies.map((c) => c.id));
@@ -220,6 +336,7 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
 
   function deleteSelection() {
     if (!activePane || selectedIds.length === 0) return;
+    commitHistory(studio);
     const group = new Set(activePane.shapes.filter((s) => selectedIds.includes(s.id) && s.groupId).map((s) => s.groupId));
     updatePane(studio.activePaneId, (shapes) => shapes.filter((s) => !selectedIds.includes(s.id) && !(s.groupId && group.has(s.groupId))));
     setSelectedIds([]);
@@ -227,6 +344,7 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
 
   function handleRadialRepeat(count: number) {
     if (!activePane || selectedIds.length === 0) return;
+    commitHistory(studio);
     const selected = activePane.shapes.filter((s) => selectedIds.includes(s.id));
     const center = paneCenter(activePane, { x: 200, y: 200 });
     const copies = radialRepeat(selected, center, count);
@@ -366,6 +484,10 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
         onSetGemCarat={setGemCarat}
         onPickGemColor={handlePickGemColor}
         gemApplicable={gemApplicable}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={canUndo}
+        canRedo={canRedo}
       />
       <FieldError>{saveError ?? undefined}</FieldError>
 
@@ -379,6 +501,8 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
           onMoveShapes={handleMoveShapes}
           onResizeShape={handleResizeShape}
           onRotateShape={handleRotateShape}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
         />
       </div>
 

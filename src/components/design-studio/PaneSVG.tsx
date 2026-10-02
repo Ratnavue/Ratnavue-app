@@ -29,6 +29,11 @@ interface PaneSVGProps {
   onMoveShapes: (updates: { id: string; x: number; y: number }[]) => void;
   onResizeShape: (id: string, w: number, h: number) => void;
   onRotateShape: (id: string, rotation: number) => void;
+  /** Fired once when a shape drag (move/resize/rotate) begins/ends, so the
+   * whole drag becomes a single undo step rather than one per
+   * pointermove — see DesignStudio's handleDragStart/handleDragEnd. */
+  onDragStart: () => void;
+  onDragEnd: () => void;
 }
 
 /** Renders one pane as an SVG, with drag-to-move, a resize handle, a
@@ -38,7 +43,7 @@ interface PaneSVGProps {
  * interactive canvas every pane in the Design Studio is built from.
  * Deliberately simple (no bezier paths, no snapping) — a schematic sketch
  * tool, not a full vector editor. */
-export function PaneSVG({ pane, active, selectedIds, onActivate, onSelect, onMoveShapes, onResizeShape, onRotateShape }: PaneSVGProps) {
+export function PaneSVG({ pane, active, selectedIds, onActivate, onSelect, onMoveShapes, onResizeShape, onRotateShape, onDragStart, onDragEnd }: PaneSVGProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<{ mode: DragMode; startX: number; startY: number } | null>(null);
   const panRef = useRef<{ startRawX: number; startRawY: number; startTx: number; startTy: number; moved: boolean } | null>(null);
@@ -96,6 +101,7 @@ export function PaneSVG({ pane, active, selectedIds, onActivate, onSelect, onMov
     if (!nextSelection.includes(shape.id)) return;
     const starts = pane.shapes.filter((s) => nextSelection.includes(s.id)).map((s) => ({ id: s.id, x: s.x, y: s.y }));
     const local = toLocal(e.clientX, e.clientY);
+    onDragStart();
     dragRef.current = { mode: { kind: "move", starts }, startX: local.x, startY: local.y };
     (e.target as Element).setPointerCapture(e.pointerId);
   }
@@ -103,12 +109,14 @@ export function PaneSVG({ pane, active, selectedIds, onActivate, onSelect, onMov
   function beginResize(e: React.PointerEvent, shape: Shape) {
     e.stopPropagation();
     const local = toLocal(e.clientX, e.clientY);
+    onDragStart();
     dragRef.current = { mode: { kind: "resize", id: shape.id, startW: shape.w, startH: shape.h }, startX: local.x, startY: local.y };
     (e.target as Element).setPointerCapture(e.pointerId);
   }
 
   function beginRotate(e: React.PointerEvent, shape: Shape) {
     e.stopPropagation();
+    onDragStart();
     dragRef.current = { mode: { kind: "rotate", id: shape.id }, startX: shape.x, startY: shape.y };
     (e.target as Element).setPointerCapture(e.pointerId);
   }
@@ -162,7 +170,10 @@ export function PaneSVG({ pane, active, selectedIds, onActivate, onSelect, onMov
       panRef.current = null;
       return;
     }
-    if (dragRef.current) (e.target as Element).releasePointerCapture?.(e.pointerId);
+    if (dragRef.current) {
+      (e.target as Element).releasePointerCapture?.(e.pointerId);
+      onDragEnd();
+    }
     dragRef.current = null;
   }
 
