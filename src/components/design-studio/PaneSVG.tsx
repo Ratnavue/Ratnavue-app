@@ -4,7 +4,7 @@ import { useId, useRef, useState } from "react";
 import { ZoomIn, ZoomOut, Maximize } from "lucide-react";
 import type { Pane, Shape } from "@/lib/design-studio/types";
 import { PANE_SIZE } from "@/lib/design-studio/types";
-import { paneCenter } from "@/lib/design-studio/shape-ops";
+import { symmetryPivot } from "@/lib/design-studio/shape-ops";
 import { METALS } from "@/lib/design-studio/metals";
 import { GemVisualizer } from "@/components/gem-visualizer/GemVisualizer";
 import { cn } from "@/lib/utils";
@@ -34,16 +34,21 @@ interface PaneSVGProps {
    * pointermove — see DesignStudio's handleDragStart/handleDragEnd. */
   onDragStart: () => void;
   onDragEnd: () => void;
+  /** When true, the next click on empty canvas sets pane.symmetryCenter
+   * instead of the normal select/deselect — the toolbar's "Set center"
+   * tool, one shot (turns itself off again once a point's picked). */
+  settingCenter: boolean;
+  onPickSymmetryCenter: (point: { x: number; y: number }) => void;
 }
 
 /** Renders one pane as an SVG, with drag-to-move, a resize handle, a
- * rotate handle on the single selected shape, scroll/pinch/button zoom,
+ * rotate handle on the single selected shape, Shift+scroll/button zoom,
  * drag-to-pan, and (when `pane.symmetry` is set) a live radial-mirror
  * mode for symmetric pieces like bangles and eternity bands — the one
  * interactive canvas every pane in the Design Studio is built from.
  * Deliberately simple (no bezier paths, no snapping) — a schematic sketch
  * tool, not a full vector editor. */
-export function PaneSVG({ pane, active, selectedIds, onActivate, onSelect, onMoveShapes, onResizeShape, onRotateShape, onDragStart, onDragEnd }: PaneSVGProps) {
+export function PaneSVG({ pane, active, selectedIds, onActivate, onSelect, onMoveShapes, onResizeShape, onRotateShape, onDragStart, onDragEnd, settingCenter, onPickSymmetryCenter }: PaneSVGProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<{ mode: DragMode; startX: number; startY: number } | null>(null);
   const panRef = useRef<{ startRawX: number; startRawY: number; startTx: number; startTy: number; moved: boolean } | null>(null);
@@ -76,10 +81,24 @@ export function PaneSVG({ pane, active, selectedIds, onActivate, onSelect, onMov
     });
   }
 
+  // Shift+scroll zooms; a plain scroll over the canvas falls through to
+  // the page instead (no preventDefault), so scrolling down the page past
+  // a pane doesn't get swallowed as a zoom. Same modifier convention as
+  // most map/image editors for exactly this reason.
   function handleWheel(e: React.WheelEvent) {
+    if (!e.shiftKey) return;
     e.preventDefault();
     const raw = rawPoint(e.clientX, e.clientY);
     zoomAt(raw.x, raw.y, e.deltaY < 0 ? 1.12 : 1 / 1.12);
+  }
+
+  function handleBackgroundPointerDown(e: React.PointerEvent) {
+    if (settingCenter) {
+      onActivate();
+      onPickSymmetryCenter(toLocal(e.clientX, e.clientY));
+      return;
+    }
+    beginPan(e);
   }
 
   function beginPan(e: React.PointerEvent) {
@@ -151,7 +170,21 @@ export function PaneSVG({ pane, active, selectedIds, onActivate, onSelect, onMov
       const rawDy = local.y - drag.startY;
       const localDx = rawDx * Math.cos(rad) - rawDy * Math.sin(rad);
       const localDy = rawDx * Math.sin(rad) + rawDy * Math.cos(rad);
-      onResizeShape(id, Math.max(8, startW + localDx * 2), Math.max(8, startH + localDy * 2));
+      if (target.type === "band") {
+        // A band only ever renders as a perfect circle driven by `w`
+        // alone (see ShapeGlyph) — resizing it from w/h independently,
+        // the way every other shape's corner handle does, meant dragging
+        // anywhere other than the exact diagonal barely changed anything
+        // visible (a mostly-vertical drag only ever touched the ignored
+        // `h`), which read as "resize doesn't work". Both dimensions move
+        // together here instead, so any drag direction grows/shrinks the
+        // ring and the bounding box stays square, matching what renders.
+        const delta = (localDx + localDy) / 2;
+        const size = Math.max(8, startW + delta * 2);
+        onResizeShape(id, size, size);
+      } else {
+        onResizeShape(id, Math.max(8, startW + localDx * 2), Math.max(8, startH + localDy * 2));
+      }
       return;
     }
     if (drag.mode.kind === "rotate") {
@@ -178,7 +211,7 @@ export function PaneSVG({ pane, active, selectedIds, onActivate, onSelect, onMov
   }
 
   const symmetry = pane.symmetry && pane.symmetry > 1 ? pane.symmetry : null;
-  const symmetryCenter = symmetry ? paneCenter(pane, { x: PANE_SIZE / 2, y: PANE_SIZE / 2 }) : null;
+  const symmetryCenter = symmetry ? symmetryPivot(pane, { x: PANE_SIZE / 2, y: PANE_SIZE / 2 }) : null;
 
   // One "pass" per render of the shape list: just the master (interactive)
   // when symmetry is off, or the master plus N−1 rotated, read-only mirror
@@ -206,13 +239,23 @@ export function PaneSVG({ pane, active, selectedIds, onActivate, onSelect, onMov
         onWheel={handleWheel}
       >
         <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>
-          <rect x={0} y={0} width={PANE_SIZE} height={PANE_SIZE} fill="transparent" onPointerDown={beginPan} />
+          <rect
+            x={0}
+            y={0}
+            width={PANE_SIZE}
+            height={PANE_SIZE}
+            fill="transparent"
+            className={settingCenter ? "cursor-crosshair" : undefined}
+            onPointerDown={handleBackgroundPointerDown}
+          />
 
           {symmetry && symmetryCenter && <SymmetryGuides center={symmetryCenter} count={symmetry} />}
+          {pane.symmetryCenter && <CenterMarker point={pane.symmetryCenter} />}
 
           {passes.map((pass, passIndex) => (
             <g key={passIndex} transform={pass.rotate ? `rotate(${pass.rotate} ${symmetryCenter!.x} ${symmetryCenter!.y})` : undefined} style={pass.interactive ? undefined : { pointerEvents: "none" }}>
               {pane.shapes.map((shape) => {
+                if (shape.hidden) return null;
                 const selected = pass.interactive && selectedIds.includes(shape.id);
                 return (
                   <g
@@ -253,13 +296,13 @@ export function PaneSVG({ pane, active, selectedIds, onActivate, onSelect, onMov
       </span>
 
       <div className="absolute bottom-1.5 right-1.5 flex gap-1 rounded-md border border-border-subtle bg-surface/90 p-0.5 shadow-sm backdrop-blur-sm">
-        <ZoomButton title="Zoom out" onClick={() => zoomAt(PANE_SIZE / 2, PANE_SIZE / 2, 1 / 1.25)}>
+        <ZoomButton title="Zoom out (or hold Shift and scroll)" onClick={() => zoomAt(PANE_SIZE / 2, PANE_SIZE / 2, 1 / 1.25)}>
           <ZoomOut size={13} />
         </ZoomButton>
         <ZoomButton title="Reset zoom" onClick={() => setView(DEFAULT_VIEW)}>
           <Maximize size={12} />
         </ZoomButton>
-        <ZoomButton title="Zoom in" onClick={() => zoomAt(PANE_SIZE / 2, PANE_SIZE / 2, 1.25)}>
+        <ZoomButton title="Zoom in (or hold Shift and scroll)" onClick={() => zoomAt(PANE_SIZE / 2, PANE_SIZE / 2, 1.25)}>
           <ZoomIn size={13} />
         </ZoomButton>
       </div>
@@ -302,6 +345,20 @@ function SymmetryGuides({ center, count }: { center: { x: number; y: number }; c
         const p = boundaryPoint(step * i);
         return <line key={i} x1={center.x} y1={center.y} x2={p.x} y2={p.y} stroke="#c9a04d" strokeOpacity={0.35} strokeDasharray="3 3" strokeWidth={1} />;
       })}
+    </g>
+  );
+}
+
+/** A small crosshair at a user-placed symmetryCenter (the "Set center"
+ * tool) — shown whenever one's set, even with symmetry currently off, so
+ * it stays visible/manageable rather than only appearing once symmetry
+ * is also on. */
+function CenterMarker({ point }: { point: { x: number; y: number } }) {
+  return (
+    <g pointerEvents="none">
+      <circle cx={point.x} cy={point.y} r={7} fill="none" stroke="#2f4f9b" strokeWidth={1.5} />
+      <line x1={point.x - 11} y1={point.y} x2={point.x + 11} y2={point.y} stroke="#2f4f9b" strokeWidth={1.5} />
+      <line x1={point.x} y1={point.y - 11} x2={point.x} y2={point.y + 11} stroke="#2f4f9b" strokeWidth={1.5} />
     </g>
   );
 }

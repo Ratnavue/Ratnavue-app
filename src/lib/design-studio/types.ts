@@ -33,6 +33,10 @@ export interface Shape {
    * a metallic gradient (src/lib/design-studio/metals.ts) instead of the
    * flat `fill` above. */
   metal?: import("./metals").MetalKey;
+  /** Hidden from the canvas (and non-interactive there) without being
+   * deleted — toggled from the Layers panel, same "hide, don't destroy"
+   * convention as every other design tool's layer visibility. */
+  hidden?: boolean;
 }
 
 export interface Pane {
@@ -46,6 +50,13 @@ export interface Pane {
    * mirror instantly. undefined/1 means no symmetry (the normal mode
    * every pane started with before this existed). */
   symmetry?: number;
+  /** A user-placed pivot for live symmetry (via the toolbar's "Set
+   * center" tool) — overrides symmetryPivot's own band-or-pane-center
+   * default whenever it's set, so symmetry isn't limited to being
+   * centered on a band or the pane's middle. An explicit, independent
+   * choice: stays put until the user clears it or picks a new one, even
+   * if the band it might happen to sit near gets moved or deleted. */
+  symmetryCenter?: { x: number; y: number };
 }
 
 export interface StudioState {

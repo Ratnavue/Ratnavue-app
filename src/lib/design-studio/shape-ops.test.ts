@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { cloneShapes, paneCenter, radialRepeat, wedgeMidpoint } from "./shape-ops";
+import { bringToFront, cloneShapes, moveBackward, moveForward, paneCenter, radialRepeat, sendToBack, symmetryPivot, wedgeMidpoint } from "./shape-ops";
 import type { Shape } from "./types";
 
 function stone(overrides: Partial<Shape> = {}): Shape {
@@ -39,6 +39,36 @@ describe("paneCenter", () => {
 
   it("falls back to the given point for an empty pane", () => {
     expect(paneCenter({ shapes: [] }, { x: 200, y: 200 })).toEqual({ x: 200, y: 200 });
+  });
+});
+
+describe("symmetryPivot", () => {
+  it("uses the pane's band shape as the pivot when one exists, same as paneCenter", () => {
+    const band: Shape = { ...stone({ type: "band" }), x: 120, y: 130 };
+    expect(symmetryPivot({ shapes: [band, stone()] }, { x: 0, y: 0 })).toEqual({ x: 120, y: 130 });
+  });
+
+  it("stays fixed at the fallback regardless of how many shapes exist, unlike paneCenter", () => {
+    // The actual bug this exists to fix: a live-symmetry pivot (and the
+    // spawn point for a new shape) that drifts as more shapes are added
+    // makes it look like earlier shapes moved, even though their own
+    // (x, y) never changed — only where the mirrors/spawn point were
+    // computed from did.
+    const fallback = { x: 200, y: 200 };
+    const withOneStone = symmetryPivot({ shapes: [stone({ x: 50, y: 50 })] }, fallback);
+    const withTwoStones = symmetryPivot({ shapes: [stone({ x: 50, y: 50 }), stone({ x: 350, y: 350 })] }, fallback);
+    expect(withOneStone).toEqual(fallback);
+    expect(withTwoStones).toEqual(fallback);
+  });
+
+  it("prefers a user-placed symmetryCenter over both the band and the fallback", () => {
+    const band: Shape = { ...stone({ type: "band" }), x: 120, y: 130 };
+    const pivot = symmetryPivot({ shapes: [band], symmetryCenter: { x: 77, y: 88 } }, { x: 0, y: 0 });
+    expect(pivot).toEqual({ x: 77, y: 88 });
+  });
+
+  it("falls back to the given point for an empty pane", () => {
+    expect(symmetryPivot({ shapes: [] }, { x: 200, y: 200 })).toEqual({ x: 200, y: 200 });
   });
 });
 
@@ -103,5 +133,49 @@ describe("wedgeMidpoint", () => {
       const p = wedgeMidpoint({ x: 200, y: 200 }, count, 90);
       expect(p.x === 200 && p.y === 200).toBe(false);
     }
+  });
+});
+
+describe("bringToFront / sendToBack", () => {
+  const a = stone({ id: "a" });
+  const b = stone({ id: "b" });
+  const c = stone({ id: "c" });
+
+  it("moves the selected shapes to the end (front = painted last/on top), preserving order", () => {
+    expect(bringToFront([a, b, c], ["a"]).map((s) => s.id)).toEqual(["b", "c", "a"]);
+  });
+
+  it("moves the selected shapes to the start (back = painted first/underneath), preserving order", () => {
+    expect(sendToBack([a, b, c], ["c"]).map((s) => s.id)).toEqual(["c", "a", "b"]);
+  });
+
+  it("keeps a multi-shape selection's own relative order when moving them together", () => {
+    expect(bringToFront([a, b, c], ["c", "a"]).map((s) => s.id)).toEqual(["b", "a", "c"]);
+    expect(sendToBack([a, b, c], ["c", "a"]).map((s) => s.id)).toEqual(["a", "c", "b"]);
+  });
+
+  it("is a no-op when nothing is selected", () => {
+    expect(bringToFront([a, b, c], []).map((s) => s.id)).toEqual(["a", "b", "c"]);
+    expect(sendToBack([a, b, c], []).map((s) => s.id)).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("moveForward / moveBackward", () => {
+  const a = stone({ id: "a" });
+  const b = stone({ id: "b" });
+  const c = stone({ id: "c" });
+
+  it("swaps a shape with its immediate neighbor", () => {
+    expect(moveForward([a, b, c], "a").map((s) => s.id)).toEqual(["b", "a", "c"]);
+    expect(moveBackward([a, b, c], "c").map((s) => s.id)).toEqual(["a", "c", "b"]);
+  });
+
+  it("is a no-op at the end of the stack it's already moving toward", () => {
+    expect(moveForward([a, b, c], "c").map((s) => s.id)).toEqual(["a", "b", "c"]);
+    expect(moveBackward([a, b, c], "a").map((s) => s.id)).toEqual(["a", "b", "c"]);
+  });
+
+  it("is a no-op for an id that isn't in the list", () => {
+    expect(moveForward([a, b, c], "zzz").map((s) => s.id)).toEqual(["a", "b", "c"]);
   });
 });

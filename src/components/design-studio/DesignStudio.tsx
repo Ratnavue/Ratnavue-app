@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { CircleCheck } from "lucide-react";
 import { StudioCanvas } from "./StudioCanvas";
 import { StudioToolbar } from "./StudioToolbar";
+import { LayersPanel } from "./LayersPanel";
 import { emptyStudioState, newPane, newShape, MAX_PANES, type Shape, type ShapeType, type StudioState } from "@/lib/design-studio/types";
-import { cloneShapes, paneCenter, radialRepeat, wedgeMidpoint } from "@/lib/design-studio/shape-ops";
+import { bringToFront, cloneShapes, moveBackward, moveForward, paneCenter, radialRepeat, sendToBack, symmetryPivot, wedgeMidpoint } from "@/lib/design-studio/shape-ops";
 import { exportPanesToPngBlob } from "@/lib/design-studio/export";
 import { saveDesign, uploadDesignThumbnail, submitDesignStudioRequest, listMyDesigns, type MyDesignSummary } from "@/actions/design-studio";
 import { Input, Label, Textarea, FieldError } from "@/components/ui/Field";
@@ -72,6 +73,9 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
   const [gemCutSlug, setGemCutSlug] = useState(STANDARD_CUTS[0].slug);
   const [gemCarat, setGemCarat] = useState(1);
   const [metalKey, setMetalKey] = useState<MetalKey>(DEFAULT_METAL);
+  // The toolbar's "Set center" tool — true while waiting for the next
+  // canvas click to place pane.symmetryCenter (see PaneSVG's own prop).
+  const [settingCenter, setSettingCenter] = useState(false);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const mounted = useRef(false);
@@ -249,7 +253,11 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
    * centers on the pane regardless, since it IS the circle itself. */
   function spawnPoint(type: ShapeType): { x: number; y: number } | undefined {
     if (type === "band" || !activePane?.symmetry || activePane.symmetry <= 1) return undefined;
-    const center = paneCenter(activePane, { x: 200, y: 200 });
+    // symmetryPivot, not paneCenter — must match the same fixed pivot
+    // PaneSVG renders the live mirrors around (see its own comment), or a
+    // second stone would spawn relative to a different center than the
+    // first one is mirrored around.
+    const center = symmetryPivot(activePane, { x: 200, y: 200 });
     return wedgeMidpoint(center, activePane.symmetry, 90);
   }
 
@@ -340,6 +348,65 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
     const group = new Set(activePane.shapes.filter((s) => selectedIds.includes(s.id) && s.groupId).map((s) => s.groupId));
     updatePane(studio.activePaneId, (shapes) => shapes.filter((s) => !selectedIds.includes(s.id) && !(s.groupId && group.has(s.groupId))));
     setSelectedIds([]);
+  }
+
+  function handleBringToFront() {
+    if (!activePane || selectedIds.length === 0) return;
+    commitHistory(studio);
+    updatePane(studio.activePaneId, (shapes) => bringToFront(shapes, selectedIds));
+  }
+
+  function handleSendToBack() {
+    if (!activePane || selectedIds.length === 0) return;
+    commitHistory(studio);
+    updatePane(studio.activePaneId, (shapes) => sendToBack(shapes, selectedIds));
+  }
+
+  /** One-step layer reordering from the Layers panel — a single shape at
+   * a time, unlike the toolbar's selection-wide bring-to-front/send-to-back. */
+  function handleMoveForward(id: string) {
+    commitHistory(studio);
+    updatePane(studio.activePaneId, (shapes) => moveForward(shapes, id));
+  }
+
+  function handleMoveBackward(id: string) {
+    commitHistory(studio);
+    updatePane(studio.activePaneId, (shapes) => moveBackward(shapes, id));
+  }
+
+  /** Hide/show from the Layers panel — a hidden shape stays in the data
+   * (and the panel), just skipped on the canvas (see PaneSVG), same
+   * "hide, don't delete" convention as any layer panel. */
+  function handleToggleHidden(id: string) {
+    commitHistory(studio);
+    updatePane(studio.activePaneId, (shapes) => shapes.map((s) => (s.id === id ? { ...s, hidden: !s.hidden } : s)));
+  }
+
+  /** Click a row in the Layers panel: selects just that shape, or adds/
+   * removes it from the selection with Shift — mirrors PaneSVG's own
+   * shift-click-on-canvas behavior, since the panel is just another way
+   * to pick the same selection. */
+  function handleSelectLayer(id: string, additive: boolean) {
+    setSelectedIds((prev) => (additive ? (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]) : [id]));
+  }
+
+  function handleToggleSetCenterTool() {
+    setSettingCenter((v) => !v);
+  }
+
+  /** Called from PaneSVG once the "Set center" tool's next canvas click
+   * lands — places pane.symmetryCenter there and turns the tool back off
+   * (one-shot, like most editors' "pick a point" tools). */
+  function handlePickSymmetryCenter(paneId: string, point: { x: number; y: number }) {
+    commitHistory(studio);
+    setStudio((prev) => ({ ...prev, panes: prev.panes.map((p) => (p.id === paneId ? { ...p, symmetryCenter: point } : p)) }));
+    setSettingCenter(false);
+  }
+
+  function handleClearSymmetryCenter() {
+    if (!activePane?.symmetryCenter) return;
+    commitHistory(studio);
+    setStudio((prev) => ({ ...prev, panes: prev.panes.map((p) => (p.id === prev.activePaneId ? { ...p, symmetryCenter: undefined } : p)) }));
   }
 
   function handleRadialRepeat(count: number) {
@@ -470,11 +537,17 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
         onPaste={handlePaste}
         onDelete={deleteSelection}
         onRadialRepeat={handleRadialRepeat}
+        onBringToFront={handleBringToFront}
+        onSendToBack={handleSendToBack}
         onSave={() => doSave(true)}
         saving={saving}
         canPaste={!!clipboard}
         symmetry={activePane?.symmetry}
         onSetSymmetry={handleSetSymmetry}
+        settingCenter={settingCenter}
+        onToggleSetCenterTool={handleToggleSetCenterTool}
+        hasSymmetryCenter={!!activePane?.symmetryCenter}
+        onClearSymmetryCenter={handleClearSymmetryCenter}
         metalKey={metalKey}
         onPickMetal={handlePickMetal}
         metalApplicable={metalApplicable}
@@ -491,19 +564,33 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
       />
       <FieldError>{saveError ?? undefined}</FieldError>
 
-      <div ref={canvasRef}>
-        <StudioCanvas
-          panes={studio.panes}
-          activePaneId={studio.activePaneId}
-          selectedIds={selectedIds}
-          onActivate={handleActivate}
-          onSelect={setSelectedIds}
-          onMoveShapes={handleMoveShapes}
-          onResizeShape={handleResizeShape}
-          onRotateShape={handleRotateShape}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        />
+      <div className="grid gap-4 lg:grid-cols-[1fr_14rem]">
+        <div ref={canvasRef}>
+          <StudioCanvas
+            panes={studio.panes}
+            activePaneId={studio.activePaneId}
+            selectedIds={selectedIds}
+            onActivate={handleActivate}
+            onSelect={setSelectedIds}
+            onMoveShapes={handleMoveShapes}
+            onResizeShape={handleResizeShape}
+            onRotateShape={handleRotateShape}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            settingCenter={settingCenter}
+            onPickSymmetryCenter={handlePickSymmetryCenter}
+          />
+        </div>
+        {activePane && (
+          <LayersPanel
+            shapes={activePane.shapes}
+            selectedIds={selectedIds}
+            onSelect={handleSelectLayer}
+            onToggleHidden={handleToggleHidden}
+            onMoveForward={handleMoveForward}
+            onMoveBackward={handleMoveBackward}
+          />
+        )}
       </div>
 
       {mode === "admin" && myDesigns !== null && myDesigns.length > 0 && (

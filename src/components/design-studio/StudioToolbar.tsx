@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Circle, Minus, Link2, GripVertical, Type, Copy, ClipboardPaste, RotateCw, Trash2, Plus, X, Save, Gem as GemIcon, Info, Undo2, Redo2 } from "lucide-react";
+import { Circle, Minus, Link2, GripVertical, Type, Copy, ClipboardPaste, RotateCw, Trash2, Plus, X, Save, Gem as GemIcon, Info, Undo2, Redo2, BringToFront, SendToBack, Crosshair } from "lucide-react";
 import type { Shape, ShapeType } from "@/lib/design-studio/types";
 import { TEMPLATE_CATEGORY_LABELS, templatesByCategory, type TemplateCategory } from "@/lib/design-studio/templates";
 import { STANDARD_CUTS } from "@/lib/gem-constants";
@@ -51,11 +51,17 @@ interface StudioToolbarProps {
   onPaste: () => void;
   onDelete: () => void;
   onRadialRepeat: (count: number) => void;
+  onBringToFront: () => void;
+  onSendToBack: () => void;
   onSave: () => void;
   saving: boolean;
   canPaste: boolean;
   symmetry: number | undefined;
   onSetSymmetry: (count: number | null) => void;
+  settingCenter: boolean;
+  onToggleSetCenterTool: () => void;
+  hasSymmetryCenter: boolean;
+  onClearSymmetryCenter: () => void;
   metalKey: MetalKey;
   onPickMetal: (metal: MetalKey) => void;
   metalApplicable: boolean;
@@ -82,11 +88,17 @@ export function StudioToolbar({
   onPaste,
   onDelete,
   onRadialRepeat,
+  onBringToFront,
+  onSendToBack,
   onSave,
   saving,
   canPaste,
   symmetry,
   onSetSymmetry,
+  settingCenter,
+  onToggleSetCenterTool,
+  hasSymmetryCenter,
+  onClearSymmetryCenter,
   metalKey,
   onPickMetal,
   metalApplicable,
@@ -113,9 +125,10 @@ export function StudioToolbar({
           <Info size={14} className="mt-0.5 shrink-0 text-gold-deep" />
           <p className="flex-1">
             Drag a shape to move it, or select it and use the arrow keys to nudge it precisely (hold Shift for 10 at
-            a time). Drag the gold corner handle to resize or the blue handle above it to rotate. Ctrl/Cmd+Z undoes,
-            Ctrl/Cmd+Shift+Z redoes. Hover any button below for what it does — select a shape first for Copy, Delete,
-            Metal and Gem color to apply to it instead of just setting the default for new ones.
+            a time). Drag the gold corner handle to resize or the blue handle above it to rotate. Hold Shift and
+            scroll over the canvas to zoom (a plain scroll just scrolls the page). Ctrl/Cmd+Z undoes, Ctrl/Cmd+Shift+Z
+            redoes. Hover any button below for what it does — select a shape first for Copy, Delete, Metal and Gem
+            color to apply to it instead of just setting the default for new ones.
           </p>
           <button type="button" onClick={() => setHintOpen(false)} className="shrink-0 text-charcoal/40 hover:text-charcoal" title="Dismiss">
             <X size={14} />
@@ -277,6 +290,14 @@ export function StudioToolbar({
             <Trash2 size={16} />
             Delete
           </ToolButton>
+          <ToolButton title="Bring the selected shape(s) in front of everything else in this pane" onClick={onBringToFront} disabled={selectionCount === 0}>
+            <BringToFront size={16} />
+            To front
+          </ToolButton>
+          <ToolButton title="Send the selected shape(s) behind everything else in this pane" onClick={onSendToBack} disabled={selectionCount === 0}>
+            <SendToBack size={16} />
+            To back
+          </ToolButton>
         </div>
 
         <div className="h-10 w-px bg-border-subtle max-sm:hidden" />
@@ -327,6 +348,36 @@ export function StudioToolbar({
                 {opt.label}
               </button>
             ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-1 text-[10px] uppercase tracking-wide text-charcoal/50" title="Pick exactly where live symmetry (and 'Around circle') pivots around, instead of the band's center or the pane's middle">
+            Symmetry center
+          </p>
+          <div className="flex gap-1.5">
+            <button
+              type="button"
+              onClick={onToggleSetCenterTool}
+              title={settingCenter ? "Click anywhere on the canvas to place the center" : "Click, then click a point on the canvas to set a custom symmetry center"}
+              className={cn(
+                "flex items-center gap-1 rounded-md border px-2 py-1.5 text-[11px]",
+                settingCenter ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70 hover:border-charcoal/40",
+              )}
+            >
+              <Crosshair size={13} />
+              {settingCenter ? "Click the canvas..." : "Set center"}
+            </button>
+            {hasSymmetryCenter && (
+              <button
+                type="button"
+                onClick={onClearSymmetryCenter}
+                title="Clear the custom center — symmetry goes back to the band's center or the pane's middle"
+                className="rounded-md border border-border-subtle px-2 py-1.5 text-[11px] text-charcoal/70 hover:border-charcoal/40"
+              >
+                <X size={13} />
+              </button>
+            )}
           </div>
         </div>
 
