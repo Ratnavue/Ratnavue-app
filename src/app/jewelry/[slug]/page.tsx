@@ -8,6 +8,7 @@ import { getActivePromotion, getActivePromotionMaps } from "@/lib/promotion-item
 import { StorefrontStockBadge as StockBadge } from "@/components/catalog/StorefrontStockBadge";
 import { QuoteRequestPanel } from "@/components/quote/QuoteRequestPanel";
 import { MediaGallery } from "@/components/catalog/MediaGallery";
+import { ArTryOnButton } from "@/components/ar/ArTryOnButton";
 import { ProductPrice } from "@/components/catalog/ProductPrice";
 import { AddToCartButton } from "@/components/catalog/AddToCartButton";
 import { WishlistButton } from "@/components/catalog/WishlistButton";
@@ -88,6 +89,7 @@ export default async function JewelryDetailPage({ params }: PageProps<"/jewelry/
       <div className="grid gap-12 lg:grid-cols-2">
         <Reveal y={16}>
           <MediaGallery media={piece.media} fallbackLabel={piece.name} />
+          {(piece.pieceType === "NECKLACE" || piece.pieceType === "PENDANT") && <ArTryOnButton modelUrl={piece.arModelUrl} pieceName={piece.name} />}
         </Reveal>
 
         <Reveal delay={0.1} y={16}>

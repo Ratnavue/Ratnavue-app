@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { hasStaffArea, hasMarketAccess } from "@/lib/rbac";
 import { JewelryForm } from "@/components/admin/JewelryForm";
 import { MediaManager } from "@/components/admin/MediaManager";
+import { ArModelUploader } from "@/components/admin/ArModelUploader";
 import { GemstoneLinkManager } from "@/components/admin/GemstoneLinkManager";
 import { VariantManager } from "@/components/admin/VariantManager";
 import { getActiveShippingWeightTiers } from "@/lib/shipping";
@@ -48,6 +49,19 @@ export default async function EditJewelryPage({ params }: PageProps<"/admin/jewe
           <MediaManager media={piece.media} jewelryId={piece.id} canDelete={!staff} />
         </div>
       </div>
+
+      {(piece.pieceType === "NECKLACE" || piece.pieceType === "PENDANT") && (
+        <div className="mt-10 max-w-2xl border-t border-border-subtle pt-8">
+          <p className="font-serif text-xl text-charcoal">Mobile AR Try-On</p>
+          <p className="mt-1 text-sm text-charcoal/60">
+            Upload a 3D model to let shoppers see this piece on their own neck via their phone&apos;s camera. Pilot
+            feature — only necklaces and pendants get this section.
+          </p>
+          <div className="mt-4">
+            <ArModelUploader jewelryId={piece.id} modelUrl={piece.arModelUrl} pieceName={piece.name} />
+          </div>
+        </div>
+      )}
 
       <div className="mt-10 max-w-2xl border-t border-border-subtle pt-8">
         <p className="font-serif text-xl text-charcoal">Gemstones Set In This Piece</p>

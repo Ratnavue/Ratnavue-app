@@ -20,6 +20,7 @@ const CONTENT_TYPES: Record<string, string> = {
   webm: "video/webm",
   mov: "video/quicktime",
   pdf: "application/pdf",
+  glb: "model/gltf-binary",
 };
 
 function contentTypeFor(filename: string): string {

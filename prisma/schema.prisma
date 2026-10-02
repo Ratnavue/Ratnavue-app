@@ -516,6 +516,13 @@ model JewelryPiece {
   // Featured Jewelry section.
   isFeatured Boolean @default(false)
 
+  // A GLB 3D model for the mobile AR "try it on" live neck-tracking
+  // feature (NECKLACE/PENDANT only — see ArTryOnButton) — null means no
+  // AR for this piece, no separate enabled flag needed. Uploaded via
+  // ArModelUploader/actions/ar-models.ts, same single-file-per-item
+  // pattern as CertificationLab.logoUrl.
+  arModelUrl String?
+
   // See the matching fields on Gemstone above for the full rationale.
   shippingWeightTierId String?
   shippingWeightTier   ShippingWeightTier? @relation(fields: [shippingWeightTierId], references: [id], onDelete: SetNull)

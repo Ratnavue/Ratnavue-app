@@ -549,45 +549,57 @@ shipped (`lib/analytics.ts`, `computeProfit`).*
   duplicate-name submission. Fixed, and a regression test now
   specifically reproduces the duplicate-field submission.
 
-- **Mobile AR try-on for necklaces/pendants** (requested 2026-10-02) — let
-  a customer on their phone see a necklace, or a necklace-with-pendant
-  (`PieceType.NECKLACE` / `PENDANT`), actually sitting on their own neck
-  via the camera, not just a product photo. Mobile-only (needs a phone
-  camera); not started. The real work here splits into two quite
-  different problems, worth being upfront about before committing to one:
-
-  1. **Live camera try-on (what was actually asked for)** — the phone's
-     camera stays on, the app finds the customer's neck/collarbone in
-     real time, and renders the 3D piece anchored there as they move.
-     This needs a face/pose landmark tracker running in the browser —
-     MediaPipe's Face Landmarker or Pose Landmarker (Google, free,
-     runs client-side via WebAssembly, so the video itself never leaves
-     the phone — worth keeping that property, given the privacy
-     sensitivity of "always-on camera pointed at your face/neck") — feeding
-     neck-anchor coordinates to a Three.js/WebGL overlay that renders the
-     3D model on top of the live feed. This is a real engineering build,
-     not a plugin: a new route or modal, camera-permission UX, a tracking
-     pipeline, and a render loop kept in sync with it.
-  2. **"Place it in your space" AR (the easier, more common pattern)** —
-     `<model-viewer>` (Google's web component) gives AR Quick Look on iOS
-     and Scene Viewer on Android essentially for free from one GLB model
-     (plus a USDZ for iOS), but it anchors to a *surface* the camera sees
-     (a table, the floor) — not to a tracked body part. Cheap to add, but
-     it is not "see it on your neck," so flag this distinction before
-     building the wrong one.
-
-  Either path has the same hard prerequisite the catalog doesn't have
-  today: **a 3D model per item**. The whole catalog is photos right now
-  (`MediaAsset`) — there's no 3D pipeline, and commissioning/scanning a
-  3D model for every necklace and pendant SKU is a real content-production
-  effort, separate from and likely larger than the engineering build
-  itself. Realistic options to weigh when this is picked up: commission
-  3D models only for a small pilot set of best-selling necklaces/pendants
-  first rather than the whole catalog; or evaluate a commercial AR-
-  commerce SDK (e.g. 8th Wall, or a jewelry-specific try-on vendor) that
-  bundles tracking + rendering + sometimes photo-to-3D model generation,
-  trading a recurring vendor cost for a much smaller build. Needs a
-  product decision on budget/scope before engineering work starts.
+- **Mobile AR try-on for necklaces/pendants** (requested 2026-10-02) —
+  shipped the same day as a pilot: live camera try-on (the version
+  actually asked for, confirmed over the surface-placement alternative),
+  built in-house (not a paid vendor SDK). A "Try it on" button on a
+  NECKLACE/PENDANT product page (mobile-only — `lg:hidden` plus a
+  `getUserMedia` feature check) opens a full-screen camera takeover: the
+  front camera stays on, MediaPipe's `PoseLandmarker` (the "lite" model,
+  client-side WASM — the video never leaves the phone) tracks shoulder
+  landmarks every frame, a pure helper (`src/lib/ar/neck-anchor.ts`,
+  unit-tested) turns those into a position/scale/rotation, and a
+  Three.js scene renders the piece's GLB there in real time. Includes a
+  "save photo" capture (composites video + render) and proper cleanup —
+  every camera track stops and the render loop cancels on close.
+  New model field: `JewelryPiece.arModelUrl` (migration
+  `20261002090000_add_jewelry_ar_model`). Admin uploads the `.glb` from a
+  new "Mobile AR Try-On" section on the jewelry edit page (necklaces/
+  pendants only), previewed there via Google's `<model-viewer>` web
+  component; `src/lib/media.ts`'s `saveArModelFile` validates both MIME
+  type and the glTF-binary magic number, capped at 3.5MB (the existing
+  4MB server-action body limit, see `next.config.ts`).
+  New dependencies: `three`, `@mediapipe/tasks-vision` (+ `@types/three`
+  dev dep) — lazy-loaded via `next/dynamic(..., { ssr: false })` only
+  when the button is actually clicked, so the product page's normal
+  bundle is unaffected.
+  **Pilot content**: the catalog only had one real NECKLACE/PENDANT item
+  at the time this shipped (`18K Gold Ruby Pendant`, `/lk/jewelry/18k-gold-ruby-pendant`)
+  — a procedurally-generated placeholder GLB (a torus chain + faceted
+  pendant, no real 3D scan exists yet) was uploaded to it through the
+  actual admin tool, as the real, honest pilot attachment (not test data
+  to delete) — replace it with a real 3D model once the business has one
+  made for that piece. Add more necklace/pendant items' models the same
+  way as they're produced; nothing about the feature is capped at one.
+  **Found and fixed a real bug during verification**: the overlay's
+  full-screen `z-[100]` div was still losing to the site's own fixed
+  Navbar/`StickyBuyBar` (CSS stacking contexts don't always let a sibling
+  z-index win) — fixed by rendering it through `createPortal` straight
+  into `document.body`, same as any full-screen takeover should.
+  **Verified for real**, not just "should work": Playwright + Chromium's
+  `--use-fake-device-for-media-stream`, driving the actual running app —
+  confirmed the camera permission flow, `PoseLandmarker` + GLB loading
+  reaching "ready", the "no pose found → hide the piece" path (the
+  synthetic fake camera has no real person in it, so this is as far as
+  an automated test can go — **real tracking accuracy against an actual
+  human body still needs a real phone/person test**, flagging this
+  honestly rather than claiming more than was actually proven), photo
+  capture producing a real downloadable PNG, and full camera-track
+  cleanup on close.
+  **Not done this pass**: self-hosting MediaPipe's WASM/model assets
+  instead of Google's CDN; surface-placement AR (ruled out, different
+  feature); earrings/rings/other piece types; rolling out beyond
+  whatever items get real models next.
 
 ## Growth & trust (competitor research, 2026-09-24)
 

@@ -284,3 +284,39 @@ export async function saveLabLogo(file: File): Promise<{ url: string }> {
   const url = await upload(filename, optimized, "image/webp");
   return { url };
 }
+
+// AR try-on 3D models (JewelryPiece.arModelUrl) — one GLB per piece,
+// uploaded through a Server Action the same way everything else above is
+// (not the direct-upload bypass product photos/videos use), so it's
+// bound by next.config.ts's 4MB server-action body cap same as any other
+// action — generous for a simple procedural necklace/pendant mesh, but a
+// real detailed 3D scan might need the direct-upload path instead; revisit
+// if that becomes the real constraint.
+const MAX_AR_MODEL_BYTES = 3.5 * 1024 * 1024;
+
+// Browsers inconsistently report .glb files as `model/gltf-binary`,
+// `application/octet-stream`, or nothing at all — unlike images/video,
+// there's no second library (sharp, looksLikeVideo) incidentally
+// validating the bytes here, so the magic number check below is the only
+// real check. A valid .glb always starts with the ASCII bytes "glTF"
+// (the glTF 2.0 binary container's magic number) followed by a uint32
+// version field — see https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#glb-file-format-specification.
+function looksLikeGlb(buffer: Buffer): boolean {
+  return buffer.length >= 4 && buffer[0] === 0x67 && buffer[1] === 0x6c && buffer[2] === 0x54 && buffer[3] === 0x46; // "glTF"
+}
+
+export async function saveArModelFile(file: File): Promise<{ url: string }> {
+  if (file.size <= 0) throw new Error("That file is empty.");
+  if (file.size > MAX_AR_MODEL_BYTES) {
+    throw new Error(`3D models here can be at most ${MAX_AR_MODEL_BYTES / (1024 * 1024)}MB.`);
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  if (!looksLikeGlb(buffer)) {
+    throw new Error("That doesn't look like a valid .glb (glTF binary) 3D model file.");
+  }
+
+  const filename = `${randomUUID()}.glb`;
+  const url = await upload(filename, buffer, "model/gltf-binary");
+  return { url };
+}
