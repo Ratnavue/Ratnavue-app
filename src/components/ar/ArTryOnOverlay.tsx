@@ -59,8 +59,12 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
   // the shoulders) independent of whether its vertical position was
   // right, most likely because BASE_MODEL_SIZE/REFERENCE_FACE_WIDTH were
   // tuned against a more typical selfie distance than an extreme close-up.
-  const [sizeMultiplier, setSizeMultiplier] = useState(1);
-  const sizeMultiplierRef = useRef(1);
+  // Starts low, not 1 — real-device testing (2026-10-03) showed the piece
+  // still clearly oversized even at 0.9x (the chain's own vertical span
+  // ran from eyebrow height past the bottom of the frame), so a lower
+  // starting point needs fewer drags to reach a reasonable size.
+  const [sizeMultiplier, setSizeMultiplier] = useState(0.3);
+  const sizeMultiplierRef = useRef(0.3);
   const debugMarkerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -277,9 +281,9 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
             </p>
             <input
               type="range"
-              min={0.1}
+              min={0.02}
               max={2}
-              step={0.05}
+              step={0.02}
               value={sizeMultiplier}
               onChange={(e) => {
                 const v = Number(e.target.value);
