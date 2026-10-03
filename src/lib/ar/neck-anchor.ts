@@ -52,11 +52,19 @@ export interface NeckAnchor {
 // is to let someone nudge it while watching their own neck, not another
 // round of guessing.
 //
-// History: 0.55 (face-WIDTH based, a unit-mismatch bug — see git log)
-// still landed on the chin → fixed the units and tried 1.1, which
-// real-device testing (2026-10-03) overshot to the chest. 0.6 is the
-// next best estimate, still unconfirmed against a real device.
-export const NECK_DROP_FRACTION = 0.6;
+// History (2026-10-03, all real-device testing the same day): 0.55
+// (face-WIDTH based, a unit-mismatch bug — see git log) landed on the
+// chin → fixed the units, tried 1.1, which overshot to the chest → tried
+// 0.6, which overshot the OTHER way for a very close/low selfie framing
+// (chin already ~85% down the frame, so even a moderate drop pushed the
+// anchor past the bottom edge entirely — nothing rendered). 0.1 is the
+// first value calibrated from actual numbers, not another guess: the
+// `?arDebug=1` panel's landmark overlay read real chin/forehead
+// coordinates off that same session, which showed the chain's own top
+// sitting about 0.3×faceHeight too high (up near the mouth) at a drop of
+// -0.3 — i.e. the chin itself is close to the right anchor point for
+// this framing, with only a small further drop needed to clear it.
+export const NECK_DROP_FRACTION = 0.1;
 
 // A face width (in the same 0–1 normalized x-units, measured ear-to-ear
 // at cheek level) that reads as "about life-size" for a typical phone

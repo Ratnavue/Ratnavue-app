@@ -15,7 +15,7 @@ describe("computeNeckAnchor", () => {
   it("offsets downward (bigger y) from the chin, scaled to face height", () => {
     const anchor = computeNeckAnchor(FOREHEAD, CHIN, LEFT, RIGHT);
     expect(anchor.y).toBeGreaterThan(CHIN.y);
-    expect(anchor.y).toBeCloseTo(CHIN.y + 0.35 * 0.6, 5);
+    expect(anchor.y).toBeCloseTo(CHIN.y + 0.35 * 0.1, 5);
   });
 
   it("drops further for a taller (closer, or just bigger-framed) face", () => {

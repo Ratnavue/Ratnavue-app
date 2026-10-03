@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { X, Download, Loader2, RotateCcw } from "lucide-react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { FilesetResolver, FaceLandmarker, type FaceLandmarkerResult } from "@mediapipe/tasks-vision";
+import { FilesetResolver, FaceLandmarker, PoseLandmarker, type FaceLandmarkerResult, type PoseLandmarkerResult } from "@mediapipe/tasks-vision";
 import { computeNeckAnchor, NECK_DROP_FRACTION } from "@/lib/ar/neck-anchor";
 import { computeModelPlacement } from "@/lib/ar/model-placement";
 
@@ -24,13 +24,24 @@ const FOREHEAD_INDEX = 10;
 const CHIN_INDEX = 152;
 const LEFT_FACE_INDEX = 234;
 const RIGHT_FACE_INDEX = 454;
+// Debug-only: shoulder landmarks from the pose tracker this used to use
+// for production anchoring (see the note above) — loaded again here
+// purely so `?arDebug=1` can draw them as a real body-tracking reference
+// alongside the face dots, to judge necklace size/drop against actual
+// shoulder position instead of guessing from face proportions alone.
+// Never loaded for a real customer — only when debugMode is true.
+const POSE_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task";
+const LEFT_SHOULDER_INDEX = 11;
+const RIGHT_SHOULDER_INDEX = 12;
 
 // How big the piece renders at computeNeckAnchor's scale=1 (a "typical"
 // selfie-distance face width) — the model's own geometry is first
 // normalized to a 1-unit bounding box (see loadModel below), then scaled
-// by this constant times the live anchor scale. Tuned by eye against the
-// placeholder model; revisit once this is tried against a real one.
-const BASE_MODEL_SIZE = 0.22;
+// by this constant times the live anchor scale. The original 0.22 (eyeballed,
+// never tried on a real device) rendered enormous — real-device testing
+// via the `?arDebug=1` size slider (2026-10-03) found 0.3x that looked
+// proportionate, folded in directly here: 0.22 * 0.3 = 0.066.
+const BASE_MODEL_SIZE = 0.066;
 
 type Status = "starting" | "denied" | "unsupported" | "loading-model" | "ready" | "error";
 
@@ -54,17 +65,13 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
   const [dropFraction, setDropFraction] = useState(NECK_DROP_FRACTION);
   const dropFractionRef = useRef(NECK_DROP_FRACTION);
   // Multiplies the final rendered size (on top of BASE_MODEL_SIZE and the
-  // live face-distance scale) — a separate axis from dropFraction, since
-  // real-device testing found the piece rendering enormous (spanning past
-  // the shoulders) independent of whether its vertical position was
-  // right, most likely because BASE_MODEL_SIZE/REFERENCE_FACE_WIDTH were
-  // tuned against a more typical selfie distance than an extreme close-up.
-  // Starts low, not 1 — real-device testing (2026-10-03) showed the piece
-  // still clearly oversized even at 0.9x (the chain's own vertical span
-  // ran from eyebrow height past the bottom of the frame), so a lower
-  // starting point needs fewer drags to reach a reasonable size.
-  const [sizeMultiplier, setSizeMultiplier] = useState(0.3);
-  const sizeMultiplierRef = useRef(0.3);
+  // live face-distance scale) — a separate axis from dropFraction, for
+  // further adjustment beyond the calibrated BASE_MODEL_SIZE baseline.
+  // Starts at 1 (no adjustment) now that the 0.3x real-device finding
+  // (2026-10-03) is folded directly into BASE_MODEL_SIZE itself, not left
+  // as a debug-only multiplier.
+  const [sizeMultiplier, setSizeMultiplier] = useState(1);
+  const sizeMultiplierRef = useRef(1);
   const debugMarkerRef = useRef<HTMLDivElement>(null);
   // A plain 2D overlay (not the Three.js canvas) for drawing every
   // detected face landmark plus the chin→anchor line — lets whoever's
@@ -77,6 +84,7 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
     let cancelled = false;
     let stream: MediaStream | null = null;
     let faceLandmarker: FaceLandmarker | null = null;
+    let poseLandmarker: PoseLandmarker | null = null;
     let renderer: THREE.WebGLRenderer | null = null;
     let rafId: number | null = null;
 
@@ -159,12 +167,31 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
       }
       if (cancelled) return;
 
+      // Debug-only, best-effort: if this fails for any reason, the
+      // calibration panel just shows face dots without shoulder dots —
+      // never blocks the real face tracking a customer would see.
+      if (debugMode) {
+        try {
+          poseLandmarker = await PoseLandmarker.createFromOptions(fileset, {
+            baseOptions: { modelAssetPath: POSE_MODEL_URL, delegate: "GPU" },
+            runningMode: "VIDEO",
+            numPoses: 1,
+          });
+        } catch {
+          poseLandmarker = null;
+        }
+        if (cancelled) return;
+      }
+
       setStatus("ready");
 
       /** Draws every detected face landmark (faint dots), the four used
-       * ones (colored), the forehead→chin line (face height, cyan) and
-       * the chin→anchor line (the drop, pink) onto a plain 2D overlay —
-       * debug-only, so a bad landmark read is visually distinguishable
+       * ones (colored), the forehead→chin line (face height, cyan), the
+       * chin→anchor line (the drop, pink), and — when the debug-only pose
+       * tracker found a body — the two shoulder landmarks plus the line
+       * between them, in green, as a real (not extrapolated) reference
+       * for how big the piece should actually be relative to the body.
+       * Debug-only, so a bad landmark read is visually distinguishable
        * from a bad drop/size number instead of guessing which is wrong. */
       function drawDebugOverlay(
         all: { x: number; y: number }[] | undefined,
@@ -173,6 +200,8 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
         leftFace: { x: number; y: number } | null,
         rightFace: { x: number; y: number } | null,
         anchor: { x: number; y: number } | null,
+        leftShoulder: { x: number; y: number } | null,
+        rightShoulder: { x: number; y: number } | null,
       ) {
         if (!debugMode || !debugCanvasRef.current) return;
         const dctx = debugCanvasRef.current.getContext("2d");
@@ -227,6 +256,16 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
           dctx.stroke();
           dctx.setLineDash([]);
         }
+        if (leftShoulder) dot(leftShoulder, "#4ade80");
+        if (rightShoulder) dot(rightShoulder, "#4ade80");
+        if (leftShoulder && rightShoulder) {
+          dctx.strokeStyle = "#4ade80";
+          dctx.lineWidth = 2;
+          dctx.beginPath();
+          dctx.moveTo(leftShoulder.x * w, leftShoulder.y * h);
+          dctx.lineTo(rightShoulder.x * w, rightShoulder.y * h);
+          dctx.stroke();
+        }
       }
 
       function renderFrame() {
@@ -239,6 +278,20 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
           result = faceLandmarker.detectForVideo(video, performance.now());
         } catch {
           return;
+        }
+
+        let leftShoulder: { x: number; y: number } | null = null;
+        let rightShoulder: { x: number; y: number } | null = null;
+        if (poseLandmarker) {
+          try {
+            const poseResult: PoseLandmarkerResult = poseLandmarker.detectForVideo(video, performance.now());
+            const poseLandmarks = poseResult.landmarks[0];
+            leftShoulder = poseLandmarks?.[LEFT_SHOULDER_INDEX] ?? null;
+            rightShoulder = poseLandmarks?.[RIGHT_SHOULDER_INDEX] ?? null;
+          } catch {
+            // Debug-only aid — a failed pose read just means no green
+            // shoulder dots this frame, never blocks face tracking/render.
+          }
         }
 
         const landmarks = result.faceLandmarks[0];
@@ -259,12 +312,12 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
             debugMarkerRef.current.style.top = `${anchor.y * 100}%`;
             debugMarkerRef.current.style.display = "block";
           }
-          drawDebugOverlay(landmarks, forehead, chin, leftFace, rightFace, anchor);
+          drawDebugOverlay(landmarks, forehead, chin, leftFace, rightFace, anchor, leftShoulder, rightShoulder);
         } else {
           piece.visible = false;
           setTracking(false);
           if (debugMarkerRef.current) debugMarkerRef.current.style.display = "none";
-          drawDebugOverlay(landmarks, null, null, null, null, null);
+          drawDebugOverlay(landmarks, null, null, null, null, null, leftShoulder, rightShoulder);
         }
 
         renderer.render(scene, camera);
@@ -284,6 +337,7 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
       if (rafId !== null) cancelAnimationFrame(rafId);
       stream?.getTracks().forEach((t) => t.stop());
       faceLandmarker?.close();
+      poseLandmarker?.close();
       renderer?.dispose();
     };
     // debugMode never changes after mount (its useState has no setter
@@ -386,7 +440,10 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
               <p>
                 <span className="text-cyan-400">—</span> face height &nbsp; <span className="text-pink-400">┄</span> the drop
               </p>
-              <p className="text-white/40">Faint white dots = everything the tracker sees on your face.</p>
+              <p>
+                <span className="text-green-400">●</span> shoulders (real body tracking, not guessed from the face)
+              </p>
+              <p className="text-white/40">Faint white dots = everything the tracker sees on your face. No green dots = the body tracker could not start on this device, or your shoulders are not in frame.</p>
             </div>
 
             <p className="mt-2 text-[10px] text-white/50">Report both numbers back once they look right — and whether the colored dots actually land on your forehead/chin/cheeks.</p>
