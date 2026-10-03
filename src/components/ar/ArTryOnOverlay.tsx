@@ -6,8 +6,8 @@ import { X, Download, Loader2, RotateCcw } from "lucide-react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { FilesetResolver, FaceLandmarker, PoseLandmarker, type FaceLandmarkerResult, type PoseLandmarkerResult } from "@mediapipe/tasks-vision";
-import { computeNeckAnchor, NECK_DROP_FRACTION } from "@/lib/ar/neck-anchor";
-import { computeModelPlacement } from "@/lib/ar/model-placement";
+import { computeNeckAnchor, NECK_DROP_FRACTION, REFERENCE_FACE_WIDTH } from "@/lib/ar/neck-anchor";
+import { computeModelPlacement, fractionOfWhole } from "@/lib/ar/model-placement";
 
 // Pinned to the installed npm package's own version so the WASM runtime
 // fetched from the CDN always matches the JS API surface this code was
@@ -34,14 +34,29 @@ const POSE_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/pose_lan
 const LEFT_SHOULDER_INDEX = 11;
 const RIGHT_SHOULDER_INDEX = 12;
 
-// How big the piece renders at computeNeckAnchor's scale=1 (a "typical"
-// selfie-distance face width) — the model's own geometry is first
-// normalized to a 1-unit bounding box (see loadModel below), then scaled
-// by this constant times the live anchor scale. The original 0.22 (eyeballed,
-// never tried on a real device) rendered enormous — real-device testing
-// via the `?arDebug=1` size slider (2026-10-03) found 0.3x that looked
-// proportionate, folded in directly here: 0.22 * 0.3 = 0.066.
-const BASE_MODEL_SIZE = 0.066;
+// Fallback size (same meaning/history as before) for a model that has no
+// "pendant"-named calibration part — real-world-cm sizing below is
+// preferred whenever a model provides one.
+const FALLBACK_BASE_MODEL_SIZE = 0.066;
+
+// Real-world-cm size calibration (2026-10-04): rather than eyeball how
+// big the whole piece should render, size ONE named part (the pendant)
+// to its actual physical dimension, and let the rest of the model follow
+// from its own proportions. REFERENCE_FACE_WIDTH_CM is the real-world
+// assumption this rests on — an average adult bizygomatic (cheek-to-
+// cheek) width, NOT measured for any specific customer, so this is only
+// as accurate as that average is for whoever's using it. PENDANT_TARGET_CM
+// is this one pilot placeholder's intended real size (customer-specified:
+// "if pendant is 5x5cm it should be there as it is") — a real future
+// model should carry its own physical size on the JewelryPiece record
+// instead of a hardcoded page constant; flagged in TODO.md.
+const REFERENCE_FACE_WIDTH_CM = 13.5;
+const PENDANT_TARGET_CM = 5;
+// Three.js object name the placeholder GLB's pendant mesh is tagged
+// with at export time — loadModel looks for this to find the
+// calibration part; falls back to FALLBACK_BASE_MODEL_SIZE if absent
+// (an older upload, or a future model that doesn't tag one).
+const PENDANT_NODE_NAME = "pendant";
 
 type Status = "starting" | "denied" | "unsupported" | "loading-model" | "ready" | "error";
 
@@ -64,12 +79,11 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
   const [debugMode] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("arDebug") === "1");
   const [dropFraction, setDropFraction] = useState(NECK_DROP_FRACTION);
   const dropFractionRef = useRef(NECK_DROP_FRACTION);
-  // Multiplies the final rendered size (on top of BASE_MODEL_SIZE and the
-  // live face-distance scale) — a separate axis from dropFraction, for
-  // further adjustment beyond the calibrated BASE_MODEL_SIZE baseline.
-  // Starts at 1 (no adjustment) now that the 0.3x real-device finding
-  // (2026-10-03) is folded directly into BASE_MODEL_SIZE itself, not left
-  // as a debug-only multiplier.
+  // Multiplies the final rendered size on top of the per-model
+  // baseModelSize (now derived from the pendant's real-world cm size,
+  // see loadModel/PENDANT_TARGET_CM) and the live face-distance scale —
+  // a further manual adjustment on top of that calibrated baseline, not
+  // the primary way size gets set anymore. Starts at 1 (no adjustment).
   const [sizeMultiplier, setSizeMultiplier] = useState(1);
   const sizeMultiplierRef = useRef(1);
   const debugMarkerRef = useRef<HTMLDivElement>(null);
@@ -136,8 +150,11 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
       }
 
       let piece: THREE.Object3D | null = null;
+      let pendantFraction: number | null = null;
       try {
-        piece = await loadModel(modelUrl);
+        const loaded = await loadModel(modelUrl);
+        piece = loaded.piece;
+        pendantFraction = loaded.pendantFraction;
       } catch {
         if (!cancelled) {
           setErrorMessage("Could not load this piece's 3D model.");
@@ -148,6 +165,11 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
       if (cancelled || !piece) return;
       piece.visible = false;
       scene.add(piece);
+      // The per-cm scale this model's pendant implies, derived once at
+      // load time (not per frame) — baseModelSize * anchor.scale is the
+      // same formula as before, just baseModelSize is now computed from
+      // a real physical size instead of hand-tuned.
+      const baseModelSize = pendantFraction ? PENDANT_TARGET_CM * (REFERENCE_FACE_WIDTH / REFERENCE_FACE_WIDTH_CM) / pendantFraction : FALLBACK_BASE_MODEL_SIZE;
 
       const [fileset] = await Promise.all([FilesetResolver.forVisionTasks(WASM_BASE)]);
       if (cancelled) return;
@@ -335,7 +357,7 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
           const anchor = computeNeckAnchor(forehead, chin, leftFace, rightFace, dropFractionRef.current);
           piece.position.set(anchor.x, anchor.y, 0);
           piece.rotation.z = anchor.rotationRad;
-          const s = BASE_MODEL_SIZE * anchor.scale * sizeMultiplierRef.current;
+          const s = baseModelSize * anchor.scale * sizeMultiplierRef.current;
           piece.scale.set(s, s, s);
           piece.visible = true;
           setTracking(true);
@@ -558,9 +580,11 @@ function OverlayMessage({ icon, message, action }: { icon?: React.ReactNode; mes
  * horizontally but anchors it at its own TOP vertically (see
  * computeModelPlacement's own comment for why: a hanging necklace should
  * render at-or-below the neck point, not straddle it), and scales its
- * largest dimension to 1 world unit, so BASE_MODEL_SIZE above is the only
- * place piece size is actually tuned. */
-async function loadModel(url: string): Promise<THREE.Object3D> {
+ * largest dimension to 1 world unit. Also measures the named "pendant"
+ * part (if the model tags one — see PENDANT_NODE_NAME) as a fraction of
+ * that whole, so the caller can size the piece from a real physical cm
+ * measurement instead of an eyeballed constant. */
+async function loadModel(url: string): Promise<{ piece: THREE.Object3D; pendantFraction: number | null }> {
   const loader = new GLTFLoader();
   const gltf = await loader.loadAsync(url);
   const root = gltf.scene;
@@ -573,6 +597,13 @@ async function loadModel(url: string): Promise<THREE.Object3D> {
   // walks the actual vertex positions instead.
   const box = new THREE.Box3().setFromObject(root, true);
 
+  let pendantFraction: number | null = null;
+  const pendantNode = root.getObjectByName(PENDANT_NODE_NAME);
+  if (pendantNode) {
+    const pendantBox = new THREE.Box3().setFromObject(pendantNode, true);
+    pendantFraction = fractionOfWhole(pendantBox, box);
+  }
+
   const placement = computeModelPlacement(box);
 
   const wrapper = new THREE.Group();
@@ -582,5 +613,5 @@ async function loadModel(url: string): Promise<THREE.Object3D> {
   wrapper.add(root);
   wrapper.scale.setScalar(placement.scale);
 
-  return wrapper;
+  return { piece: wrapper, pendantFraction };
 }

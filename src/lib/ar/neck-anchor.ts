@@ -69,8 +69,10 @@ export const NECK_DROP_FRACTION = 0.1;
 // A face width (in the same 0–1 normalized x-units, measured ear-to-ear
 // at cheek level) that reads as "about life-size" for a typical phone
 // selfie distance — scale is 1 at this width. Also tuned by eye, same
-// caveat as above.
-const REFERENCE_FACE_WIDTH = 0.3;
+// caveat as above. Exported so ArTryOnOverlay can derive a real-world-cm
+// size calibration from it (see REFERENCE_FACE_WIDTH_CM there) — both
+// need to agree on what "scale = 1" means.
+export const REFERENCE_FACE_WIDTH = 0.3;
 
 const MAX_ROTATION_RAD = Math.PI / 6; // 30°
 

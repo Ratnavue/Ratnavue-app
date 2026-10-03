@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeModelPlacement } from "./model-placement";
+import { computeModelPlacement, fractionOfWhole } from "./model-placement";
 
 describe("computeModelPlacement", () => {
   it("centers the offset horizontally (x/z)", () => {
@@ -36,5 +36,25 @@ describe("computeModelPlacement", () => {
     expect(Number.isFinite(offset.x)).toBe(true);
     expect(Number.isFinite(offset.y)).toBe(true);
     expect(Number.isFinite(offset.z)).toBe(true);
+  });
+});
+
+describe("fractionOfWhole", () => {
+  it("computes what fraction of the whole's largest dimension the part takes up", () => {
+    const whole = { min: { x: 0, y: 0, z: 0 }, max: { x: 10, y: 4, z: 1 } }; // largest = 10
+    const part = { min: { x: 0, y: 0, z: 0 }, max: { x: 2, y: 2, z: 0.5 } }; // largest = 2
+    expect(fractionOfWhole(part, whole)).toBeCloseTo(0.2, 5);
+  });
+
+  it("uses each box's own largest dimension, not a fixed axis", () => {
+    const whole = { min: { x: 0, y: 0, z: 0 }, max: { x: 1, y: 8, z: 1 } }; // largest = 8 (y)
+    const part = { min: { x: 0, y: 0, z: 0 }, max: { x: 4, y: 0.5, z: 0.5 } }; // largest = 4 (x)
+    expect(fractionOfWhole(part, whole)).toBeCloseTo(0.5, 5);
+  });
+
+  it("stays finite for a degenerate (zero-size) whole", () => {
+    const whole = { min: { x: 0, y: 0, z: 0 }, max: { x: 0, y: 0, z: 0 } };
+    const part = { min: { x: 0, y: 0, z: 0 }, max: { x: 1, y: 1, z: 1 } };
+    expect(Number.isFinite(fractionOfWhole(part, whole))).toBe(true);
   });
 });

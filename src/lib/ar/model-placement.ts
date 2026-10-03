@@ -44,3 +44,15 @@ export function computeModelPlacement(box: BoundingBox): ModelPlacement {
     scale: 1 / largest,
   };
 }
+
+/** What fraction of the whole model's largest dimension one named part
+ * (e.g. the pendant) takes up — lets the real-world scale be calibrated
+ * against a part with a known physical size ("the pendant is 5cm") instead
+ * of an eyeballed BASE_MODEL_SIZE constant for the whole piece. Works for
+ * any model that names its calibration part consistently (see
+ * ArTryOnOverlay's loadModel), not just today's one placeholder. */
+export function fractionOfWhole(partBox: BoundingBox, wholeBox: BoundingBox): number {
+  const partSize = Math.max(partBox.max.x - partBox.min.x, partBox.max.y - partBox.min.y, partBox.max.z - partBox.min.z);
+  const wholeSize = Math.max(wholeBox.max.x - wholeBox.min.x, wholeBox.max.y - wholeBox.min.y, wholeBox.max.z - wholeBox.min.z, 1e-6);
+  return partSize / wholeSize;
+}
