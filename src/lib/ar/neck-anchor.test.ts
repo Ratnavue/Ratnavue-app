@@ -14,9 +14,8 @@ describe("computeNeckAnchor", () => {
 
   it("offsets downward (bigger y) from the chin, scaled to face height", () => {
     const anchor = computeNeckAnchor(FOREHEAD, CHIN, LEFT, RIGHT);
-    // face height = 0.35, drop fraction > 1, so the offset should exceed
-    // the face height itself.
-    expect(anchor.y).toBeGreaterThan(CHIN.y + 0.35);
+    expect(anchor.y).toBeGreaterThan(CHIN.y);
+    expect(anchor.y).toBeCloseTo(CHIN.y + 0.35 * 0.6, 5);
   });
 
   it("drops further for a taller (closer, or just bigger-framed) face", () => {
@@ -53,6 +52,13 @@ describe("computeNeckAnchor", () => {
     // A near-vertical "face line" — not a real pose, should clamp to 30°.
     const anchor = computeNeckAnchor(FOREHEAD, CHIN, { x: 0.5, y: 0.2 }, { x: 0.51, y: 0.8 });
     expect(Math.abs(anchor.rotationRad)).toBeCloseTo(Math.PI / 6, 5);
+  });
+
+  it("accepts an explicit dropFraction override instead of the default", () => {
+    const shallow = computeNeckAnchor(FOREHEAD, CHIN, LEFT, RIGHT, 0.2);
+    const deep = computeNeckAnchor(FOREHEAD, CHIN, LEFT, RIGHT, 2);
+    expect(shallow.y).toBeLessThan(deep.y);
+    expect(shallow.y).toBeCloseTo(CHIN.y + 0.35 * 0.2, 5);
   });
 
   it("stays finite and doesn't divide by zero when both face-edge landmarks coincide", () => {

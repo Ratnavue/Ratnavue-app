@@ -6,7 +6,7 @@ import { X, Download, Loader2, RotateCcw } from "lucide-react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { FilesetResolver, FaceLandmarker, type FaceLandmarkerResult } from "@mediapipe/tasks-vision";
-import { computeNeckAnchor } from "@/lib/ar/neck-anchor";
+import { computeNeckAnchor, NECK_DROP_FRACTION } from "@/lib/ar/neck-anchor";
 import { computeModelPlacement } from "@/lib/ar/model-placement";
 
 // Pinned to the installed npm package's own version so the WASM runtime
@@ -42,6 +42,18 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [tracking, setTracking] = useState(false);
   const [capturedUrl, setCapturedUrl] = useState<string | null>(null);
+
+  // Calibration aid — `?arDebug=1` on the product page URL shows a live
+  // slider for the drop-below-chin fraction plus a crosshair at the
+  // computed anchor, so the exact right number for NECK_DROP_FRACTION
+  // (src/lib/ar/neck-anchor.ts) can be found by nudging it while watching
+  // it against a real neck, instead of guessing blind from a screen away.
+  // Nothing here reaches customers: it's opt-in by URL and never surfaced
+  // in any UI.
+  const [debugMode] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("arDebug") === "1");
+  const [dropFraction, setDropFraction] = useState(NECK_DROP_FRACTION);
+  const dropFractionRef = useRef(NECK_DROP_FRACTION);
+  const debugMarkerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -144,16 +156,22 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
         const leftFace = landmarks?.[LEFT_FACE_INDEX];
         const rightFace = landmarks?.[RIGHT_FACE_INDEX];
         if (forehead && chin && leftFace && rightFace) {
-          const anchor = computeNeckAnchor(forehead, chin, leftFace, rightFace);
+          const anchor = computeNeckAnchor(forehead, chin, leftFace, rightFace, dropFractionRef.current);
           piece.position.set(anchor.x, anchor.y, 0);
           piece.rotation.z = anchor.rotationRad;
           const s = BASE_MODEL_SIZE * anchor.scale;
           piece.scale.set(s, s, s);
           piece.visible = true;
           setTracking(true);
+          if (debugMarkerRef.current) {
+            debugMarkerRef.current.style.left = `${anchor.x * 100}%`;
+            debugMarkerRef.current.style.top = `${anchor.y * 100}%`;
+            debugMarkerRef.current.style.display = "block";
+          }
         } else {
           piece.visible = false;
           setTracking(false);
+          if (debugMarkerRef.current) debugMarkerRef.current.style.display = "none";
         }
 
         renderer.render(scene, camera);
@@ -207,6 +225,45 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
       <div ref={containerRef} className="relative h-full w-full overflow-hidden">
         <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover [transform:scaleX(-1)]" />
         <canvas ref={canvasRef} className="absolute inset-0 h-full w-full [transform:scaleX(-1)]" />
+
+        {debugMode && (
+          // Same scaleX(-1) as the video/canvas above so it lines up with
+          // the mirrored display, not the raw (unmirrored) landmark space
+          // it's actually positioned in.
+          <div className="pointer-events-none absolute inset-0 [transform:scaleX(-1)]">
+            <div
+              ref={debugMarkerRef}
+              className="absolute hidden h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-cyan-400"
+              style={{ boxShadow: "0 0 0 1px rgba(0,0,0,0.5)" }}
+            >
+              <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-cyan-400" />
+              <div className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-cyan-400" />
+            </div>
+          </div>
+        )}
+
+        {debugMode && (
+          <div className="absolute left-3 top-16 z-10 w-56 rounded-lg bg-black/70 p-3 text-white">
+            <p className="text-[10px] uppercase tracking-wide text-white/60">Calibration (debug only)</p>
+            <p className="mt-1 text-xs">
+              Drop fraction: <span className="font-mono">{dropFraction.toFixed(2)}</span>
+            </p>
+            <input
+              type="range"
+              min={0.2}
+              max={2.5}
+              step={0.05}
+              value={dropFraction}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                dropFractionRef.current = v;
+                setDropFraction(v);
+              }}
+              className="mt-1 w-full"
+            />
+            <p className="mt-1 text-[10px] text-white/50">Nudge until the cyan crosshair sits right where the chain should rest, then report this number back.</p>
+          </div>
+        )}
 
         <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-3 bg-gradient-to-b from-black/60 to-transparent p-4">
           <p className="truncate text-sm font-medium text-white">{pieceName}</p>

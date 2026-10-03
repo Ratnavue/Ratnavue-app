@@ -637,10 +637,28 @@ shipped (`lib/analytics.ts`, `computeProfit`).*
      floating above it) with the pendant hanging below — see problem 2
      below for what that harness also fixed. 14 unit tests total between
      `neck-anchor.test.ts` and the new `model-placement.test.ts`.
+
+     **Real-device retest (2026-10-03, same day) found the fix overshot**:
+     1.1 landed the necklace on the chest, not the neck. Two things
+     landed from that: (a) `NECK_DROP_FRACTION` dropped to 0.6 — still a
+     guess, unconfirmed; (b) added a **live calibration mode** —
+     `ArTryOnOverlay.tsx` now reads `?arDebug=1` off the product page URL
+     and, when present, shows a slider for the drop fraction plus a cyan
+     crosshair at the computed anchor point, both opt-in-by-URL and never
+     shown otherwise. `computeNeckAnchor` takes `dropFraction` as an
+     optional 5th argument now (defaults to the same constant) so the
+     slider can override it live without touching the pure function's
+     normal behavior. The point: the actual right number for this can be
+     found in under a minute by opening `<product page URL>?arDebug=1` on
+     a phone and nudging the slider while watching it against a real
+     neck — far faster and more precise than another guess-and-report
+     round trip. 15 unit tests now (added one for the `dropFraction`
+     override).
      **Still not done, still worth it** (unchanged from before — these
      need a real phone to judge, not more code):
-     - Recalibrate `NECK_DROP_FRACTION`/`REFERENCE_FACE_WIDTH` against
-       real recorded video of a person, not guessed.
+     - Use the `?arDebug=1` calibration slider on a real phone to find
+       the actual right `NECK_DROP_FRACTION`/`REFERENCE_FACE_WIDTH`
+       values, then bake the result in as the new default.
      - Check `delegate: "GPU"` in `ArTryOnOverlay.tsx`'s
        `FaceLandmarker.createFromOptions` call is actually succeeding on
        real phone hardware rather than silently failing/falling back —

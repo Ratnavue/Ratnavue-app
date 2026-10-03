@@ -46,8 +46,17 @@ export interface NeckAnchor {
 // device. Using face HEIGHT keeps the offset on the same axis as the
 // drop (no unit mismatch), and this fraction is intentionally large
 // enough to clear the chin with room to spare. Still "tuned by eye, not
-// measured against real video" — see TODO.md.
-const NECK_DROP_FRACTION = 1.1;
+// measured against real video" — see TODO.md. Exported so
+// ArTryOnOverlay's debug mode (`?arDebug=1`) can offer it as a live,
+// adjustable starting point — the fastest way to get a real number here
+// is to let someone nudge it while watching their own neck, not another
+// round of guessing.
+//
+// History: 0.55 (face-WIDTH based, a unit-mismatch bug — see git log)
+// still landed on the chin → fixed the units and tried 1.1, which
+// real-device testing (2026-10-03) overshot to the chest. 0.6 is the
+// next best estimate, still unconfirmed against a real device.
+export const NECK_DROP_FRACTION = 0.6;
 
 // A face width (in the same 0–1 normalized x-units, measured ear-to-ear
 // at cheek level) that reads as "about life-size" for a typical phone
@@ -70,14 +79,14 @@ function clamp(value: number, min: number, max: number): number {
  * tracker calls "left" vs "right" (that labeling, and so the sign of a
  * cheek-relative perpendicular, flips depending on camera mirroring and
  * landmark order; straight-down doesn't have that failure mode). */
-export function computeNeckAnchor(forehead: FaceLandmark, chin: FaceLandmark, leftFace: FaceLandmark, rightFace: FaceLandmark): NeckAnchor {
+export function computeNeckAnchor(forehead: FaceLandmark, chin: FaceLandmark, leftFace: FaceLandmark, rightFace: FaceLandmark, dropFraction: number = NECK_DROP_FRACTION): NeckAnchor {
   const dx = rightFace.x - leftFace.x;
   const dy = rightFace.y - leftFace.y;
   const faceWidth = Math.hypot(dx, dy);
   const faceHeight = Math.abs(chin.y - forehead.y);
 
   const x = chin.x;
-  const y = chin.y + faceHeight * NECK_DROP_FRACTION;
+  const y = chin.y + faceHeight * dropFraction;
 
   const scale = faceWidth > 0 ? faceWidth / REFERENCE_FACE_WIDTH : 1;
   const rotationRad = faceWidth > 0 ? clamp(Math.atan2(dy, dx), -MAX_ROTATION_RAD, MAX_ROTATION_RAD) : 0;
