@@ -37,6 +37,15 @@ export interface Shape {
    * deleted — toggled from the Layers panel, same "hide, don't destroy"
    * convention as every other design tool's layer visibility. */
   hidden?: boolean;
+  /** Opts this one shape out of live symmetry (Pane.symmetry) — it still
+   * renders once, normally, in the editable master wedge, but PaneSVG
+   * skips it in every rotated mirror pass. undefined/false means included
+   * (the default — matches every design saved before this existed),
+   * toggled per-shape from the Layers panel so symmetry can be scoped to
+   * just the layers that should actually repeat (e.g. mirror the stones
+   * but not a band or a one-off text label). Meaningless (ignored) when
+   * the pane has no symmetry set. */
+  excludeFromSymmetry?: boolean;
 }
 
 export interface Pane {

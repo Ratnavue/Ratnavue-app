@@ -256,6 +256,7 @@ export function PaneSVG({ pane, active, selectedIds, onActivate, onSelect, onMov
             <g key={passIndex} transform={pass.rotate ? `rotate(${pass.rotate} ${symmetryCenter!.x} ${symmetryCenter!.y})` : undefined} style={pass.interactive ? undefined : { pointerEvents: "none" }}>
               {pane.shapes.map((shape) => {
                 if (shape.hidden) return null;
+                if (!pass.interactive && shape.excludeFromSymmetry) return null;
                 const selected = pass.interactive && selectedIds.includes(shape.id);
                 return (
                   <g

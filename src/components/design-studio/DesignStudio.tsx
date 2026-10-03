@@ -382,6 +382,14 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
     updatePane(studio.activePaneId, (shapes) => shapes.map((s) => (s.id === id ? { ...s, hidden: !s.hidden } : s)));
   }
 
+  /** Mirror toggle from the Layers panel — scopes live symmetry to just
+   * the layers that should actually repeat, instead of every shape in the
+   * pane (see Shape.excludeFromSymmetry's own comment). */
+  function handleToggleSymmetryExclude(id: string) {
+    commitHistory(studio);
+    updatePane(studio.activePaneId, (shapes) => shapes.map((s) => (s.id === id ? { ...s, excludeFromSymmetry: !s.excludeFromSymmetry } : s)));
+  }
+
   /** Click a row in the Layers panel: selects just that shape, or adds/
    * removes it from the selection with Shift — mirrors PaneSVG's own
    * shift-click-on-canvas behavior, since the panel is just another way
@@ -589,6 +597,8 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
             onToggleHidden={handleToggleHidden}
             onMoveForward={handleMoveForward}
             onMoveBackward={handleMoveBackward}
+            symmetryActive={!!activePane.symmetry && activePane.symmetry > 1}
+            onToggleSymmetryExclude={handleToggleSymmetryExclude}
           />
         )}
       </div>

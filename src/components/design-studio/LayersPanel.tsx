@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, ChevronUp, ChevronDown, Circle, Minus, Link2, GripVertical, Type } from "lucide-react";
+import { Eye, EyeOff, ChevronUp, ChevronDown, Circle, Minus, Link2, GripVertical, Type, Repeat, RepeatOff } from "lucide-react";
 import type { Shape, ShapeType } from "@/lib/design-studio/types";
 import { cn } from "@/lib/utils";
 
@@ -35,14 +35,21 @@ interface LayersPanelProps {
   onToggleHidden: (id: string) => void;
   onMoveForward: (id: string) => void;
   onMoveBackward: (id: string) => void;
+  /** Whether the active pane currently has live symmetry turned on — the
+   * per-row mirror toggle only renders when it's relevant (it has no
+   * visible effect otherwise). */
+  symmetryActive: boolean;
+  onToggleSymmetryExclude: (id: string) => void;
 }
 
 /** The active pane's shapes, Figma-style: top row of the list is the
  * frontmost (last-painted) shape, click a row to select it (Shift to add
- * to the selection), per-row eye toggle to hide without deleting, and
- * up/down to nudge one layer forward/back (the toolbar's "To front"/"To
- * back" buttons jump a whole selection all the way instead). */
-export function LayersPanel({ shapes, selectedIds, onSelect, onToggleHidden, onMoveForward, onMoveBackward }: LayersPanelProps) {
+ * to the selection), per-row eye toggle to hide without deleting, up/down
+ * to nudge one layer forward/back (the toolbar's "To front"/"To back"
+ * buttons jump a whole selection all the way instead), and — while
+ * symmetry's on — a per-row mirror toggle so live symmetry can be scoped
+ * to just the layers that should actually repeat. */
+export function LayersPanel({ shapes, selectedIds, onSelect, onToggleHidden, onMoveForward, onMoveBackward, symmetryActive, onToggleSymmetryExclude }: LayersPanelProps) {
   // Reversed so the list reads top-to-bottom as front-to-back, matching
   // how the shapes actually paint (later in the array = on top).
   const rows = [...shapes].map((shape, index) => ({ shape, index })).reverse();
@@ -85,6 +92,19 @@ export function LayersPanel({ shapes, selectedIds, onSelect, onToggleHidden, onM
                   >
                     {shape.hidden ? <EyeOff size={13} /> : <Eye size={13} />}
                   </button>
+                  {symmetryActive && (
+                    <button
+                      type="button"
+                      title={shape.excludeFromSymmetry ? "Excluded from live symmetry — click to mirror it too" : "Mirrored by live symmetry — click to exclude it"}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleSymmetryExclude(shape.id);
+                      }}
+                      className={cn("shrink-0 rounded p-0.5 hover:bg-charcoal/10", shape.excludeFromSymmetry ? "text-charcoal/30 hover:text-charcoal" : "text-gold-deep hover:text-charcoal")}
+                    >
+                      {shape.excludeFromSymmetry ? <RepeatOff size={13} /> : <Repeat size={13} />}
+                    </button>
+                  )}
                   <button
                     type="button"
                     title="Move one layer forward"
