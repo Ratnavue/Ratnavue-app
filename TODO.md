@@ -694,11 +694,25 @@ shipped (`lib/analytics.ts`, `computeProfit`).*
      the real admin tool; no application code changed, this was purely
      the uploaded asset.
 
+     Once right-side-up, next feedback was that the shape itself read as
+     a tall, narrow loop rather than "lying around the skin" the way a
+     real necklace drapes wide and shallow across the front of the neck.
+     Fixed the same day by rendering a 3x3 grid of arc-sweep/horizontal-
+     stretch combinations side by side and picking the one that actually
+     looked like a worn necklace: narrowed the open arc from 261° of a
+     circle down to 126° and stretched it 1.6x horizontally (flattening
+     it into a wide, shallow curve instead of a deep "U"), baked directly
+     into the exported geometry (not left as a transform) so the real
+     app's own bounding-box-based recentering/scaling sees genuine
+     vertex positions, not a node transform it could interact with
+     unexpectedly. Re-uploaded onto the pilot item the same way.
+
      Still a procedural placeholder, not real jewelry geometry — the
      underlying "needs a genuinely realistic replacement" problem is
      unchanged, this only fixes the shape reading as the wrong *kind* of
-     object (and now, right-side-up). Needs a genuinely realistic
-     replacement before further testing is useful: either (a)
+     object and the wrong *drape* (now right-side-up and
+     properly-proportioned). Needs a genuinely realistic replacement
+     before further testing is useful: either (a)
      commission/scan a real 3D model of the actual `18K Gold Ruby
      Pendant` (the real fix, and the content-production work this whole
      feature was always going to need — see the "hard prerequisite" note
