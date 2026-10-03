@@ -675,34 +675,60 @@ shipped (`lib/analytics.ts`, `computeProfit`).*
      bracelet/ring viewed face-on no matter how it's positioned. Replaced
      with an *open* torus arc (a "U" shape, gap at the top where the
      chain would go around behind the neck) with the pendant hanging from
-     its lowest point — built and visually verified in a scratch
-     Three.js/Playwright harness before uploading (screenshot-checked
-     that it actually reads as an open, draped chain, not a ring, and
-     that the pendant hangs below the chain rather than floating beside
-     or above it) — then uploaded onto the pilot item
-     (`18K Gold Ruby Pendant`) through the real admin tool. Still a
-     procedural placeholder, not real jewelry geometry — the underlying
-     "needs a genuinely realistic replacement" problem is unchanged, this
-     only fixes the shape reading as the wrong *kind* of object. Needs a
-     genuinely realistic replacement before further testing is useful:
-     either (a) commission/scan a real 3D model of the actual
-     `18K Gold Ruby Pendant` (the real fix, and the content-production
-     work this whole feature was always going to need — see the "hard
-     prerequisite" note above), or (b) in the meantime, source one
-     well-made reference GLB necklace/pendant model (a decent free/CC0
-     one, properly chain-and-stone-shaped, not primitives) just to
-     separate "is the placeholder bad" from "is the tracking bad" while
-     problem 1 above is being fixed.
-  3. **None of this has been confirmed against a real face on a real
-     device yet** — every fix above was verified as far as automation
-     can: unit tests for the math, and a scratch render harness to
-     visually confirm the model's shape/anchor point by eye. Chromium's
-     fake-camera flags (used for the rest of this feature's automated
-     testing) feed a synthetic clip with no actual face in it, so
-     `FaceLandmarker` has nothing to detect — there's no automated way to
-     confirm the full pipeline (real face in, piece correctly placed on
-     a real neck out). **This needs an actual phone with an actual
-     person in front of it** before calling any of the above done.
+     its lowest point.
+
+     This open-arc shape then shipped **upside down** for a full day of
+     testing without anyone (including this agent) catching it — the
+     rotation formula that's supposed to center the gap at the top had a
+     sign error, so the gap actually landed at the *bottom* (a closed,
+     rounded "∩" dome up top, two legs dangling open at the bottom with
+     nothing connecting them — "the pendant isn't even attached to the
+     chain" was the exact, correct symptom reported). Caught and fixed
+     2026-10-04 by rendering the same 8 candidate rotation values side by
+     side with an unambiguous top/bottom marker and visually confirming
+     which one actually reads as "∪" (open top, closed bottom) rather
+     than trusting a single render by eye — the earlier "fixed, verified"
+     screenshots from this same investigation were themselves misread at
+     least twice, which is why a side-by-side comparison mattered more
+     than one more careful look. Re-uploaded onto the pilot item through
+     the real admin tool; no application code changed, this was purely
+     the uploaded asset.
+
+     Still a procedural placeholder, not real jewelry geometry — the
+     underlying "needs a genuinely realistic replacement" problem is
+     unchanged, this only fixes the shape reading as the wrong *kind* of
+     object (and now, right-side-up). Needs a genuinely realistic
+     replacement before further testing is useful: either (a)
+     commission/scan a real 3D model of the actual `18K Gold Ruby
+     Pendant` (the real fix, and the content-production work this whole
+     feature was always going to need — see the "hard prerequisite" note
+     above), or (b) in the meantime, source one well-made reference GLB
+     necklace/pendant model (a decent free/CC0 one, properly
+     chain-and-stone-shaped, not primitives).
+  3. ~~**None of this has been confirmed against a real face on a real
+     device yet.**~~ — extensively confirmed now (2026-10-03/04), via a
+     purpose-built live calibration mode: `ArTryOnOverlay.tsx` reads
+     `?arDebug=1` off the product page URL and shows a slider for the
+     drop-below-chin fraction, a slider for overall size, and a full
+     landmark visualization (every detected face point, the four actually
+     used ones colored, the forehead→chin and chin→anchor reference
+     lines) plus — loading MediaPipe's `PoseLandmarker` a second time,
+     debug-only — the full body skeleton (shoulders/arms/hips) as a real,
+     not-guessed-from-the-face size reference. Several real-device rounds
+     through this found and fixed actual bugs, not just bad tuning: the
+     original `NECK_DROP_FRACTION`/`BASE_MODEL_SIZE` values rendered the
+     piece landing on the chest and spanning past the shoulders; one
+     close/low selfie framing pushed the computed anchor entirely past
+     the bottom of the frame (nothing rendered) until the drop fraction
+     was recalibrated from landmark coordinates read directly off a
+     debug session, not guessed. Current baseline: `NECK_DROP_FRACTION =
+     0.1`, `BASE_MODEL_SIZE = 0.066` (both in `src/lib/ar/neck-anchor.ts`
+     / `ArTryOnOverlay.tsx`) — reads as plausible on the one real device
+     tested so far, not yet confirmed as right for a typical/more
+     distant selfie framing (every test so far has been an unusually
+     close/low framing on one person's phone). Worth another look once
+     the model itself is a real scan, since right now a placeholder's own
+     proportions are part of what's being judged.
 
 ## Growth & trust (competitor research, 2026-09-24)
 
