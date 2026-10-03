@@ -53,6 +53,14 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
   const [debugMode] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("arDebug") === "1");
   const [dropFraction, setDropFraction] = useState(NECK_DROP_FRACTION);
   const dropFractionRef = useRef(NECK_DROP_FRACTION);
+  // Multiplies the final rendered size (on top of BASE_MODEL_SIZE and the
+  // live face-distance scale) — a separate axis from dropFraction, since
+  // real-device testing found the piece rendering enormous (spanning past
+  // the shoulders) independent of whether its vertical position was
+  // right, most likely because BASE_MODEL_SIZE/REFERENCE_FACE_WIDTH were
+  // tuned against a more typical selfie distance than an extreme close-up.
+  const [sizeMultiplier, setSizeMultiplier] = useState(1);
+  const sizeMultiplierRef = useRef(1);
   const debugMarkerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -159,7 +167,7 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
           const anchor = computeNeckAnchor(forehead, chin, leftFace, rightFace, dropFractionRef.current);
           piece.position.set(anchor.x, anchor.y, 0);
           piece.rotation.z = anchor.rotationRad;
-          const s = BASE_MODEL_SIZE * anchor.scale;
+          const s = BASE_MODEL_SIZE * anchor.scale * sizeMultiplierRef.current;
           piece.scale.set(s, s, s);
           piece.visible = true;
           setTracking(true);
@@ -243,14 +251,15 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
         )}
 
         {debugMode && (
-          <div className="absolute left-3 top-16 z-10 w-56 rounded-lg bg-black/70 p-3 text-white">
+          <div className="absolute left-3 top-16 z-10 w-60 rounded-lg bg-black/70 p-3 text-white">
             <p className="text-[10px] uppercase tracking-wide text-white/60">Calibration (debug only)</p>
-            <p className="mt-1 text-xs">
+
+            <p className="mt-2 text-xs">
               Drop fraction: <span className="font-mono">{dropFraction.toFixed(2)}</span>
             </p>
             <input
               type="range"
-              min={0.2}
+              min={-0.3}
               max={2.5}
               step={0.05}
               value={dropFraction}
@@ -261,7 +270,27 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
               }}
               className="mt-1 w-full"
             />
-            <p className="mt-1 text-[10px] text-white/50">Nudge until the cyan crosshair sits right where the chain should rest, then report this number back.</p>
+            <p className="mt-1 text-[10px] text-white/50">Nudge until the cyan crosshair sits right where the chain should rest.</p>
+
+            <p className="mt-3 text-xs">
+              Size: <span className="font-mono">{sizeMultiplier.toFixed(2)}×</span>
+            </p>
+            <input
+              type="range"
+              min={0.1}
+              max={2}
+              step={0.05}
+              value={sizeMultiplier}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                sizeMultiplierRef.current = v;
+                setSizeMultiplier(v);
+              }}
+              className="mt-1 w-full"
+            />
+            <p className="mt-1 text-[10px] text-white/50">Shrink/grow until the necklace is proportioned to your neck, not spanning your whole chest.</p>
+
+            <p className="mt-2 text-[10px] text-white/50">Report both numbers back once they look right.</p>
           </div>
         )}
 
