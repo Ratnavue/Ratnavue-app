@@ -719,6 +719,21 @@ shipped (`lib/analytics.ts`, `computeProfit`).*
      above), or (b) in the meantime, source one well-made reference GLB
      necklace/pendant model (a decent free/CC0 one, properly
      chain-and-stone-shaped, not primitives).
+
+     **Sized to a real measurement (2026-10-04)**, per direct request
+     ("if pendant is 5x5cm it should be there as it is based on the
+     size"): the old single eyeballed `BASE_MODEL_SIZE` constant is gone
+     — `loadModel()` now looks for a GLTF node named `"pendant"` and
+     measures it as a fraction of the whole model, then sizes everything
+     from `PENDANT_TARGET_CM` (5cm, this placeholder's assumed size) and
+     an assumed `REFERENCE_FACE_WIDTH_CM` (13.5cm average adult
+     cheek-to-cheek width — not measured for any specific customer).
+     Works for any future model that tags its own calibration part the
+     same way. **Follow-up**: a real production piece should carry its
+     own physical dimensions on the `JewelryPiece` record (no such field
+     exists yet) instead of a hardcoded page constant, and
+     `REFERENCE_FACE_WIDTH_CM` itself is still an assumed average, not
+     verified against this or any specific user.
   3. ~~**None of this has been confirmed against a real face on a real
      device yet.**~~ — extensively confirmed now (2026-10-03/04), via a
      purpose-built live calibration mode: `ArTryOnOverlay.tsx` reads
