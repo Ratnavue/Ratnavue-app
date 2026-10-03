@@ -7,6 +7,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { FilesetResolver, FaceLandmarker, type FaceLandmarkerResult } from "@mediapipe/tasks-vision";
 import { computeNeckAnchor } from "@/lib/ar/neck-anchor";
+import { computeModelPlacement } from "@/lib/ar/model-placement";
 
 // Pinned to the installed npm package's own version so the WASM runtime
 // fetched from the CDN always matches the JS API surface this code was
@@ -15,10 +16,11 @@ import { computeNeckAnchor } from "@/lib/ar/neck-anchor";
 // on Google's CDN at runtime.
 const WASM_BASE = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm";
 // Detects the face first (478 points, including the jaw/chin), then
-// neck-anchor.ts derives the neck from three of those points — a far more
+// neck-anchor.ts derives the neck from four of those points — a far more
 // direct anchor than the pose tracker's shoulder landmarks this used
 // before (see TODO.md's AR follow-up note on why that changed).
 const FACE_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task";
+const FOREHEAD_INDEX = 10;
 const CHIN_INDEX = 152;
 const LEFT_FACE_INDEX = 234;
 const RIGHT_FACE_INDEX = 454;
@@ -137,11 +139,12 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
         }
 
         const landmarks = result.faceLandmarks[0];
+        const forehead = landmarks?.[FOREHEAD_INDEX];
         const chin = landmarks?.[CHIN_INDEX];
         const leftFace = landmarks?.[LEFT_FACE_INDEX];
         const rightFace = landmarks?.[RIGHT_FACE_INDEX];
-        if (chin && leftFace && rightFace) {
-          const anchor = computeNeckAnchor(chin, leftFace, rightFace);
+        if (forehead && chin && leftFace && rightFace) {
+          const anchor = computeNeckAnchor(forehead, chin, leftFace, rightFace);
           piece.position.set(anchor.x, anchor.y, 0);
           piece.rotation.z = anchor.rotationRad;
           const s = BASE_MODEL_SIZE * anchor.scale;
@@ -277,28 +280,33 @@ function OverlayMessage({ icon, message, action }: { icon?: React.ReactNode; mes
 
 /** Loads the GLB and normalizes its scale/position so computeNeckAnchor's
  * scale=1 reads consistently regardless of how the source file happened
- * to be authored (its own units, an off-center origin, etc.) — recenters
- * on its own bounding-box center and scales its largest dimension to 1
- * world unit, so BASE_MODEL_SIZE above is the only place piece size is
- * actually tuned. */
+ * to be authored (its own units, an off-center origin, etc.) — centers it
+ * horizontally but anchors it at its own TOP vertically (see
+ * computeModelPlacement's own comment for why: a hanging necklace should
+ * render at-or-below the neck point, not straddle it), and scales its
+ * largest dimension to 1 world unit, so BASE_MODEL_SIZE above is the only
+ * place piece size is actually tuned. */
 async function loadModel(url: string): Promise<THREE.Object3D> {
   const loader = new GLTFLoader();
   const gltf = await loader.loadAsync(url);
   const root = gltf.scene;
 
-  const box = new THREE.Box3().setFromObject(root);
-  const size = new THREE.Vector3();
-  box.getSize(size);
-  const center = new THREE.Vector3();
-  box.getCenter(center);
+  // `true` = precise mode: the default walks the object's own LOCAL
+  // bounding box and transforms just its 8 corners by the world matrix,
+  // which badly over-estimates the box for anything with a rotation in
+  // its hierarchy (confirmed while building the current placeholder: a
+  // ~45°-rotated mesh came out ~sqrt(2)x too big that way). Precise mode
+  // walks the actual vertex positions instead.
+  const box = new THREE.Box3().setFromObject(root, true);
+
+  const placement = computeModelPlacement(box);
 
   const wrapper = new THREE.Group();
-  root.position.sub(center);
+  root.position.x += placement.offset.x;
+  root.position.y += placement.offset.y;
+  root.position.z += placement.offset.z;
   wrapper.add(root);
-
-  const largest = Math.max(size.x, size.y, size.z, 1e-6);
-  const normalizeScale = 1 / largest;
-  wrapper.scale.setScalar(normalizeScale);
+  wrapper.scale.setScalar(placement.scale);
 
   return wrapper;
 }

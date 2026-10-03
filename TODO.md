@@ -604,20 +604,43 @@ shipped (`lib/analytics.ts`, `computeProfit`).*
   **Real-device feedback (2026-10-02, tried on an actual phone) — two
   problems, both expected given what shipped was explicitly a pilot, but
   both need real fixes before this is customer-facing:**
-  1. ~~**Tracking doesn't reliably find the face/neck to anchor the
-     piece.**~~ — the tracking swap is done (2026-10-03): `ArTryOnOverlay.tsx`
-     now runs MediaPipe's **`FaceLandmarker`** (478 face points) instead of
-     `PoseLandmarker`'s shoulder landmarks, and `src/lib/ar/neck-anchor.ts`
-     derives the neck from three of those points (the chin, landmark 152,
-     plus the two face-edge/cheek points, 234/454) — face first, neck
-     second, same order the piece gets placed in. `NECK_DROP_FRACTION`/
-     `REFERENCE_FACE_WIDTH` replace the old shoulder-based constants, still
-     "tuned by eye, not measured" placeholders (unit tests in
-     `neck-anchor.test.ts` check the math is internally consistent, not
-     that the tuning reads right on a real face — that still needs a real
-     phone to judge). **Not yet done, still worth it:**
-     - Recalibrate `NECK_DROP_FRACTION`/`REFERENCE_FACE_WIDTH` against real
-       recorded video of a person, not guessed.
+  1. **Tracking doesn't reliably find the face/neck to anchor the
+     piece.** First fix (2026-10-03): swapped `PoseLandmarker`'s shoulder
+     landmarks for MediaPipe's **`FaceLandmarker`** (478 face points),
+     with `src/lib/ar/neck-anchor.ts` deriving the neck from the chin
+     landmark — face first, neck second. **Still reported wrong after
+     that first fix** ("pendant lies on my chin, and the chain looks like
+     a bangle") — two more real bugs found and fixed the same day:
+     - The drop-below-chin offset was computed from face *width*
+       (measured on the video's x-axis) and added directly to a
+       y-coordinate — but a video frame's width and height aren't equal,
+       so an x-measured distance doesn't mean the same thing applied as a
+       y-offset. Now uses face *height* (forehead landmark 10 to chin
+       152, both already on the y-axis — no unit mismatch) and a much
+       larger, deliberately generous `NECK_DROP_FRACTION` (1.1, up from
+       0.55) given it was still landing on the chin even before this fix.
+     - `loadModel()`'s `THREE.Box3.setFromObject(root)` (no `precise`
+       flag) was found to badly over-estimate the bounding box for any
+       mesh with a rotation in its hierarchy — confirmed directly while
+       rebuilding the placeholder: a ~45°-rotated part came out ~√2×
+       inflated. That skewed both the model's recentering and its scale.
+       Now passes `precise: true`. Separately, the recentering itself
+       changed from "center the model on the neck anchor" (half the
+       model renders *above* the anchor — i.e. above the chin, which is
+       exactly the reported bug) to "anchor the model's own *top*", via
+       a new pure, unit-tested helper (`src/lib/ar/model-placement.ts`)
+       — a hanging necklace should render at-or-below the neck point, the
+       same way a real one hangs down from wherever it rests.
+     Both fixes verified by rendering the model through the exact same
+     camera/recentering logic in a scratch harness and visually
+     confirming the anchor point now sits right at the chain (not
+     floating above it) with the pendant hanging below — see problem 2
+     below for what that harness also fixed. 14 unit tests total between
+     `neck-anchor.test.ts` and the new `model-placement.test.ts`.
+     **Still not done, still worth it** (unchanged from before — these
+     need a real phone to judge, not more code):
+     - Recalibrate `NECK_DROP_FRACTION`/`REFERENCE_FACE_WIDTH` against
+       real recorded video of a person, not guessed.
      - Check `delegate: "GPU"` in `ArTryOnOverlay.tsx`'s
        `FaceLandmarker.createFromOptions` call is actually succeeding on
        real phone hardware rather than silently failing/falling back —
@@ -628,20 +651,40 @@ shipped (`lib/analytics.ts`, `computeProfit`).*
        `minFacePresenceConfidence` from MediaPipe's 0.5 defaults if the
        tracker is simply failing to detect a face often enough in normal
        lighting/framing, rather than detecting one in the wrong place.
-  2. **The placeholder 3D model doesn't look like real jewelry** — a
-     torus "chain" + octahedron "pendant" (see `ArModelUploader`'s
-     uploaded file on the pilot pendant) was always meant as a pipeline
-     stand-in, not something to actually evaluate the *feature* by, but
-     it's not good enough even for that — it reads as abstract shapes,
-     not a necklace. Needs a genuinely realistic replacement before
-     further testing is useful: either (a) commission/scan a real 3D
-     model of the actual `18K Gold Ruby Pendant` (the real fix, and the
-     content-production work this whole feature was always going to
-     need — see the "hard prerequisite" note above), or (b) in the
-     meantime, source one well-made reference GLB necklace/pendant model
-     (a decent free/CC0 one, properly chain-and-stone-shaped, not
-     primitives) just to separate "is the placeholder bad" from "is the
-     tracking bad" while problem 1 above is being fixed.
+  2. **The placeholder 3D model doesn't look like real jewelry** — "the
+     chain is like a bangle" (2026-10-03 feedback): the original
+     placeholder's chain was a full closed torus, which reads as a
+     bracelet/ring viewed face-on no matter how it's positioned. Replaced
+     with an *open* torus arc (a "U" shape, gap at the top where the
+     chain would go around behind the neck) with the pendant hanging from
+     its lowest point — built and visually verified in a scratch
+     Three.js/Playwright harness before uploading (screenshot-checked
+     that it actually reads as an open, draped chain, not a ring, and
+     that the pendant hangs below the chain rather than floating beside
+     or above it) — then uploaded onto the pilot item
+     (`18K Gold Ruby Pendant`) through the real admin tool. Still a
+     procedural placeholder, not real jewelry geometry — the underlying
+     "needs a genuinely realistic replacement" problem is unchanged, this
+     only fixes the shape reading as the wrong *kind* of object. Needs a
+     genuinely realistic replacement before further testing is useful:
+     either (a) commission/scan a real 3D model of the actual
+     `18K Gold Ruby Pendant` (the real fix, and the content-production
+     work this whole feature was always going to need — see the "hard
+     prerequisite" note above), or (b) in the meantime, source one
+     well-made reference GLB necklace/pendant model (a decent free/CC0
+     one, properly chain-and-stone-shaped, not primitives) just to
+     separate "is the placeholder bad" from "is the tracking bad" while
+     problem 1 above is being fixed.
+  3. **None of this has been confirmed against a real face on a real
+     device yet** — every fix above was verified as far as automation
+     can: unit tests for the math, and a scratch render harness to
+     visually confirm the model's shape/anchor point by eye. Chromium's
+     fake-camera flags (used for the rest of this feature's automated
+     testing) feed a synthetic clip with no actual face in it, so
+     `FaceLandmarker` has nothing to detect — there's no automated way to
+     confirm the full pipeline (real face in, piece correctly placed on
+     a real neck out). **This needs an actual phone with an actual
+     person in front of it** before calling any of the above done.
 
 ## Growth & trust (competitor research, 2026-09-24)
 
