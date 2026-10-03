@@ -202,6 +202,7 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
         anchor: { x: number; y: number } | null,
         leftShoulder: { x: number; y: number } | null,
         rightShoulder: { x: number; y: number } | null,
+        allPose: { x: number; y: number }[] | null,
       ) {
         if (!debugMode || !debugCanvasRef.current) return;
         const dctx = debugCanvasRef.current.getContext("2d");
@@ -215,6 +216,35 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
             dctx.beginPath();
             dctx.arc(lm.x * w, lm.y * h, 1.5, 0, Math.PI * 2);
             dctx.fill();
+          }
+        }
+        if (allPose) {
+          dctx.fillStyle = "rgba(74,222,128,0.5)";
+          for (const lm of allPose) {
+            dctx.beginPath();
+            dctx.arc(lm.x * w, lm.y * h, 2.5, 0, Math.PI * 2);
+            dctx.fill();
+          }
+          // A basic upper-body skeleton — shoulders/elbows/wrists/hips,
+          // the BlazePose topology's own indices — so the full body
+          // reads as a figure, not just a scatter of dots.
+          const bones: [number, number][] = [
+            [11, 12], // shoulder to shoulder
+            [11, 13], [13, 15], // left arm
+            [12, 14], [14, 16], // right arm
+            [11, 23], [12, 24], // shoulders to hips
+            [23, 24], // hip to hip
+          ];
+          dctx.strokeStyle = "rgba(74,222,128,0.65)";
+          dctx.lineWidth = 2;
+          for (const [a, b] of bones) {
+            const pa = allPose[a];
+            const pb = allPose[b];
+            if (!pa || !pb) continue;
+            dctx.beginPath();
+            dctx.moveTo(pa.x * w, pa.y * h);
+            dctx.lineTo(pb.x * w, pb.y * h);
+            dctx.stroke();
           }
         }
         const dot = (p: { x: number; y: number }, color: string) => {
@@ -282,12 +312,14 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
 
         let leftShoulder: { x: number; y: number } | null = null;
         let rightShoulder: { x: number; y: number } | null = null;
+        let allPose: { x: number; y: number }[] | null = null;
         if (poseLandmarker) {
           try {
             const poseResult: PoseLandmarkerResult = poseLandmarker.detectForVideo(video, performance.now());
             const poseLandmarks = poseResult.landmarks[0];
             leftShoulder = poseLandmarks?.[LEFT_SHOULDER_INDEX] ?? null;
             rightShoulder = poseLandmarks?.[RIGHT_SHOULDER_INDEX] ?? null;
+            allPose = poseLandmarks ?? null;
           } catch {
             // Debug-only aid — a failed pose read just means no green
             // shoulder dots this frame, never blocks face tracking/render.
@@ -312,12 +344,12 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
             debugMarkerRef.current.style.top = `${anchor.y * 100}%`;
             debugMarkerRef.current.style.display = "block";
           }
-          drawDebugOverlay(landmarks, forehead, chin, leftFace, rightFace, anchor, leftShoulder, rightShoulder);
+          drawDebugOverlay(landmarks, forehead, chin, leftFace, rightFace, anchor, leftShoulder, rightShoulder, allPose);
         } else {
           piece.visible = false;
           setTracking(false);
           if (debugMarkerRef.current) debugMarkerRef.current.style.display = "none";
-          drawDebugOverlay(landmarks, null, null, null, null, null, leftShoulder, rightShoulder);
+          drawDebugOverlay(landmarks, null, null, null, null, null, leftShoulder, rightShoulder, allPose);
         }
 
         renderer.render(scene, camera);
@@ -441,9 +473,9 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
                 <span className="text-cyan-400">—</span> face height &nbsp; <span className="text-pink-400">┄</span> the drop
               </p>
               <p>
-                <span className="text-green-400">●</span> shoulders (real body tracking, not guessed from the face)
+                <span className="text-green-400">●</span> full body skeleton (shoulders/arms/hips — real tracking, not guessed from the face)
               </p>
-              <p className="text-white/40">Faint white dots = everything the tracker sees on your face. No green dots = the body tracker could not start on this device, or your shoulders are not in frame.</p>
+              <p className="text-white/40">Faint white dots = everything the tracker sees on your face. No green = the body tracker could not start on this device, or your upper body is not in frame.</p>
             </div>
 
             <p className="mt-2 text-[10px] text-white/50">Report both numbers back once they look right — and whether the colored dots actually land on your forehead/chin/cheeks.</p>
