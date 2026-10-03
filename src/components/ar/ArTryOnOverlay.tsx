@@ -66,6 +66,12 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
   const [sizeMultiplier, setSizeMultiplier] = useState(0.3);
   const sizeMultiplierRef = useRef(0.3);
   const debugMarkerRef = useRef<HTMLDivElement>(null);
+  // A plain 2D overlay (not the Three.js canvas) for drawing every
+  // detected face landmark plus the chin→anchor line — lets whoever's
+  // calibrating see what the tracker actually found, not just the final
+  // computed result, so a bad landmark read is distinguishable from a
+  // bad drop/size number.
+  const debugCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -116,6 +122,11 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setSize(container.clientWidth, container.clientHeight);
 
+      if (debugMode && debugCanvasRef.current) {
+        debugCanvasRef.current.width = container.clientWidth;
+        debugCanvasRef.current.height = container.clientHeight;
+      }
+
       let piece: THREE.Object3D | null = null;
       try {
         piece = await loadModel(modelUrl);
@@ -150,6 +161,74 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
 
       setStatus("ready");
 
+      /** Draws every detected face landmark (faint dots), the four used
+       * ones (colored), the forehead→chin line (face height, cyan) and
+       * the chin→anchor line (the drop, pink) onto a plain 2D overlay —
+       * debug-only, so a bad landmark read is visually distinguishable
+       * from a bad drop/size number instead of guessing which is wrong. */
+      function drawDebugOverlay(
+        all: { x: number; y: number }[] | undefined,
+        forehead: { x: number; y: number } | null,
+        chin: { x: number; y: number } | null,
+        leftFace: { x: number; y: number } | null,
+        rightFace: { x: number; y: number } | null,
+        anchor: { x: number; y: number } | null,
+      ) {
+        if (!debugMode || !debugCanvasRef.current) return;
+        const dctx = debugCanvasRef.current.getContext("2d");
+        if (!dctx) return;
+        const w = debugCanvasRef.current.width;
+        const h = debugCanvasRef.current.height;
+        dctx.clearRect(0, 0, w, h);
+        if (all) {
+          dctx.fillStyle = "rgba(255,255,255,0.4)";
+          for (const lm of all) {
+            dctx.beginPath();
+            dctx.arc(lm.x * w, lm.y * h, 1.5, 0, Math.PI * 2);
+            dctx.fill();
+          }
+        }
+        const dot = (p: { x: number; y: number }, color: string) => {
+          dctx.fillStyle = color;
+          dctx.beginPath();
+          dctx.arc(p.x * w, p.y * h, 6, 0, Math.PI * 2);
+          dctx.fill();
+          dctx.strokeStyle = "rgba(0,0,0,0.6)";
+          dctx.lineWidth = 1;
+          dctx.stroke();
+        };
+        if (forehead) dot(forehead, "#22d3ee");
+        if (chin) dot(chin, "#ef4444");
+        if (leftFace) dot(leftFace, "#facc15");
+        if (rightFace) dot(rightFace, "#facc15");
+        if (forehead && chin) {
+          dctx.strokeStyle = "#22d3ee";
+          dctx.lineWidth = 2;
+          dctx.beginPath();
+          dctx.moveTo(forehead.x * w, forehead.y * h);
+          dctx.lineTo(chin.x * w, chin.y * h);
+          dctx.stroke();
+        }
+        if (leftFace && rightFace) {
+          dctx.strokeStyle = "#facc15";
+          dctx.lineWidth = 2;
+          dctx.beginPath();
+          dctx.moveTo(leftFace.x * w, leftFace.y * h);
+          dctx.lineTo(rightFace.x * w, rightFace.y * h);
+          dctx.stroke();
+        }
+        if (chin && anchor) {
+          dctx.strokeStyle = "#f472b6";
+          dctx.lineWidth = 2;
+          dctx.setLineDash([4, 4]);
+          dctx.beginPath();
+          dctx.moveTo(chin.x * w, chin.y * h);
+          dctx.lineTo(anchor.x * w, anchor.y * h);
+          dctx.stroke();
+          dctx.setLineDash([]);
+        }
+      }
+
       function renderFrame() {
         rafId = requestAnimationFrame(renderFrame);
         if (!video || !faceLandmarker || !renderer || !piece) return;
@@ -180,10 +259,12 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
             debugMarkerRef.current.style.top = `${anchor.y * 100}%`;
             debugMarkerRef.current.style.display = "block";
           }
+          drawDebugOverlay(landmarks, forehead, chin, leftFace, rightFace, anchor);
         } else {
           piece.visible = false;
           setTracking(false);
           if (debugMarkerRef.current) debugMarkerRef.current.style.display = "none";
+          drawDebugOverlay(landmarks, null, null, null, null, null);
         }
 
         renderer.render(scene, camera);
@@ -205,7 +286,9 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
       faceLandmarker?.close();
       renderer?.dispose();
     };
-  }, [modelUrl]);
+    // debugMode never changes after mount (its useState has no setter
+    // call anywhere) — listed for exhaustive-deps, not because it varies.
+  }, [modelUrl, debugMode]);
 
   function handleCapture() {
     const video = videoRef.current;
@@ -237,6 +320,7 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
       <div ref={containerRef} className="relative h-full w-full overflow-hidden">
         <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover [transform:scaleX(-1)]" />
         <canvas ref={canvasRef} className="absolute inset-0 h-full w-full [transform:scaleX(-1)]" />
+        {debugMode && <canvas ref={debugCanvasRef} className="pointer-events-none absolute inset-0 h-full w-full [transform:scaleX(-1)]" />}
 
         {debugMode && (
           // Same scaleX(-1) as the video/canvas above so it lines up with
@@ -294,7 +378,18 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
             />
             <p className="mt-1 text-[10px] text-white/50">Shrink/grow until the necklace is proportioned to your neck, not spanning your whole chest.</p>
 
-            <p className="mt-2 text-[10px] text-white/50">Report both numbers back once they look right.</p>
+            <div className="mt-3 space-y-1 border-t border-white/20 pt-2 text-[10px] text-white/70">
+              <p className="text-white/50">What the dots mean:</p>
+              <p>
+                <span className="text-cyan-400">●</span> forehead &nbsp; <span className="text-red-500">●</span> chin &nbsp; <span className="text-yellow-400">●</span> face edges
+              </p>
+              <p>
+                <span className="text-cyan-400">—</span> face height &nbsp; <span className="text-pink-400">┄</span> the drop
+              </p>
+              <p className="text-white/40">Faint white dots = everything the tracker sees on your face.</p>
+            </div>
+
+            <p className="mt-2 text-[10px] text-white/50">Report both numbers back once they look right — and whether the colored dots actually land on your forehead/chin/cheeks.</p>
           </div>
         )}
 
