@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { X, Download, Loader2, RotateCcw } from "lucide-react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { FilesetResolver, PoseLandmarker, type PoseLandmarkerResult } from "@mediapipe/tasks-vision";
+import { FilesetResolver, FaceLandmarker, type FaceLandmarkerResult } from "@mediapipe/tasks-vision";
 import { computeNeckAnchor } from "@/lib/ar/neck-anchor";
 
 // Pinned to the installed npm package's own version so the WASM runtime
@@ -14,14 +14,17 @@ import { computeNeckAnchor } from "@/lib/ar/neck-anchor";
 // these two CDN assets under this app's own domain instead of depending
 // on Google's CDN at runtime.
 const WASM_BASE = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm";
-// The "lite" pose model — fastest variant, and shoulder landmarks are all
-// this needs (not fine-grained body tracking).
-const POSE_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task";
-const LEFT_SHOULDER_INDEX = 11;
-const RIGHT_SHOULDER_INDEX = 12;
+// Detects the face first (478 points, including the jaw/chin), then
+// neck-anchor.ts derives the neck from three of those points — a far more
+// direct anchor than the pose tracker's shoulder landmarks this used
+// before (see TODO.md's AR follow-up note on why that changed).
+const FACE_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task";
+const CHIN_INDEX = 152;
+const LEFT_FACE_INDEX = 234;
+const RIGHT_FACE_INDEX = 454;
 
 // How big the piece renders at computeNeckAnchor's scale=1 (a "typical"
-// selfie-distance shoulder width) — the model's own geometry is first
+// selfie-distance face width) — the model's own geometry is first
 // normalized to a 1-unit bounding box (see loadModel below), then scaled
 // by this constant times the live anchor scale. Tuned by eye against the
 // placeholder model; revisit once this is tried against a real one.
@@ -41,7 +44,7 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
   useEffect(() => {
     let cancelled = false;
     let stream: MediaStream | null = null;
-    let poseLandmarker: PoseLandmarker | null = null;
+    let faceLandmarker: FaceLandmarker | null = null;
     let renderer: THREE.WebGLRenderer | null = null;
     let rafId: number | null = null;
 
@@ -105,10 +108,10 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
       if (cancelled) return;
 
       try {
-        poseLandmarker = await PoseLandmarker.createFromOptions(fileset, {
-          baseOptions: { modelAssetPath: POSE_MODEL_URL, delegate: "GPU" },
+        faceLandmarker = await FaceLandmarker.createFromOptions(fileset, {
+          baseOptions: { modelAssetPath: FACE_MODEL_URL, delegate: "GPU" },
           runningMode: "VIDEO",
-          numPoses: 1,
+          numFaces: 1,
         });
       } catch {
         if (!cancelled) {
@@ -123,21 +126,22 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
 
       function renderFrame() {
         rafId = requestAnimationFrame(renderFrame);
-        if (!video || !poseLandmarker || !renderer || !piece) return;
+        if (!video || !faceLandmarker || !renderer || !piece) return;
         if (video.readyState < 2) return;
 
-        let result: PoseLandmarkerResult;
+        let result: FaceLandmarkerResult;
         try {
-          result = poseLandmarker.detectForVideo(video, performance.now());
+          result = faceLandmarker.detectForVideo(video, performance.now());
         } catch {
           return;
         }
 
-        const landmarks = result.landmarks[0];
-        const left = landmarks?.[LEFT_SHOULDER_INDEX];
-        const right = landmarks?.[RIGHT_SHOULDER_INDEX];
-        if (left && right) {
-          const anchor = computeNeckAnchor(left, right);
+        const landmarks = result.faceLandmarks[0];
+        const chin = landmarks?.[CHIN_INDEX];
+        const leftFace = landmarks?.[LEFT_FACE_INDEX];
+        const rightFace = landmarks?.[RIGHT_FACE_INDEX];
+        if (chin && leftFace && rightFace) {
+          const anchor = computeNeckAnchor(chin, leftFace, rightFace);
           piece.position.set(anchor.x, anchor.y, 0);
           piece.rotation.z = anchor.rotationRad;
           const s = BASE_MODEL_SIZE * anchor.scale;
@@ -165,7 +169,7 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
       cancelled = true;
       if (rafId !== null) cancelAnimationFrame(rafId);
       stream?.getTracks().forEach((t) => t.stop());
-      poseLandmarker?.close();
+      faceLandmarker?.close();
       renderer?.dispose();
     };
   }, [modelUrl]);
@@ -210,7 +214,7 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
 
         {status === "ready" && !tracking && (
           <p className="absolute left-1/2 top-1/2 w-64 -translate-x-1/2 -translate-y-1/2 text-center text-sm text-white/90">
-            Step back a little so your shoulders are in frame.
+            Make sure your face is fully in frame and well-lit.
           </p>
         )}
 

@@ -604,36 +604,30 @@ shipped (`lib/analytics.ts`, `computeProfit`).*
   **Real-device feedback (2026-10-02, tried on an actual phone) — two
   problems, both expected given what shipped was explicitly a pilot, but
   both need real fixes before this is customer-facing:**
-  1. **Tracking doesn't reliably find the face/neck to anchor the piece.**
-     This pilot only ever used `PoseLandmarker`'s two *shoulder*
-     landmarks (11/12) as a proxy for "where the neck is" — shoulders are
-     a much coarser, less reliable signal than the neck/jaw area itself,
-     and the position/scale constants in `src/lib/ar/neck-anchor.ts`
-     (`NECK_OFFSET_FRACTION`, `REFERENCE_SHOULDER_WIDTH`) were explicitly
-     "tuned by eye, not measured" placeholders (see that file's own
-     comments) — never actually calibrated against a real phone. Likely
-     fix, worth trying in this order:
-     - Switch to (or add) MediaPipe's **`FaceLandmarker`** instead of/
-       alongside `PoseLandmarker` — it gives 478 face points including
-       jaw/chin, a far more direct anchor for "where a necklace sits"
-       than inferring it from shoulder width.
-     - Recalibrate `NECK_OFFSET_FRACTION`/`REFERENCE_SHOULDER_WIDTH` (or
-       their face-landmark equivalents) against real recorded video of a
-       person, not guessed — the unit tests in `neck-anchor.test.ts`
-       check the *math* is internally consistent, not that the tuning
-       constants are visually correct, which is exactly the gap that
-       showed up here.
+  1. ~~**Tracking doesn't reliably find the face/neck to anchor the
+     piece.**~~ — the tracking swap is done (2026-10-03): `ArTryOnOverlay.tsx`
+     now runs MediaPipe's **`FaceLandmarker`** (478 face points) instead of
+     `PoseLandmarker`'s shoulder landmarks, and `src/lib/ar/neck-anchor.ts`
+     derives the neck from three of those points (the chin, landmark 152,
+     plus the two face-edge/cheek points, 234/454) — face first, neck
+     second, same order the piece gets placed in. `NECK_DROP_FRACTION`/
+     `REFERENCE_FACE_WIDTH` replace the old shoulder-based constants, still
+     "tuned by eye, not measured" placeholders (unit tests in
+     `neck-anchor.test.ts` check the math is internally consistent, not
+     that the tuning reads right on a real face — that still needs a real
+     phone to judge). **Not yet done, still worth it:**
+     - Recalibrate `NECK_DROP_FRACTION`/`REFERENCE_FACE_WIDTH` against real
+       recorded video of a person, not guessed.
      - Check `delegate: "GPU"` in `ArTryOnOverlay.tsx`'s
-       `PoseLandmarker.createFromOptions` call is actually succeeding on
+       `FaceLandmarker.createFromOptions` call is actually succeeding on
        real phone hardware rather than silently failing/falling back —
        add a visible diagnostic (or at least a console log) for which
        delegate actually initialized, since the current code has no way
        to tell from the outside.
-     - Consider lowering `minPoseDetectionConfidence`/
-       `minPosePresenceConfidence` from MediaPipe's 0.5 defaults if the
-       tracker is simply failing to detect a valid pose often enough in
-       normal lighting/framing, rather than detecting one in the wrong
-       place.
+     - Consider lowering `minFaceDetectionConfidence`/
+       `minFacePresenceConfidence` from MediaPipe's 0.5 defaults if the
+       tracker is simply failing to detect a face often enough in normal
+       lighting/framing, rather than detecting one in the wrong place.
   2. **The placeholder 3D model doesn't look like real jewelry** — a
      torus "chain" + octahedron "pendant" (see `ArModelUploader`'s
      uploaded file on the pilot pendant) was always meant as a pipeline
