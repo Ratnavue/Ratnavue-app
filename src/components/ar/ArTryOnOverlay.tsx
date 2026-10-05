@@ -6,8 +6,7 @@ import { X, Download, Loader2, RotateCcw } from "lucide-react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { FilesetResolver, FaceLandmarker, PoseLandmarker, type FaceLandmarkerResult, type PoseLandmarkerResult } from "@mediapipe/tasks-vision";
-import { computeNeckAnchor, NECK_DROP_FRACTION, REFERENCE_FACE_WIDTH } from "@/lib/ar/neck-anchor";
-import { computeModelPlacement, fractionOfWhole } from "@/lib/ar/model-placement";
+import { computeNecklaceAnchor, NECK_BASE_FRACTION, NECKLACE_WIDTH_MULTIPLIER } from "@/lib/ar/neck-anchor";
 
 // Pinned to the installed npm package's own version so the WASM runtime
 // fetched from the CDN always matches the JS API surface this code was
@@ -15,47 +14,36 @@ import { computeModelPlacement, fractionOfWhole } from "@/lib/ar/model-placement
 // these two CDN assets under this app's own domain instead of depending
 // on Google's CDN at runtime.
 const WASM_BASE = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm";
-// Detects the face first (478 points, including the jaw/chin), then
-// neck-anchor.ts derives the neck from four of those points — a far more
-// direct anchor than the pose tracker's shoulder landmarks this used
-// before (see TODO.md's AR follow-up note on why that changed).
 const FACE_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task";
-const FOREHEAD_INDEX = 10;
 const CHIN_INDEX = 152;
 const LEFT_FACE_INDEX = 234;
 const RIGHT_FACE_INDEX = 454;
-// Debug-only: shoulder landmarks from the pose tracker this used to use
-// for production anchoring (see the note above) — loaded again here
-// purely so `?arDebug=1` can draw them as a real body-tracking reference
-// alongside the face dots, to judge necklace size/drop against actual
-// shoulder position instead of guessing from face proportions alone.
-// Never loaded for a real customer — only when debugMode is true.
+// The necklace is anchored between the chin and the shoulder line (see
+// neck-anchor.ts's computeNecklaceAnchor) — shoulders are tracked via a
+// SECOND model, always loaded (not debug-only anymore; this pilot's
+// real-device testing found shoulder tracking reliable enough to be a
+// primary input, not just a debug reference — see TODO.md).
 const POSE_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task";
 const LEFT_SHOULDER_INDEX = 11;
 const RIGHT_SHOULDER_INDEX = 12;
 
-// Fallback size (same meaning/history as before) for a model that has no
-// "pendant"-named calibration part — real-world-cm sizing below is
-// preferred whenever a model provides one.
-const FALLBACK_BASE_MODEL_SIZE = 0.066;
-
-// Real-world-cm size calibration (2026-10-04): rather than eyeball how
-// big the whole piece should render, size ONE named part (the pendant)
-// to its actual physical dimension, and let the rest of the model follow
-// from its own proportions. REFERENCE_FACE_WIDTH_CM is the real-world
-// assumption this rests on — an average adult bizygomatic (cheek-to-
-// cheek) width, NOT measured for any specific customer, so this is only
-// as accurate as that average is for whoever's using it. PENDANT_TARGET_CM
-// is this one pilot placeholder's intended real size (customer-specified:
-// "if pendant is 5x5cm it should be there as it is") — a real future
-// model should carry its own physical size on the JewelryPiece record
-// instead of a hardcoded page constant; flagged in TODO.md.
+// Real-world-cm size calibration for the pendant specifically (the chain
+// is sized directly from the live-measured face width instead — see
+// NECKLACE_WIDTH_MULTIPLIER). REFERENCE_FACE_WIDTH_CM is an average adult
+// bizygomatic (cheek-to-cheek) width — NOT measured for any specific
+// customer. PENDANT_TARGET_CM is this one pilot placeholder's intended
+// real size (customer-specified: "if pendant is 5x5cm it should be there
+// as it is") — a real future model should carry its own physical size on
+// the JewelryPiece record instead of a hardcoded page constant (flagged
+// in TODO.md).
 const REFERENCE_FACE_WIDTH_CM = 13.5;
 const PENDANT_TARGET_CM = 5;
-// Three.js object name the placeholder GLB's pendant mesh is tagged
-// with at export time — loadModel looks for this to find the
-// calibration part; falls back to FALLBACK_BASE_MODEL_SIZE if absent
-// (an older upload, or a future model that doesn't tag one).
+// Three.js object names the placeholder GLB tags its two independently-
+// positioned parts with at export time (see build script referenced in
+// TODO.md) — the chain spans between the neck-anchor points, the pendant
+// hangs from wherever the chain's own live bottom-center ends up, scaled
+// to its real-world cm size independent of the chain's width.
+const CHAIN_NODE_NAME = "chain";
 const PENDANT_NODE_NAME = "pendant";
 
 type Status = "starting" | "denied" | "unsupported" | "loading-model" | "ready" | "error";
@@ -69,29 +57,23 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
   const [tracking, setTracking] = useState(false);
   const [capturedUrl, setCapturedUrl] = useState<string | null>(null);
 
-  // Calibration aid — `?arDebug=1` on the product page URL shows a live
-  // slider for the drop-below-chin fraction plus a crosshair at the
-  // computed anchor, so the exact right number for NECK_DROP_FRACTION
-  // (src/lib/ar/neck-anchor.ts) can be found by nudging it while watching
-  // it against a real neck, instead of guessing blind from a screen away.
-  // Nothing here reaches customers: it's opt-in by URL and never surfaced
-  // in any UI.
+  // Calibration aid — `?arDebug=1` on the product page URL shows live
+  // sliders for the two tuning constants (see neck-anchor.ts) plus a full
+  // landmark visualization, so the exact right numbers can be found by
+  // nudging them while watching against a real neck/body, instead of
+  // guessing blind from a screen away. Nothing here reaches customers:
+  // it's opt-in by URL and never surfaced in any UI.
   const [debugMode] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("arDebug") === "1");
-  const [dropFraction, setDropFraction] = useState(NECK_DROP_FRACTION);
-  const dropFractionRef = useRef(NECK_DROP_FRACTION);
-  // Multiplies the final rendered size on top of the per-model
-  // baseModelSize (now derived from the pendant's real-world cm size,
-  // see loadModel/PENDANT_TARGET_CM) and the live face-distance scale —
-  // a further manual adjustment on top of that calibrated baseline, not
-  // the primary way size gets set anymore. Starts at 1 (no adjustment).
-  const [sizeMultiplier, setSizeMultiplier] = useState(1);
-  const sizeMultiplierRef = useRef(1);
+  const [neckBaseFraction, setNeckBaseFraction] = useState(NECK_BASE_FRACTION);
+  const neckBaseFractionRef = useRef(NECK_BASE_FRACTION);
+  const [widthMultiplier, setWidthMultiplier] = useState(NECKLACE_WIDTH_MULTIPLIER);
+  const widthMultiplierRef = useRef(NECKLACE_WIDTH_MULTIPLIER);
   const debugMarkerRef = useRef<HTMLDivElement>(null);
   // A plain 2D overlay (not the Three.js canvas) for drawing every
-  // detected face landmark plus the chin→anchor line — lets whoever's
+  // detected face/body landmark plus the chin→anchor line — lets whoever's
   // calibrating see what the tracker actually found, not just the final
-  // computed result, so a bad landmark read is distinguishable from a
-  // bad drop/size number.
+  // computed result, so a bad landmark read is distinguishable from a bad
+  // tuning-constant value.
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -128,12 +110,14 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
       await video.play();
       if (cancelled) return;
 
-      // Scene: an orthographic camera spanning exactly [0,1]x[0,1] with
-      // top=0/bottom=1 means a point's Three.js world (x,y) equals its
-      // MediaPipe normalized image (x,y) directly — no projection math
-      // needed to place the piece from a landmark position.
+      // Camera world bounds match the container's actual aspect ratio
+      // (not a fixed [0,1]x[0,1] square) so a world unit means the same
+      // physical on-screen distance on both axes — a uniform scale
+      // otherwise renders stretched on any non-square video (every phone
+      // selfie), since the container is taller than it is wide.
+      const aspect = container.clientHeight / container.clientWidth;
       const scene = new THREE.Scene();
-      const camera = new THREE.OrthographicCamera(0, 1, 0, 1, 0.1, 10);
+      const camera = new THREE.OrthographicCamera(0, 1, 0, aspect, 0.1, 10);
       camera.position.z = 1;
       scene.add(new THREE.AmbientLight(0xffffff, 0.8));
       const key = new THREE.DirectionalLight(0xffffff, 0.6);
@@ -149,12 +133,16 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
         debugCanvasRef.current.height = container.clientHeight;
       }
 
-      let piece: THREE.Object3D | null = null;
-      let pendantFraction: number | null = null;
+      let chain: THREE.Object3D | null = null;
+      let pendant: THREE.Object3D | null = null;
+      let chainAuthoredWidth = 1;
+      let pendantAuthoredSize = 1;
       try {
         const loaded = await loadModel(modelUrl);
-        piece = loaded.piece;
-        pendantFraction = loaded.pendantFraction;
+        chain = loaded.chain;
+        pendant = loaded.pendant;
+        chainAuthoredWidth = loaded.chainAuthoredWidth;
+        pendantAuthoredSize = loaded.pendantAuthoredSize;
       } catch {
         if (!cancelled) {
           setErrorMessage("Could not load this piece's 3D model.");
@@ -162,14 +150,10 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
         }
         return;
       }
-      if (cancelled || !piece) return;
-      piece.visible = false;
-      scene.add(piece);
-      // The per-cm scale this model's pendant implies, derived once at
-      // load time (not per frame) — baseModelSize * anchor.scale is the
-      // same formula as before, just baseModelSize is now computed from
-      // a real physical size instead of hand-tuned.
-      const baseModelSize = pendantFraction ? PENDANT_TARGET_CM * (REFERENCE_FACE_WIDTH / REFERENCE_FACE_WIDTH_CM) / pendantFraction : FALLBACK_BASE_MODEL_SIZE;
+      if (cancelled || !chain || !pendant) return;
+      chain.visible = false;
+      pendant.visible = false;
+      scene.add(chain, pendant);
 
       const [fileset] = await Promise.all([FilesetResolver.forVisionTasks(WASM_BASE)]);
       if (cancelled) return;
@@ -189,35 +173,30 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
       }
       if (cancelled) return;
 
-      // Debug-only, best-effort: if this fails for any reason, the
-      // calibration panel just shows face dots without shoulder dots —
-      // never blocks the real face tracking a customer would see.
-      if (debugMode) {
-        try {
-          poseLandmarker = await PoseLandmarker.createFromOptions(fileset, {
-            baseOptions: { modelAssetPath: POSE_MODEL_URL, delegate: "GPU" },
-            runningMode: "VIDEO",
-            numPoses: 1,
-          });
-        } catch {
-          poseLandmarker = null;
+      try {
+        poseLandmarker = await PoseLandmarker.createFromOptions(fileset, {
+          baseOptions: { modelAssetPath: POSE_MODEL_URL, delegate: "GPU" },
+          runningMode: "VIDEO",
+          numPoses: 1,
+        });
+      } catch {
+        if (!cancelled) {
+          setErrorMessage("Couldn't start the camera tracker on this device.");
+          setStatus("error");
         }
-        if (cancelled) return;
+        return;
       }
+      if (cancelled) return;
 
       setStatus("ready");
 
-      /** Draws every detected face landmark (faint dots), the four used
-       * ones (colored), the forehead→chin line (face height, cyan), the
-       * chin→anchor line (the drop, pink), and — when the debug-only pose
-       * tracker found a body — the two shoulder landmarks plus the line
-       * between them, in green, as a real (not extrapolated) reference
-       * for how big the piece should actually be relative to the body.
-       * Debug-only, so a bad landmark read is visually distinguishable
-       * from a bad drop/size number instead of guessing which is wrong. */
+      /** Draws every detected face/body landmark (faint dots), the
+       * ones actually used (colored), the chin→shoulder-line reference,
+       * and the chin→anchor line onto a plain 2D overlay — debug-only,
+       * so a bad landmark read is visually distinguishable from a bad
+       * tuning-constant value instead of guessing which is wrong. */
       function drawDebugOverlay(
-        all: { x: number; y: number }[] | undefined,
-        forehead: { x: number; y: number } | null,
+        allFace: { x: number; y: number }[] | undefined,
         chin: { x: number; y: number } | null,
         leftFace: { x: number; y: number } | null,
         rightFace: { x: number; y: number } | null,
@@ -232,9 +211,9 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
         const w = debugCanvasRef.current.width;
         const h = debugCanvasRef.current.height;
         dctx.clearRect(0, 0, w, h);
-        if (all) {
+        if (allFace) {
           dctx.fillStyle = "rgba(255,255,255,0.4)";
-          for (const lm of all) {
+          for (const lm of allFace) {
             dctx.beginPath();
             dctx.arc(lm.x * w, lm.y * h, 1.5, 0, Math.PI * 2);
             dctx.fill();
@@ -247,15 +226,15 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
             dctx.arc(lm.x * w, lm.y * h, 2.5, 0, Math.PI * 2);
             dctx.fill();
           }
-          // A basic upper-body skeleton — shoulders/elbows/wrists/hips,
-          // the BlazePose topology's own indices — so the full body
-          // reads as a figure, not just a scatter of dots.
           const bones: [number, number][] = [
-            [11, 12], // shoulder to shoulder
-            [11, 13], [13, 15], // left arm
-            [12, 14], [14, 16], // right arm
-            [11, 23], [12, 24], // shoulders to hips
-            [23, 24], // hip to hip
+            [11, 12],
+            [11, 13],
+            [13, 15],
+            [12, 14],
+            [14, 16],
+            [11, 23],
+            [12, 24],
+            [23, 24],
           ];
           dctx.strokeStyle = "rgba(74,222,128,0.65)";
           dctx.lineWidth = 2;
@@ -278,18 +257,9 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
           dctx.lineWidth = 1;
           dctx.stroke();
         };
-        if (forehead) dot(forehead, "#22d3ee");
         if (chin) dot(chin, "#ef4444");
         if (leftFace) dot(leftFace, "#facc15");
         if (rightFace) dot(rightFace, "#facc15");
-        if (forehead && chin) {
-          dctx.strokeStyle = "#22d3ee";
-          dctx.lineWidth = 2;
-          dctx.beginPath();
-          dctx.moveTo(forehead.x * w, forehead.y * h);
-          dctx.lineTo(chin.x * w, chin.y * h);
-          dctx.stroke();
-        }
         if (leftFace && rightFace) {
           dctx.strokeStyle = "#facc15";
           dctx.lineWidth = 2;
@@ -322,56 +292,66 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
 
       function renderFrame() {
         rafId = requestAnimationFrame(renderFrame);
-        if (!video || !faceLandmarker || !renderer || !piece) return;
+        if (!video || !faceLandmarker || !poseLandmarker || !renderer || !chain || !pendant) return;
         if (video.readyState < 2) return;
 
-        let result: FaceLandmarkerResult;
+        let faceResult: FaceLandmarkerResult;
+        let poseResult: PoseLandmarkerResult;
         try {
-          result = faceLandmarker.detectForVideo(video, performance.now());
+          faceResult = faceLandmarker.detectForVideo(video, performance.now());
+          poseResult = poseLandmarker.detectForVideo(video, performance.now());
         } catch {
           return;
         }
 
-        let leftShoulder: { x: number; y: number } | null = null;
-        let rightShoulder: { x: number; y: number } | null = null;
-        let allPose: { x: number; y: number }[] | null = null;
-        if (poseLandmarker) {
-          try {
-            const poseResult: PoseLandmarkerResult = poseLandmarker.detectForVideo(video, performance.now());
-            const poseLandmarks = poseResult.landmarks[0];
-            leftShoulder = poseLandmarks?.[LEFT_SHOULDER_INDEX] ?? null;
-            rightShoulder = poseLandmarks?.[RIGHT_SHOULDER_INDEX] ?? null;
-            allPose = poseLandmarks ?? null;
-          } catch {
-            // Debug-only aid — a failed pose read just means no green
-            // shoulder dots this frame, never blocks face tracking/render.
-          }
-        }
+        const faceLandmarks = faceResult.faceLandmarks[0];
+        const chinLm = faceLandmarks?.[CHIN_INDEX];
+        const leftFace = faceLandmarks?.[LEFT_FACE_INDEX];
+        const rightFace = faceLandmarks?.[RIGHT_FACE_INDEX];
+        const poseLandmarks = poseResult.landmarks[0];
+        const leftShoulder = poseLandmarks?.[LEFT_SHOULDER_INDEX];
+        const rightShoulder = poseLandmarks?.[RIGHT_SHOULDER_INDEX];
 
-        const landmarks = result.faceLandmarks[0];
-        const forehead = landmarks?.[FOREHEAD_INDEX];
-        const chin = landmarks?.[CHIN_INDEX];
-        const leftFace = landmarks?.[LEFT_FACE_INDEX];
-        const rightFace = landmarks?.[RIGHT_FACE_INDEX];
-        if (forehead && chin && leftFace && rightFace) {
-          const anchor = computeNeckAnchor(forehead, chin, leftFace, rightFace, dropFractionRef.current);
-          piece.position.set(anchor.x, anchor.y, 0);
-          piece.rotation.z = anchor.rotationRad;
-          const s = baseModelSize * anchor.scale * sizeMultiplierRef.current;
-          piece.scale.set(s, s, s);
-          piece.visible = true;
+        if (chinLm && leftFace && rightFace && leftShoulder && rightShoulder) {
+          const anchor = computeNecklaceAnchor(chinLm, leftFace, rightFace, leftShoulder, rightShoulder, aspect, neckBaseFractionRef.current, widthMultiplierRef.current);
+
+          const chainScale = anchor.width / chainAuthoredWidth;
+          chain.position.set(anchor.x, anchor.y * aspect, 0);
+          chain.rotation.z = anchor.rotationRad;
+          chain.scale.setScalar(chainScale);
+          chain.visible = true;
+
+          // Pendant hangs from wherever the chain's own LIVE bottom-center
+          // ends up (after this frame's position/rotation/scale) — not a
+          // fixed offset — so it stays attached to the chain regardless
+          // of how wide/tilted it currently is. Measured fresh each
+          // frame rather than computed analytically: simpler and exactly
+          // right regardless of the chain's specific geometry.
+          const liveChainBox = new THREE.Box3().setFromObject(chain, true);
+          const bottomX = (liveChainBox.min.x + liveChainBox.max.x) / 2;
+          const bottomY = liveChainBox.max.y;
+
+          const faceWidth = anchor.width / widthMultiplierRef.current;
+          const worldUnitsPerCm = faceWidth / REFERENCE_FACE_WIDTH_CM;
+          const pendantWorldSize = PENDANT_TARGET_CM * worldUnitsPerCm;
+          const pendantScale = pendantWorldSize / pendantAuthoredSize;
+          pendant.position.set(bottomX, bottomY, 0.01);
+          pendant.scale.setScalar(pendantScale);
+          pendant.visible = true;
+
           setTracking(true);
           if (debugMarkerRef.current) {
             debugMarkerRef.current.style.left = `${anchor.x * 100}%`;
             debugMarkerRef.current.style.top = `${anchor.y * 100}%`;
             debugMarkerRef.current.style.display = "block";
           }
-          drawDebugOverlay(landmarks, forehead, chin, leftFace, rightFace, anchor, leftShoulder, rightShoulder, allPose);
+          drawDebugOverlay(faceLandmarks, chinLm, leftFace, rightFace, anchor, leftShoulder, rightShoulder, poseLandmarks ?? null);
         } else {
-          piece.visible = false;
+          chain.visible = false;
+          pendant.visible = false;
           setTracking(false);
           if (debugMarkerRef.current) debugMarkerRef.current.style.display = "none";
-          drawDebugOverlay(landmarks, null, null, null, null, null, leftShoulder, rightShoulder, allPose);
+          drawDebugOverlay(faceLandmarks, null, null, null, null, leftShoulder ?? null, rightShoulder ?? null, poseLandmarks ?? null);
         }
 
         renderer.render(scene, camera);
@@ -451,56 +431,53 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
             <p className="text-[10px] uppercase tracking-wide text-white/60">Calibration (debug only)</p>
 
             <p className="mt-2 text-xs">
-              Drop fraction: <span className="font-mono">{dropFraction.toFixed(2)}</span>
+              Neck base: <span className="font-mono">{neckBaseFraction.toFixed(2)}</span>
             </p>
             <input
               type="range"
-              min={-0.3}
-              max={2.5}
-              step={0.05}
-              value={dropFraction}
+              min={0}
+              max={1}
+              step={0.02}
+              value={neckBaseFraction}
               onChange={(e) => {
                 const v = Number(e.target.value);
-                dropFractionRef.current = v;
-                setDropFraction(v);
+                neckBaseFractionRef.current = v;
+                setNeckBaseFraction(v);
               }}
               className="mt-1 w-full"
             />
-            <p className="mt-1 text-[10px] text-white/50">Nudge until the cyan crosshair sits right where the chain should rest.</p>
+            <p className="mt-1 text-[10px] text-white/50">0 = right at the chin, 1 = all the way down at the shoulder line.</p>
 
             <p className="mt-3 text-xs">
-              Size: <span className="font-mono">{sizeMultiplier.toFixed(2)}×</span>
+              Width: <span className="font-mono">{widthMultiplier.toFixed(2)}×</span> face width
             </p>
             <input
               type="range"
-              min={0.02}
-              max={2}
-              step={0.02}
-              value={sizeMultiplier}
+              min={0.5}
+              max={3}
+              step={0.05}
+              value={widthMultiplier}
               onChange={(e) => {
                 const v = Number(e.target.value);
-                sizeMultiplierRef.current = v;
-                setSizeMultiplier(v);
+                widthMultiplierRef.current = v;
+                setWidthMultiplier(v);
               }}
               className="mt-1 w-full"
             />
-            <p className="mt-1 text-[10px] text-white/50">Shrink/grow until the necklace is proportioned to your neck, not spanning your whole chest.</p>
+            <p className="mt-1 text-[10px] text-white/50">Shrink/grow until the chain&apos;s ends land near the jaw, not spanning the whole chest.</p>
 
             <div className="mt-3 space-y-1 border-t border-white/20 pt-2 text-[10px] text-white/70">
               <p className="text-white/50">What the dots mean:</p>
               <p>
-                <span className="text-cyan-400">●</span> forehead &nbsp; <span className="text-red-500">●</span> chin &nbsp; <span className="text-yellow-400">●</span> face edges
+                <span className="text-red-500">●</span> chin &nbsp; <span className="text-yellow-400">●</span> face edges &nbsp; <span className="text-green-400">●</span> body (real tracking)
               </p>
               <p>
-                <span className="text-cyan-400">—</span> face height &nbsp; <span className="text-pink-400">┄</span> the drop
+                <span className="text-pink-400">┄</span> chin → anchor
               </p>
-              <p>
-                <span className="text-green-400">●</span> full body skeleton (shoulders/arms/hips — real tracking, not guessed from the face)
-              </p>
-              <p className="text-white/40">Faint white dots = everything the tracker sees on your face. No green = the body tracker could not start on this device, or your upper body is not in frame.</p>
+              <p className="text-white/40">Faint dots = everything each tracker sees. No green = the body tracker could not start, or your upper body is not in frame.</p>
             </div>
 
-            <p className="mt-2 text-[10px] text-white/50">Report both numbers back once they look right — and whether the colored dots actually land on your forehead/chin/cheeks.</p>
+            <p className="mt-2 text-[10px] text-white/50">Report both numbers back once the chain looks right.</p>
           </div>
         )}
 
@@ -513,7 +490,7 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
 
         {status === "ready" && !tracking && (
           <p className="absolute left-1/2 top-1/2 w-64 -translate-x-1/2 -translate-y-1/2 text-center text-sm text-white/90">
-            Make sure your face is fully in frame and well-lit.
+            Make sure your face and shoulders are fully in frame and well-lit.
           </p>
         )}
 
@@ -574,44 +551,33 @@ function OverlayMessage({ icon, message, action }: { icon?: React.ReactNode; mes
   );
 }
 
-/** Loads the GLB and normalizes its scale/position so computeNeckAnchor's
- * scale=1 reads consistently regardless of how the source file happened
- * to be authored (its own units, an off-center origin, etc.) — centers it
- * horizontally but anchors it at its own TOP vertically (see
- * computeModelPlacement's own comment for why: a hanging necklace should
- * render at-or-below the neck point, not straddle it), and scales its
- * largest dimension to 1 world unit. Also measures the named "pendant"
- * part (if the model tags one — see PENDANT_NODE_NAME) as a fraction of
- * that whole, so the caller can size the piece from a real physical cm
- * measurement instead of an eyeballed constant. */
-async function loadModel(url: string): Promise<{ piece: THREE.Object3D; pendantFraction: number | null }> {
+/** Loads the GLB and finds its two independently-positioned parts by
+ * name (see CHAIN_NODE_NAME/PENDANT_NODE_NAME) — the chain gets stretched
+ * to span the live-measured neck width each frame, the pendant hangs
+ * from wherever the chain's current bottom ends up, scaled to its own
+ * real-world cm size. Each part's own authored size (in the model's
+ * native units) is measured once here, not every frame. */
+async function loadModel(url: string): Promise<{ chain: THREE.Object3D; pendant: THREE.Object3D; chainAuthoredWidth: number; pendantAuthoredSize: number }> {
   const loader = new GLTFLoader();
   const gltf = await loader.loadAsync(url);
   const root = gltf.scene;
 
+  const chain = root.getObjectByName(CHAIN_NODE_NAME);
+  const pendant = root.getObjectByName(PENDANT_NODE_NAME);
+  if (!chain || !pendant) {
+    throw new Error(`Model is missing a "${CHAIN_NODE_NAME}" or "${PENDANT_NODE_NAME}" named part.`);
+  }
+
   // `true` = precise mode: the default walks the object's own LOCAL
   // bounding box and transforms just its 8 corners by the world matrix,
   // which badly over-estimates the box for anything with a rotation in
-  // its hierarchy (confirmed while building the current placeholder: a
+  // its hierarchy (confirmed while building the placeholder: a
   // ~45°-rotated mesh came out ~sqrt(2)x too big that way). Precise mode
   // walks the actual vertex positions instead.
-  const box = new THREE.Box3().setFromObject(root, true);
+  const chainBox = new THREE.Box3().setFromObject(chain, true);
+  const chainAuthoredWidth = chainBox.max.x - chainBox.min.x;
+  const pendantBox = new THREE.Box3().setFromObject(pendant, true);
+  const pendantAuthoredSize = Math.max(pendantBox.max.x - pendantBox.min.x, pendantBox.max.y - pendantBox.min.y);
 
-  let pendantFraction: number | null = null;
-  const pendantNode = root.getObjectByName(PENDANT_NODE_NAME);
-  if (pendantNode) {
-    const pendantBox = new THREE.Box3().setFromObject(pendantNode, true);
-    pendantFraction = fractionOfWhole(pendantBox, box);
-  }
-
-  const placement = computeModelPlacement(box);
-
-  const wrapper = new THREE.Group();
-  root.position.x += placement.offset.x;
-  root.position.y += placement.offset.y;
-  root.position.z += placement.offset.z;
-  wrapper.add(root);
-  wrapper.scale.setScalar(placement.scale);
-
-  return { piece: wrapper, pendantFraction };
+  return { chain, pendant, chainAuthoredWidth, pendantAuthoredSize };
 }

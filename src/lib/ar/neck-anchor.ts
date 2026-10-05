@@ -1,16 +1,26 @@
 // Pure landmark math for the AR try-on overlay, kept free of
 // Three.js/MediaPipe/DOM so it's unit-testable on its own — same "keep
 // the math pure and separately testable" pattern as the Design Studio's
-// shape-ops.ts. Takes four of MediaPipe FaceLandmarker's 478 face points
-// (forehead, chin, and the two face-edge/cheek points) and turns them
-// into where/how big/how tilted the 3D necklace model should render.
+// shape-ops.ts. Takes face landmarks (forehead, chin, cheeks) plus the
+// two shoulder landmarks and turns them into where/how big/how tilted
+// the 3D necklace model should render.
 //
-// This replaces an earlier version built on PoseLandmarker's two shoulder
-// landmarks — shoulders turned out to be a poor proxy for "where the neck
-// is" on real devices (see TODO.md's AR follow-up note). Detecting the
-// face first and deriving the neck from it (a fixed drop below the chin)
-// is a much more direct anchor: the face is what the tracker actually
-// finds, the neck is immediately below it.
+// History: originally built on PoseLandmarker's two shoulder landmarks
+// alone, then switched to pure face-landmark extrapolation (a fixed drop
+// below the chin) when shoulders proved unreliable in that first pass —
+// see TODO.md. Real-device calibration sessions (2026-10-03/04, via the
+// `?arDebug=1` panel) found shoulder tracking is in fact reliable on this
+// device, and that anchoring purely by chin-drop-fraction or purely by
+// shoulder-width both misjudge how a real necklace actually sits: too
+// far down/wide when scaled to shoulder width, but a pure face-based
+// guess couldn't reliably clear the chin either. Composited test renders
+// directly onto a real photo (not just live trial and error) found that
+// a HYBRID works: horizontal size from face width (a necklace hugs the
+// neck, closer to face-width than full shoulder-width), vertical anchor
+// interpolated between the chin and the shoulder line (not the chin
+// alone, and not the shoulder line alone), and tilt from the shoulders
+// (a more reliable body-tilt reference than the face). See
+// computeNecklaceAnchor below.
 
 /** A MediaPipe NormalizedLandmark, narrowed to the fields this needs —
  * x/y are 0–1, normalized to the video frame's width/height. */
@@ -29,50 +39,31 @@ export interface NeckAnchor {
    * camera-only depth cue with no real depth sensor. */
   scale: number;
   /** Radians, clamped to ±30° — how much to rotate the piece to match
-   * head tilt. Clamped because a wider angle almost always means a bad
-   * detection (a person's natural head tilt rarely exceeds this), not a
+   * head/shoulder tilt. Clamped because a wider angle almost always means
+   * a bad detection (a person's natural tilt rarely exceeds this), not a
    * real pose worth matching exactly. */
   rotationRad: number;
 }
 
-// How far below the chin the neck/collar — where a necklace or pendant
-// actually rests — sits, as a fraction of the face's own height
-// (forehead-to-chin). Deliberately generous: the first version of this
-// (a fraction of face WIDTH, added directly to the y-coordinate) mixed
-// two different normalized axes — a video frame's width and height aren't
-// equal, so an x-measured distance applied as a y-offset doesn't mean
-// what it looks like it means — and even measured correctly, the first
-// value (0.55) was reported as still landing on the chin on a real
-// device. Using face HEIGHT keeps the offset on the same axis as the
-// drop (no unit mismatch), and this fraction is intentionally large
-// enough to clear the chin with room to spare. Still "tuned by eye, not
-// measured against real video" — see TODO.md. Exported so
-// ArTryOnOverlay's debug mode (`?arDebug=1`) can offer it as a live,
-// adjustable starting point — the fastest way to get a real number here
-// is to let someone nudge it while watching their own neck, not another
-// round of guessing.
-//
-// History (2026-10-03, all real-device testing the same day): 0.55
-// (face-WIDTH based, a unit-mismatch bug — see git log) landed on the
-// chin → fixed the units, tried 1.1, which overshot to the chest → tried
-// 0.6, which overshot the OTHER way for a very close/low selfie framing
-// (chin already ~85% down the frame, so even a moderate drop pushed the
-// anchor past the bottom edge entirely — nothing rendered). 0.1 is the
-// first value calibrated from actual numbers, not another guess: the
-// `?arDebug=1` panel's landmark overlay read real chin/forehead
-// coordinates off that same session, which showed the chain's own top
-// sitting about 0.3×faceHeight too high (up near the mouth) at a drop of
-// -0.3 — i.e. the chin itself is close to the right anchor point for
-// this framing, with only a small further drop needed to clear it.
-export const NECK_DROP_FRACTION = 0.1;
-
 // A face width (in the same 0–1 normalized x-units, measured ear-to-ear
 // at cheek level) that reads as "about life-size" for a typical phone
-// selfie distance — scale is 1 at this width. Also tuned by eye, same
-// caveat as above. Exported so ArTryOnOverlay can derive a real-world-cm
-// size calibration from it (see REFERENCE_FACE_WIDTH_CM there) — both
-// need to agree on what "scale = 1" means.
+// selfie distance — scale is 1 at this width. Tuned by eye, not measured
+// against real video.
 export const REFERENCE_FACE_WIDTH = 0.3;
+
+// How far below the chin, as a fraction of the gap between the chin and
+// the shoulder line, the necklace's own anchor sits — 0 would put it
+// exactly at the chin, 1 exactly at the shoulder line. A real necklace
+// hugs the neck, close to the chin/jaw, not out at the shoulders — a
+// small fraction read right in composited tests against a real photo
+// (2026-10-04, see TODO.md).
+export const NECK_BASE_FRACTION = 0.12;
+
+// The necklace's own width as a multiple of face width — a real necklace
+// (as opposed to a statement/wide chain) sits close to the neck, a
+// little wider than the face itself, nowhere near full shoulder width.
+// Also read from composited real-photo tests.
+export const NECKLACE_WIDTH_MULTIPLIER = 1.15;
 
 const MAX_ROTATION_RAD = Math.PI / 6; // 30°
 
@@ -80,26 +71,64 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-/** Turns the forehead/chin landmarks and the two face-edge landmarks
- * (MediaPipe FaceLandmarker's indices 10, 152, 234, 454 — see
- * ArTryOnOverlay's own constants) into where/how big/how tilted the piece
- * should render. Always drops straight down (increasing y) in image
- * space from the chin — not perpendicular to the cheek line — since a
- * necklace hangs down from the neck regardless of which landmark the
- * tracker calls "left" vs "right" (that labeling, and so the sign of a
- * cheek-relative perpendicular, flips depending on camera mirroring and
- * landmark order; straight-down doesn't have that failure mode). */
-export function computeNeckAnchor(forehead: FaceLandmark, chin: FaceLandmark, leftFace: FaceLandmark, rightFace: FaceLandmark, dropFraction: number = NECK_DROP_FRACTION): NeckAnchor {
-  const dx = rightFace.x - leftFace.x;
-  const dy = rightFace.y - leftFace.y;
-  const faceWidth = Math.hypot(dx, dy);
-  const faceHeight = Math.abs(chin.y - forehead.y);
+export interface ShoulderLandmark {
+  x: number;
+  y: number;
+}
+
+export interface NecklaceAnchor {
+  /** Normalized 0–1 position for the necklace's own top-center anchor
+   * (where the chain's highest point sits), interpolated between the
+   * chin and the shoulder line. */
+  x: number;
+  y: number;
+  /** The necklace's target width, in the same normalized x-units as x —
+   * a multiple of the measured face width (see NECKLACE_WIDTH_MULTIPLIER),
+   * not shoulder width. */
+  width: number;
+  /** Radians, clamped to ±30°, from the shoulder line's own tilt — a
+   * more reliable body-tilt reference than the face. */
+  rotationRad: number;
+}
+
+/** Turns face landmarks (forehead unused here, chin + the two face-edge
+ * points) and the two shoulder landmarks into where/how wide/how tilted
+ * the necklace's chain should render, and where its top anchor sits.
+ * `aspect` is the video's height/width ratio — needed because x is
+ * normalized to frame width and y to frame height, two different
+ * physical scales whenever the frame isn't square (a phone selfie never
+ * is); mixing them directly in one hypot/atan2 silently gives the wrong
+ * width/angle (the same class of bug that first made the old
+ * drop-fraction-only version wrong — see git history on this file). */
+export function computeNecklaceAnchor(
+  chin: FaceLandmark,
+  leftFace: FaceLandmark,
+  rightFace: FaceLandmark,
+  leftShoulder: ShoulderLandmark,
+  rightShoulder: ShoulderLandmark,
+  aspect: number,
+  neckBaseFraction: number = NECK_BASE_FRACTION,
+  widthMultiplier: number = NECKLACE_WIDTH_MULTIPLIER,
+): NecklaceAnchor {
+  const faceDx = rightFace.x - leftFace.x;
+  const faceDy = (rightFace.y - leftFace.y) * aspect;
+  const faceWidth = Math.hypot(faceDx, faceDy);
+
+  // MediaPipe's "left shoulder" (landmark 11) is the SUBJECT's own left,
+  // which in a raw/unmirrored selfie frame appears on the larger-x side —
+  // the opposite of what the label suggests spatially. Sort by actual
+  // frame position, not the semantic label, so the result doesn't depend
+  // on which argument the caller passed as "left" vs "right".
+  const [p1, p2] = leftShoulder.x >= rightShoulder.x ? [leftShoulder, rightShoulder] : [rightShoulder, leftShoulder];
+  const shoulderDx = p1.x - p2.x;
+  const shoulderDy = (p1.y - p2.y) * aspect;
+
+  const shoulderMidY = (leftShoulder.y + rightShoulder.y) / 2;
 
   const x = chin.x;
-  const y = chin.y + faceHeight * dropFraction;
+  const y = chin.y + (shoulderMidY - chin.y) * neckBaseFraction;
+  const width = faceWidth * widthMultiplier;
+  const rotationRad = clamp(Math.atan2(shoulderDy, shoulderDx), -MAX_ROTATION_RAD, MAX_ROTATION_RAD);
 
-  const scale = faceWidth > 0 ? faceWidth / REFERENCE_FACE_WIDTH : 1;
-  const rotationRad = faceWidth > 0 ? clamp(Math.atan2(dy, dx), -MAX_ROTATION_RAD, MAX_ROTATION_RAD) : 0;
-
-  return { x, y, scale, rotationRad };
+  return { x, y, width, rotationRad };
 }

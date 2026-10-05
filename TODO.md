@@ -759,6 +759,85 @@ shipped (`lib/analytics.ts`, `computeProfit`).*
      the model itself is a real scan, since right now a placeholder's own
      proportions are part of what's being judged.
 
+  **Superseded the same day (2026-10-04) by a full positioning rewrite** —
+  everything above this point (drop-fraction-from-chin anchoring,
+  `BASE_MODEL_SIZE`, `computeNeckAnchor`, the old pendant-as-fraction-of-
+  whole-model sizing) describes an *earlier* iteration kept here as a
+  record of the debugging journey, not the current implementation. Four
+  more real-device rounds the same day, each with concrete photographic
+  evidence, found the old approach's actual shape was wrong, not just its
+  numbers:
+  - A screenshot showed the chain's own vertical span still running from
+    eyebrow height to below the frame — oversized far beyond what the
+    size slider's tested range could fix. Customer's direct suggestion:
+    *"identify shoulders and place at the top as starting point and let
+    the pendant be below the points."*
+  - Customer supplied a real photo of themselves (not another live-device
+    round trip) specifically so the AR math could be tested locally,
+    offline, against real `FaceLandmarker`/`PoseLandmarker` output
+    (MediaPipe's `IMAGE` running mode, not just `VIDEO`) — composited
+    render iterations directly onto that photo, screenshotted and
+    visually compared, replaced several more rounds of guess-and-wait.
+    That process caught a real bug a live round-trip likely wouldn't have
+    surfaced as clearly: MediaPipe's "left shoulder" (landmark 11) is the
+    *subject's own* left, which in a raw/unmirrored selfie frame sits on
+    the frame's *right* (larger-x) side — subtracting naively gave a
+    rotation near 180° instead of near 0° for level shoulders, visibly
+    distorting every shoulder-based render until caught.
+  - Pure shoulder-width-based sizing put the necklace's ends too far out
+    and too low (confirmed by compositing onto the real photo) — a real
+    necklace hugs the neck, closer to face width than full shoulder
+    width. The working formula blends both: horizontal size from live
+    face width, vertical anchor interpolated between the chin and the
+    shoulder line (not either alone), tilt from the shoulder line
+    (steadier than the face for this specific purpose).
+  - Customer annotated a render directly (drew on the image) showing the
+    chain's ends should extend further up toward the jaw than the first
+    shoulder-anchored attempt did — the open-arc chain's sweep was
+    widened from 126° to 252° of a circle to reach that high while
+    keeping the same "hugs the neck" width.
+  - *"This is not like a chain. Its just a geometrical shape"* — the
+    single smooth torus arc was replaced with 28 individual small-torus
+    links strung along the curve, alternating 90° twist per link like a
+    real rolo/cable chain, baked into real exported vertex geometry (not
+    left as per-link node transforms).
+
+  **Current architecture**: `computeNecklaceAnchor`
+  (`src/lib/ar/neck-anchor.ts`, replaces `computeNeckAnchor`) takes chin,
+  both face-edge, and both shoulder landmarks plus the video's aspect
+  ratio, returns an anchor point + necklace width + rotation.
+  `ArTryOnOverlay.tsx` now always loads `PoseLandmarker` (previously
+  debug-only) since shoulder tracking proved reliable enough to be a
+  primary input, not just a debug reference. The GLB's `"chain"` and
+  `"pendant"` named nodes (`CHAIN_NODE_NAME`/`PENDANT_NODE_NAME`) are
+  positioned independently each frame — the chain stretches to the live-
+  measured width/rotation, the pendant hangs from wherever the chain's
+  own current bottom-center measures to (fresh `Box3` each frame, not a
+  fixed offset) and keeps its own real-world-cm scale regardless of how
+  wide the chain currently is, so it never distorts. The camera's
+  orthographic bounds were also fixed to match the container's actual
+  aspect ratio (previously a fixed `[0,1]x[0,1]` square mapped onto a
+  non-square phone video, silently stretching any uniformly-scaled
+  object) — a real, independent bug this rewrite's precision requirements
+  surfaced, fixed alongside it. `computeNeckAnchor`/`neck-anchor`'s old
+  drop-fraction constants and the separate `model-placement.ts` module
+  (whole-model single-anchor placement, `fractionOfWhole`) are gone —
+  genuinely unused once the chain/pendant became independently
+  positioned, not kept as dormant alternatives. New tuning constants:
+  `NECK_BASE_FRACTION` (0.12 — 0 is right at the chin, 1 is the shoulder
+  line) and `NECKLACE_WIDTH_MULTIPLIER` (1.15× live face width). Both
+  adjustable live via the same `?arDebug=1` panel, now relabeled to
+  match. 9 new unit tests for `computeNecklaceAnchor` (includes a
+  regression test for the left/right shoulder-label bug above — argument
+  order shouldn't change the result, and now provably doesn't).
+  **Verified**: tsc/eslint clean, 744 tests passing, confirmed loading
+  without runtime errors end-to-end against the real deployed app (camera
+  start → model load with the new named parts → both trackers
+  initializing) via Playwright. **Not yet confirmed**: a live, on-device
+  photo of the final result — every visual confirmation so far is a
+  composited render onto the one static reference photo, not the actual
+  moving-camera experience. That still needs a real next phone check.
+
 ## Growth & trust (competitor research, 2026-09-24)
 
 *Sourced from a competitor pass over James Allen/Blue Nile, Angara,
