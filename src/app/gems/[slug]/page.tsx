@@ -65,8 +65,13 @@ export default async function GemDetailPage({ params }: PageProps<"/gems/[slug]"
   const verifyUrl = buildCertVerifyUrl(gem.certLab?.verifyUrlTemplate, gem.certReportNumber);
   // Same price precedence CardPrice/ProductPrice use for display — see
   // StickyBuyBar's own comment for why this is a plain label rather than
-  // reusing ProductPrice itself (that component isn't meant for a compact bar).
-  const displayPrice = promotion?.promoPrice ?? gem.retailPrice ?? (gem.showPrice ? gem.price : null);
+  // reusing ProductPrice itself (that component isn't meant for a compact
+  // bar). basePrice (no promotion layer) is the buy-box's own "is there
+  // actually a price to buy at" gate — using displayPrice there would
+  // show a buy box purely because a promotion exists with no real price
+  // underneath it.
+  const basePrice = gem.retailPrice ?? (gem.showPrice ? gem.price : null);
+  const displayPrice = promotion?.promoPrice ?? basePrice;
   const stickyPriceLabel = displayPrice != null ? formatPrice(displayPrice, MARKETS[market].currency) : t("requestQuote");
 
   return (
@@ -161,7 +166,7 @@ export default async function GemDetailPage({ params }: PageProps<"/gems/[slug]"
           )}
 
           <div id="buy-box">
-            {gem.retailPrice != null && (
+            {basePrice != null && (
               <div className="mt-8">
                 {session?.user ? (
                   <AddToCartButton gemstoneId={gem.id} />
