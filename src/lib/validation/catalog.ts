@@ -13,8 +13,11 @@ function formBoolean(defaultValue: boolean) {
 }
 
 // A blank number input submits "" — which z.coerce.number() turns into 0,
-// silently turning "no rupee price" into "Rs 0, buy now". The Sri Lanka
-// store's price fields treat blank as genuinely unset instead.
+// silently turning "no price" into "$0, buy now" (price/retailPrice/costPrice
+// included — clearing retailPrice to go back to quote-only must leave it
+// genuinely null, not 0, which addToRetailCart's `!= null` check would treat
+// as a valid, free purchase price). Every money field on these forms uses
+// this instead of a bare z.coerce.number() so blank means unset.
 const optionalMoney = z.preprocess(
   (v) => (v === "" || v == null ? undefined : v),
   z.coerce.number().min(0).max(1_000_000_000).optional(),
@@ -61,10 +64,10 @@ export const gemstoneSchema = z.object({
   certLabId: z.string().optional().or(z.literal("")),
   certReportNumber: z.string().max(100).optional().or(z.literal("")),
   certFileUrl: z.string().max(500).optional().or(z.literal("")),
-  price: z.coerce.number().min(0).max(10_000_000).optional(),
+  price: optionalMoney,
   showPrice: formBoolean(false),
-  retailPrice: z.coerce.number().min(0).max(10_000_000).optional(),
-  costPrice: z.coerce.number().min(0).max(10_000_000).optional(),
+  retailPrice: optionalMoney,
+  costPrice: optionalMoney,
   market: listingMarket,
   lkrRetailPrice: optionalMoney,
   lkrPrice: optionalMoney,
@@ -87,10 +90,10 @@ export const jewelrySchema = z.object({
   metalWeightG: z.coerce.number().min(0).max(2000).optional(),
   ringSize: z.string().max(20).optional().or(z.literal("")),
   styleTags: z.string().max(300).optional().or(z.literal("")), // comma-separated in the form
-  price: z.coerce.number().min(0).max(10_000_000).optional(),
+  price: optionalMoney,
   showPrice: formBoolean(false),
-  retailPrice: z.coerce.number().min(0).max(10_000_000).optional(),
-  costPrice: z.coerce.number().min(0).max(10_000_000).optional(),
+  retailPrice: optionalMoney,
+  costPrice: optionalMoney,
   market: listingMarket,
   lkrRetailPrice: optionalMoney,
   lkrPrice: optionalMoney,
