@@ -174,13 +174,16 @@ export async function updateGemstone(id: string, formData: FormData): Promise<Ac
       certReportNumber: data.certReportNumber || undefined,
       certFileUrl: data.certFileUrl || undefined,
       // Only the price fields of the listing's own store are used; the other
-      // store's are cleared (null, not undefined, so they really clear).
-      price: lk ? null : data.price,
+      // store's are cleared. On an update, a blank field parses to
+      // `undefined` (see optionalMoney), and Prisma treats `undefined` as
+      // "leave the existing value alone" — so these all coalesce to `null`
+      // to make clearing the field on an existing row actually clear it.
+      price: lk ? null : (data.price ?? null),
       showPrice: lk ? false : data.showPrice,
-      retailPrice: lk ? null : data.retailPrice,
-      costPrice: data.costPrice,
-      lkrRetailPrice: lk ? data.lkrRetailPrice : null,
-      lkrPrice: lk ? data.lkrPrice : null,
+      retailPrice: lk ? null : (data.retailPrice ?? null),
+      costPrice: data.costPrice ?? null,
+      lkrRetailPrice: lk ? (data.lkrRetailPrice ?? null) : null,
+      lkrPrice: lk ? (data.lkrPrice ?? null) : null,
       stockStatus: data.stockStatus,
       isPublished: data.isPublished,
       isFeatured: data.isFeatured,
@@ -361,12 +364,15 @@ export async function updateJewelry(id: string, formData: FormData): Promise<Act
       metalWeightG: data.metalWeightG,
       ringSize: data.ringSize || undefined,
       styleTags: data.styleTags ? data.styleTags.split(",").map((t) => t.trim()).filter(Boolean) : [],
-      price: lk ? null : data.price,
+      // See updateGemstone's matching comment: a blank price field parses to
+      // `undefined`, which Prisma treats as "leave the existing value alone",
+      // so these coalesce to `null` to make clearing the field actually clear it.
+      price: lk ? null : (data.price ?? null),
       showPrice: lk ? false : data.showPrice,
-      retailPrice: lk ? null : data.retailPrice,
-      costPrice: data.costPrice,
-      lkrRetailPrice: lk ? data.lkrRetailPrice : null,
-      lkrPrice: lk ? data.lkrPrice : null,
+      retailPrice: lk ? null : (data.retailPrice ?? null),
+      costPrice: data.costPrice ?? null,
+      lkrRetailPrice: lk ? (data.lkrRetailPrice ?? null) : null,
+      lkrPrice: lk ? (data.lkrPrice ?? null) : null,
       stockStatus: data.stockStatus,
       isPublished: data.isPublished,
       isFeatured: data.isFeatured,
