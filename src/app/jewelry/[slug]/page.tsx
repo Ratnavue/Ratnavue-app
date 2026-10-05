@@ -68,13 +68,8 @@ export default async function JewelryDetailPage({ params }: PageProps<"/jewelry/
   const pieceTypeLabel = pieceTypeText(piece.pieceType);
   const audienceSlug = piece.audience.toLowerCase() as JewelryAudienceSlug;
   // Same price precedence CardPrice/ProductPrice use for display — see
-  // StickyBuyBar's own comment for why this is a plain label. basePrice
-  // (no promotion layer) is the buy-box's own "is there actually a price
-  // to buy at" gate and the variant picker's per-variant fallback —
-  // using displayPrice there would silently pass a promo price down as
-  // if it were every un-priced variant's own base price.
-  const basePrice = piece.retailPrice ?? (piece.showPrice ? piece.price : null);
-  const displayPrice = promotion?.promoPrice ?? basePrice;
+  // StickyBuyBar's own comment for why this is a plain label.
+  const displayPrice = promotion?.promoPrice ?? piece.retailPrice ?? (piece.showPrice ? piece.price : null);
   const stickyPriceLabel = displayPrice != null ? formatPrice(displayPrice, MARKETS[market].currency) : t("requestQuote");
 
   return (
@@ -152,11 +147,11 @@ export default async function JewelryDetailPage({ params }: PageProps<"/jewelry/
           )}
 
           <div id="buy-box">
-            {basePrice != null && (
+            {piece.retailPrice != null && (
               <div className="mt-8">
                 {session?.user ? (
                   piece.variants.length > 0 ? (
-                    <JewelryVariantPicker jewelryId={piece.id} variants={piece.variants} basePrice={basePrice} />
+                    <JewelryVariantPicker jewelryId={piece.id} variants={piece.variants} basePrice={piece.retailPrice} />
                   ) : (
                     <AddToCartButton jewelryId={piece.id} />
                   )
