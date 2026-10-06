@@ -154,9 +154,11 @@ export async function updateGemstone(id: string, formData: FormData): Promise<Ac
       variety: data.variety || undefined,
       cutId: data.cutId,
       caratWeight: data.caratWeight,
-      lengthMm: data.lengthMm,
-      widthMm: data.widthMm,
-      depthMm: data.depthMm,
+      // Same undefined-vs-null reasoning as the price fields below — a
+      // blanked dimension has to actually clear the saved value.
+      lengthMm: data.lengthMm ?? null,
+      widthMm: data.widthMm ?? null,
+      depthMm: data.depthMm ?? null,
       colorHue: data.colorHue,
       colorSaturation: data.colorSaturation,
       colorLightness: data.colorLightness,
@@ -361,7 +363,9 @@ export async function updateJewelry(id: string, formData: FormData): Promise<Act
       audience: data.audience,
       metalType: data.metalType,
       metalPurity: data.metalPurity || undefined,
-      metalWeightG: data.metalWeightG,
+      // Same undefined-vs-null reasoning as the price fields below — a
+      // blanked weight has to actually clear the saved value.
+      metalWeightG: data.metalWeightG ?? null,
       ringSize: data.ringSize || undefined,
       styleTags: data.styleTags ? data.styleTags.split(",").map((t) => t.trim()).filter(Boolean) : [],
       // See updateGemstone's matching comment: a blank price field parses to

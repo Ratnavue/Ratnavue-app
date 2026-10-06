@@ -23,6 +23,19 @@ const optionalMoney = z.preprocess(
   z.coerce.number().min(0).max(1_000_000_000).optional(),
 );
 
+// Same "blank must mean unset, not 0" guard as optionalMoney — these
+// dimension/weight fields have no free-purchase stakes, but a cleared
+// field silently becoming "0mm"/"0g" instead of staying unset is still
+// wrong data (and on an update, see the `?? null` coalescing in
+// updateGemstone/updateJewelry for why blank also has to actually clear
+// the saved value, not just avoid becoming 0).
+function optionalMeasurement(max: number) {
+  return z.preprocess(
+    (v) => (v === "" || v == null ? undefined : v),
+    z.coerce.number().min(0).max(max).optional(),
+  );
+}
+
 const listingMarket = z.enum(["intl", "lk"]).default("intl");
 
 // A listing belongs to exactly one storefront, and a Sri Lanka listing must be
@@ -49,9 +62,9 @@ export const gemstoneSchema = z.object({
   variety: z.string().max(100).optional().or(z.literal("")),
   cutId: z.string().min(1, "Select a cut"),
   caratWeight: z.coerce.number().min(0.01).max(500),
-  lengthMm: z.coerce.number().min(0).max(200).optional(),
-  widthMm: z.coerce.number().min(0).max(200).optional(),
-  depthMm: z.coerce.number().min(0).max(200).optional(),
+  lengthMm: optionalMeasurement(200),
+  widthMm: optionalMeasurement(200),
+  depthMm: optionalMeasurement(200),
   colorHue: z.coerce.number().min(0).max(360),
   colorSaturation: z.coerce.number().min(0).max(100).default(72),
   colorLightness: z.coerce.number().min(0).max(100).default(50),
@@ -87,7 +100,7 @@ export const jewelrySchema = z.object({
   audience: z.enum(["WOMEN", "MEN", "COUPLE", "UNISEX"]).default("UNISEX"),
   metalType: z.enum(["GOLD", "WHITE_GOLD", "ROSE_GOLD", "PLATINUM", "SILVER"]),
   metalPurity: z.string().max(30).optional().or(z.literal("")),
-  metalWeightG: z.coerce.number().min(0).max(2000).optional(),
+  metalWeightG: optionalMeasurement(2000),
   ringSize: z.string().max(20).optional().or(z.literal("")),
   styleTags: z.string().max(300).optional().or(z.literal("")), // comma-separated in the form
   price: optionalMoney,
