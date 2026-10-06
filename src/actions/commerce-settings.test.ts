@@ -63,3 +63,36 @@ describe("updateCommerceSettings — free shipping thresholds", () => {
     expect(prismaMock.commerceSettings.update).not.toHaveBeenCalled();
   });
 });
+
+describe("updateCommerceSettings — applyVatToInternational checkbox", () => {
+  // The real form submits this field twice (a hidden "false" input,
+  // followed by the checkbox itself at "true" when checked) — the same
+  // hidden-false + checkbox-true convention every boolean toggle on these
+  // admin forms uses. The shared formData() helper above uses .set(),
+  // which can only hold one value per key, so it can't reproduce this; a
+  // plain object with a single string also can't. Build the FormData by
+  // hand with .append() in DOM order to match what a real browser submits.
+  function formDataWithDuplicateCheckbox(checked: boolean): FormData {
+    const fd = new FormData();
+    for (const [k, v] of Object.entries(validFields)) fd.set(k, v);
+    fd.append("applyVatToInternational", "false");
+    if (checked) fd.append("applyVatToInternational", "true");
+    return fd;
+  }
+
+  it("saves true when the checkbox is checked, even though the hidden false field submits first", async () => {
+    const result = await updateCommerceSettings(formDataWithDuplicateCheckbox(true));
+    expect(result.ok).toBe(true);
+    expect(prismaMock.commerceSettings.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ applyVatToInternational: true }) }),
+    );
+  });
+
+  it("saves false when the checkbox is unchecked (only the hidden field submits)", async () => {
+    const result = await updateCommerceSettings(formDataWithDuplicateCheckbox(false));
+    expect(result.ok).toBe(true);
+    expect(prismaMock.commerceSettings.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ applyVatToInternational: false }) }),
+    );
+  });
+});

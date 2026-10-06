@@ -49,7 +49,15 @@ export async function updateCommerceSettings(formData: FormData): Promise<Action
     where: { id: "singleton" },
     data: {
       vatPercent,
-      applyVatToInternational: formData.get("applyVatToInternational") === "true",
+      // Same "hidden-false + checkbox-true, same name" convention every
+      // boolean toggle on these admin forms uses — formData.get() returns
+      // only the FIRST field with a given name, and the hidden one is
+      // first in the DOM, so a bare .get() === "true" check always reads
+      // the hidden "false" and the checkbox can never actually turn this
+      // on. getAll() + includes checks every submitted value for this
+      // name regardless of order (the exact bug already found once in the
+      // refund-resolve form's restock checkbox — see TODO.md).
+      applyVatToInternational: formData.getAll("applyVatToInternational").includes("true"),
       gatewayCommissionPercent,
       handlingFeeMarginPercent,
       birthdayDiscountPercent,
