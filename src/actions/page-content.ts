@@ -16,6 +16,18 @@ function obj(formData: FormData) {
   return Object.fromEntries(formData.entries());
 }
 
+// Coerces the "true"/"false" STRING an HTML checkbox form submits (via the
+// hidden-false + checkbox-true pattern every boolean toggle on these admin
+// forms uses) into an actual boolean — same helper as
+// lib/validation/catalog.ts's formBoolean, duplicated here rather than
+// imported since this is the only schema in this file that needs it.
+// z.coerce.boolean() can't be used here: it coerces via JS's Boolean(), and
+// Boolean("false") is true — any non-empty string is truthy — so it would
+// silently coerce an unchecked box's hidden "false" field right back to true.
+function formBoolean(defaultValue: boolean) {
+  return z.preprocess((v) => v === "true" || v === true, z.boolean()).default(defaultValue);
+}
+
 // ---------- Home ----------
 //
 // The international home page ("home") and the Sri Lanka one ("lk:home")
@@ -45,8 +57,8 @@ const homeTextSchema = z.object({
   closingKicker: z.string().max(200),
   closingHeading: z.string().max(300),
   closingBody: z.string().max(1000),
-  showFeaturedGems: z.coerce.boolean().default(false),
-  showFeaturedJewelry: z.coerce.boolean().default(false),
+  showFeaturedGems: formBoolean(false),
+  showFeaturedJewelry: formBoolean(false),
 });
 
 export async function updateHomeText(formData: FormData, market: Market = "intl"): Promise<ActionResult> {
