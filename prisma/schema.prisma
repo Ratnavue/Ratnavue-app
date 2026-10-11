@@ -647,6 +647,24 @@ model PageContent {
   updatedAt DateTime @updatedAt
 }
 
+// An admin-editable overlay on top of the static next-intl JSON catalogs
+// (messages/*.json) — key is a dot-path matching a key in those files (e.g.
+// "nav.shopGems"), locale is one of SUPPORTED_LOCALES (src/i18n/request.ts),
+// "en" included. A row here takes priority over the shipped JSON for that
+// exact key+locale, letting an admin change any UI string without a deploy;
+// deleting the row (not an empty string) falls back to the JSON/English
+// chain again. See lib/translations.ts.
+model TranslationOverride {
+  id        String   @id @default(cuid())
+  key       String
+  locale    String
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@unique([key, locale])
+  @@index([key])
+}
+
 // ---------- Quotes & sourcing ----------
 
 enum QuoteStatus {

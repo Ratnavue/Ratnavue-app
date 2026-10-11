@@ -1,5 +1,6 @@
 import { getRequestConfig } from "next-intl/server";
 import { cookies, headers } from "next/headers";
+import { applyOverrides, getTranslationOverrides, type Messages } from "@/lib/translations";
 
 // Deliberately no `[locale]` URL segment (see the multi-language plan) —
 // the whole existing route tree, middleware.ts's scoped matcher, and
@@ -32,8 +33,6 @@ function resolveLocale(cookieValue: string | undefined, acceptLanguage: string |
   return DEFAULT_LOCALE;
 }
 
-type Messages = { [key: string]: string | Messages };
-
 // English underneath every locale: a key that hasn't been translated yet
 // renders its English text instead of a raw "checkout.placeOrder" key (or
 // throwing), so a locale can ship with partial coverage and fill in over
@@ -53,5 +52,10 @@ export default getRequestConfig(async () => {
   const locale = resolveLocale(cookieStore.get(LOCALE_COOKIE)?.value, headerStore.get("accept-language"));
   const english = (await import("../../messages/en.json")).default as Messages;
   const localized = locale === DEFAULT_LOCALE ? english : mergeMessages(english, (await import(`../../messages/${locale}.json`)).default as Messages);
-  return { locale, messages: localized };
+  // Admin-editable overlay on top of the shipped JSON catalogs — see
+  // lib/translations.ts. Applies to English too, so an admin can tweak
+  // base copy without a deploy, not just non-English locales.
+  const overrides = await getTranslationOverrides(locale);
+  const withOverrides = Object.keys(overrides).length === 0 ? localized : applyOverrides(localized, overrides);
+  return { locale, messages: withOverrides };
 });

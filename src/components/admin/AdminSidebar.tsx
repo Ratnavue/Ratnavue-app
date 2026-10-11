@@ -30,6 +30,7 @@ const NAV = [
   { href: "/admin/orders", label: "Retail Orders" },
   { href: "/admin/commerce-settings", label: "Commerce Settings" },
   { href: "/admin/shipping-zones", label: "Shipping Zones" },
+  { href: "/admin/translations", label: "Translations" },
 ];
 
 const MASTER_DATA = [
