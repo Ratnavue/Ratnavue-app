@@ -40,5 +40,313 @@
   },
   "localeSwitcher": {
     "label": "Sprache"
+  },
+  "checkout": {
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "phone": "Telefon",
+    "address": "Adresse",
+    "city": "Stadt",
+    "country": "Land",
+    "countryPlaceholder": "z. B. Sri Lanka",
+    "deliveryNote": "Lieferung innerhalb Sri Lankas.",
+    "paymentMethod": "Zahlungsmethode",
+    "comingSoon": "Demnächst verfügbar",
+    "methods": {
+      "WIRE_TRANSFER": {
+        "name": "Banküberweisung",
+        "hint": "Zahlen Sie per Banküberweisung. Wir zeigen Ihnen anschließend unsere Bankdaten und Ihre Zahlungsreferenz an und halten Ihre Artikel zurück, während wir auf die Überweisung warten."
+      },
+      "PAYHERE_CARD": {
+        "name": "Kartenzahlung",
+        "hint": "Zahlen Sie sicher mit einer Kredit- oder Debitkarte."
+      },
+      "COD": {
+        "name": "Nachnahme",
+        "hint": "Verfügbar für registrierte Kunden."
+      }
+    },
+    "agreeToTerms": "Ich stimme den <link>Allgemeinen Geschäftsbedingungen</link> zu",
+    "placeOrder": "Bestellung Aufgeben",
+    "continueToPayment": "Weiter zur Zahlung",
+    "preparing": "Zahlung wird vorbereitet...",
+    "placing": "Ihre Bestellung wird aufgegeben...",
+    "payhereNote": "Sie werden zu PayHere weitergeleitet, um die Zahlung sicher abzuschließen.",
+    "wireNote": "Ihre Bestellung wird jetzt erstellt und ihre Artikel werden für Sie zurückgehalten, bis die Überweisung bestätigt ist.",
+    "summary": {
+      "title": "Bestellübersicht",
+      "subtotal": "Zwischensumme",
+      "discount": "Rabatt",
+      "birthday": "Geburtstagsrabatt",
+      "bundle": "Paketrabatt",
+      "points": "Prämienpunkte",
+      "tax": "MwSt.",
+      "shipping": "Lieferung",
+      "total": "Gesamt"
+    },
+    "wire": {
+      "kicker": "Bestellung aufgegeben",
+      "title": "Schließen Sie Ihre Banküberweisung ab",
+      "intro": "Ihre Artikel werden für Sie zurückgehalten. Bitte überweisen Sie den unten genannten Gesamtbetrag und verwenden Sie Ihre Bestellnummer als Zahlungsreferenz, damit wir sie zuordnen können.",
+      "amount": "Zu überweisender Betrag",
+      "reference": "Zahlungsreferenz",
+      "instructionsTitle": "Bankdaten",
+      "afterTransfer": "Sobald Ihre Überweisung bei uns eingeht, bestätigen wir Ihre Bestellung und bereiten sie für die Lieferung vor. Sie können den Status unter Meine Bestellungen verfolgen.",
+      "viewOrders": "Meine Bestellungen Ansehen",
+      "continueShopping": "Weiter Einkaufen",
+      "cancelOrder": "Diese Bestellung stornieren",
+      "cancelled": "Diese Bestellung wurde storniert und ihre Artikel freigegeben."
+    }
+  },
+  "market": {
+    "switchLabel": "Wählen Sie Ihren Shop",
+    "badge": "Sri Lanka",
+    "short": {
+      "lk": "LKR",
+      "intl": "USD"
+    },
+    "name": {
+      "lk": "Sri Lanka",
+      "intl": "International"
+    },
+    "detail": {
+      "lk": "Preise in Rupien (LKR)",
+      "intl": "Preise in US-Dollar (USD)"
+    }
+  },
+  "lk": {
+    "strip": {
+      "pricesTitle": "Preise in Rupien",
+      "pricesBody": "Alle Preise in diesem Shop sind in sri-lankischen Rupien, festgelegt für Sri Lanka — keine Währungsumrechnung.",
+      "payTitle": "Zahlung per Banküberweisung",
+      "payBody": "Geben Sie Ihre Bestellung auf, und wir halten das Stück zurück, bis Ihre Überweisung eintrifft. Kartenzahlung und Nachnahme folgen in Kürze.",
+      "deliveryTitle": "Lieferung in Sri Lanka",
+      "deliveryBody": "Bestellungen in diesem Shop werden innerhalb Sri Lankas geliefert, die Versandkosten werden beim Checkout angezeigt."
+    },
+    "footer": {
+      "storeTitle": "Sri Lanka Shop",
+      "storeBody": "Preise in Rupien, Lieferung innerhalb Sri Lankas.",
+      "paymentsTitle": "Zahlungsoptionen",
+      "bankTransfer": "Banküberweisung",
+      "card": "Kartenzahlung",
+      "cod": "Nachnahme",
+      "comingSoon": "Demnächst verfügbar",
+      "switchTitle": "Kaufen Sie aus dem Ausland?"
+    }
+  },
+  "catalog": {
+    "gems": {
+      "kicker": "Lose Edelsteine",
+      "title": "Ceylon-Edelsteine Kaufen",
+      "intro": "Jeder Stein wird mit seiner vollständigen Spezifikation aufgeführt — Schliff, Farbe, Ton und Reinheit. Stöbern Sie frei; fordern Sie ein Angebot an, wenn Ihnen etwas gefällt.",
+      "empty": "Noch keine Edelsteine entsprechen Ihren Filtern."
+    },
+    "jewelry": {
+      "kicker": "Feiner Schmuck",
+      "title": "Schmuck Kaufen",
+      "intro": "Ringe, Anhänger und Ohrringe, gestaltet rund um Ceylon-Edelsteine. Fordern Sie ein Angebot für jedes Stück an, oder lassen Sie uns einen von Ihnen selbst konfigurierten Edelstein fassen.",
+      "empty": "Noch keine Schmuckstücke entsprechen Ihren Filtern."
+    },
+    "filters": {
+      "search": "Suche",
+      "gemPlaceholder": "Saphir, Rubin, ovaler Schliff...",
+      "jewelryPlaceholder": "Ring, Collier, Saphir...",
+      "filtersButton": "Filter",
+      "mineral": "Mineral",
+      "cut": "Form / Schliff",
+      "colour": "Farbe",
+      "treatment": "Behandlung",
+      "clarity": "Reinheit",
+      "origin": "Herkunft",
+      "price": "Preis",
+      "min": "Min",
+      "max": "Max",
+      "carat": "Karat",
+      "pieceType": "Stückart",
+      "metal": "Metall",
+      "sortBy": "Sortieren nach",
+      "newest": "Neueste",
+      "caratWeight": "Karatgewicht",
+      "alphabetical": "Alphabetisch",
+      "priceLow": "Preis: aufsteigend",
+      "priceHigh": "Preis: absteigend",
+      "inStockOnly": "Nur vorrätige",
+      "onPromotion": "Im Angebot",
+      "filter": "Filtern",
+      "clear": "Filter Zurücksetzen",
+      "audience": "Gestaltet für"
+    },
+    "stock": {
+      "AVAILABLE": "Verfügbar",
+      "RESERVED": "Reserviert",
+      "SOLD": "Verkauft"
+    },
+    "requestQuote": "Angebot Anfordern →",
+    "landing": {
+      "pieces": "{count, plural, one {# Stück} other {# Stücke}}",
+      "browse": "Durchsuchen",
+      "gems": {
+        "kicker": "Nach Material kaufen",
+        "title": "Ceylon-Edelsteine",
+        "intro": "Wählen Sie einen Stein zum Entdecken, oder durchsuchen Sie alle Edelsteine auf einmal mit den vollständigen Filtern.",
+        "viewAll": "Alle Edelsteine ansehen",
+        "allTitle": "Alle Edelsteine",
+        "allDescription": "Jeder Stein, mit den vollständigen Filtern"
+      },
+      "jewelry": {
+        "kicker": "Nach Zielgruppe kaufen",
+        "title": "Feiner Schmuck",
+        "intro": "Beginnen Sie damit, für wen es ist, und wählen Sie dann die Art des Stücks — oder durchsuchen Sie alles auf einmal.",
+        "viewAll": "Allen Schmuck ansehen",
+        "allTitle": "Aller Schmuck",
+        "allDescription": "Jedes Stück, mit den vollständigen Filtern",
+        "typeKicker": "Wählen Sie ein Stück",
+        "typeIntro": "Wählen Sie die Art von Schmuck, die Sie suchen, oder sehen Sie alles in dieser Kollektion.",
+        "viewAllFor": "Allen {audience} Schmuck ansehen",
+        "audience": {
+          "women": "Ringe, Anhänger, Ohrringe und mehr, gestaltet für sie.",
+          "men": "Siegelringe, Armbänder, Manschettenknöpfe und Anhänger für ihn.",
+          "couple": "Passende Paare und Sets, zum Teilen gemacht.",
+          "unisex": "Zeitlose Stücke, die zu jedem passen."
+        }
+      }
+    }
+  },
+  "product": {
+    "home": "Start",
+    "gems": "Edelsteine",
+    "jewelry": "Schmuck",
+    "ceylonOrigin": "Herkunft Ceylon",
+    "onlyOne": "Dies ist das einzige Exemplar — ein einzigartiger Naturstein, kein reproduzierbares Design.",
+    "onlyOneJewelry": "Ein handgefertigtes Einzelstück — sobald es verkauft ist, wird es nicht erneut angefertigt.",
+    "spec": {
+      "cut": "Schliff",
+      "caratWeight": "Karatgewicht",
+      "dimensions": "Maße",
+      "colour": "Farbe",
+      "clarity": "Reinheit",
+      "treatment": "Behandlung",
+      "origin": "Herkunft",
+      "variety": "Varietät",
+      "symmetry": "Symmetrie / Politur",
+      "certification": "Zertifizierung",
+      "metal": "Metall",
+      "purity": "Feingehalt",
+      "metalWeight": "Metallgewicht",
+      "ringSize": "Ringgröße",
+      "style": "Stil"
+    },
+    "gemstonesSet": "In Diesem Stück Gefasste Edelsteine",
+    "sizeGuide": "Größentabelle",
+    "verifyCertificate": "Zertifikat Prüfen",
+    "viewCertificate": "Zertifikat Ansehen",
+    "signInToAddPrompt": "Melden Sie sich an, um {name} zum Verkaufspreis in den Warenkorb zu legen.",
+    "signInToAdd": "Zum Hinzufügen anmelden",
+    "addToCart": "In den Warenkorb",
+    "adding": "Wird hinzugefügt...",
+    "added": "Zum Warenkorb Hinzugefügt",
+    "addedNote": "<link>Warenkorb Ansehen</link> zum Bezahlen, oder weiter stöbern.",
+    "moreFrom": "Mehr aus der Kollektion",
+    "youMayLove": "Das Könnte Ihnen Auch Gefallen",
+    "requestQuote": "Angebot Anfordern",
+    "viewOptions": "Optionen Ansehen",
+    "chooseOption": "Wählen Sie oben eine Option, um sie zum Warenkorb hinzuzufügen.",
+    "variantSold": "Verkauft",
+    "variantReserved": "Reserviert"
+  },
+  "cart": {
+    "kicker": "Ihr Warenkorb",
+    "title": "Warenkorb",
+    "empty": "Ihr Warenkorb ist leer.",
+    "browseGems": "Edelsteine Durchsuchen",
+    "birthday": "🎂 Frohen Geburtstagsmonat! Sie erhalten einen Rabatt auf die Gewinnspanne bei berechtigten Artikeln, automatisch angewendet beim Checkout — einmal pro Jahr.",
+    "subtotalItems": "Zwischensumme ({count, plural, one {# Artikel} other {# Artikel}})",
+    "freeShippingUnlocked": "Sie haben kostenlosen Versand freigeschaltet!",
+    "freeShippingProgress": "Fügen Sie {amount} mehr hinzu, um kostenlosen Versand freizuschalten.",
+    "taxNote": "Steuern, Versand und Bearbeitungsgebühr werden beim Checkout berechnet.",
+    "removeUnavailable": "Entfernen Sie die oben nicht verfügbaren Artikel, um mit dem Checkout fortzufahren.",
+    "proceed": "Zur Kasse Gehen",
+    "back": "Zurück zu Meinem Konto",
+    "each": "{price} pro Stück",
+    "unavailable": "Nicht mehr verfügbar — bitte entfernen, um fortzufahren",
+    "remove": "Entfernen",
+    "discountCode": "Rabattcode",
+    "apply": "Anwenden",
+    "applying": "Wird angewendet...",
+    "removing": "Wird entfernt...",
+    "codeApplied": "Code <mono>{code}</mono> angewendet"
+  },
+  "orders": {
+    "kicker": "Konto",
+    "title": "Meine Bestellungen",
+    "none": "Noch keine Bestellungen. Durchsuchen Sie unsere <gems>Edelsteine</gems> oder unseren <jewelry>Schmuck</jewelry>, um direkt zum Verkaufspreis zu kaufen.",
+    "status": {
+      "PENDING_PAYMENT": "Zahlung ausstehend",
+      "PAID": "Bezahlt",
+      "SHIPPED": "Versandt",
+      "DELIVERED": "Zugestellt",
+      "PAYMENT_FAILED": "Zahlung fehlgeschlagen",
+      "CANCELLED": "Storniert",
+      "PAYMENT_REVERSED": "Erfordert Aufmerksamkeit"
+    },
+    "paymentReversedBanner": "Diese Bestellung erfordert Aufmerksamkeit",
+    "items": "{count, plural, one {# Artikel} other {# Artikel}}",
+    "paymentInstructions": "Zahlungsanweisungen",
+    "checkStatus": "Status Prüfen",
+    "placed": "Aufgegeben am {date}",
+    "total": "Gesamt",
+    "noneInTab": "Keine Bestellungen in diesem Tab.",
+    "tabs": {
+      "all": "Alle",
+      "pending": "Zahlung ausstehend",
+      "paid": "Bezahlt",
+      "closed": "Storniert"
+    },
+    "viewDetails": "Details Ansehen",
+    "detail": {
+      "kicker": "Bestellung",
+      "backToOrders": "Zurück zu Meinen Bestellungen",
+      "items": "Artikel",
+      "tracking": "Sendungsverfolgung",
+      "carrier": "Versanddienstleister",
+      "trackingNumber": "Sendungsnummer",
+      "shippingAddress": "Lieferadresse",
+      "paymentInfo": "Zahlung",
+      "method": "Zahlungsmethode",
+      "reference": "Zahlungsreferenz",
+      "paidOn": "Bezahlt am {date}",
+      "subtotal": "Zwischensumme",
+      "discount": "Rabatt",
+      "birthday": "Geburtstagsrabatt",
+      "bundle": "Paketrabatt",
+      "points": "Eingelöste Prämienpunkte",
+      "tax": "Steuer",
+      "shipping": "Versand",
+      "handling": "Bearbeitungsgebühr",
+      "total": "Gesamt",
+      "completePayment": "Zahlung Abschließen"
+    }
+  },
+  "checkoutPage": {
+    "kicker": "Checkout",
+    "title": "Versand & Zahlung",
+    "estimateNote": "Die endgültige Steuer, der EMS-Versand und die Bearbeitungsgebühr werden berechnet, nachdem Sie unten Ihre Lieferadresse eingegeben haben."
+  },
+  "breadcrumb": {
+    "home": "Start",
+    "gems": "Edelsteine",
+    "jewelry": "Schmuck",
+    "allGems": "Alle Edelsteine",
+    "allJewelry": "Aller Schmuck",
+    "about": "Unsere Geschichte",
+    "auctions": "Auktionen",
+    "promotions": "Aktionen",
+    "sourcing": "Edelstein-Beschaffung",
+    "configurator": "Gestalte deinen Edelstein",
+    "sizeGuide": "Größentabelle",
+    "terms": "Bedingungen",
+    "search": "Suche",
+    "account": "Mein Konto",
+    "results": "Ergebnisse"
   }
 }

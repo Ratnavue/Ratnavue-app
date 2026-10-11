@@ -40,5 +40,313 @@
   },
   "localeSwitcher": {
     "label": "Idioma"
+  },
+  "checkout": {
+    "firstName": "Nome",
+    "lastName": "Sobrenome",
+    "phone": "Telefone",
+    "address": "Endereço",
+    "city": "Cidade",
+    "country": "País",
+    "countryPlaceholder": "ex. Sri Lanka",
+    "deliveryNote": "Entrega dentro do Sri Lanka.",
+    "paymentMethod": "Forma de pagamento",
+    "comingSoon": "Em breve",
+    "methods": {
+      "WIRE_TRANSFER": {
+        "name": "Transferência bancária",
+        "hint": "Pague por transferência bancária. Mostraremos a seguir nossos dados bancários e sua referência de pagamento, e manteremos seus itens reservados enquanto aguardamos a transferência."
+      },
+      "PAYHERE_CARD": {
+        "name": "Pagamento com cartão",
+        "hint": "Pague com segurança usando um cartão de crédito ou débito."
+      },
+      "COD": {
+        "name": "Pagamento na entrega",
+        "hint": "Disponível para clientes registrados."
+      }
+    },
+    "agreeToTerms": "Eu concordo com os <link>Termos e Condições</link>",
+    "placeOrder": "Fazer Pedido",
+    "continueToPayment": "Continuar para Pagamento",
+    "preparing": "Preparando o pagamento...",
+    "placing": "Realizando seu pedido...",
+    "payhereNote": "Você será redirecionado ao PayHere para concluir o pagamento com segurança.",
+    "wireNote": "Seu pedido é criado agora e seus itens ficam reservados até a confirmação da transferência.",
+    "summary": {
+      "title": "Resumo do Pedido",
+      "subtotal": "Subtotal",
+      "discount": "Desconto",
+      "birthday": "Desconto de aniversário",
+      "bundle": "Desconto de pacote",
+      "points": "Pontos de recompensa",
+      "tax": "Imposto",
+      "shipping": "Entrega",
+      "total": "Total"
+    },
+    "wire": {
+      "kicker": "Pedido realizado",
+      "title": "Conclua sua transferência bancária",
+      "intro": "Seus itens estão sendo reservados para você. Transfira o total abaixo e use o número do seu pedido como referência de pagamento para que possamos identificá-lo.",
+      "amount": "Valor a transferir",
+      "reference": "Referência de pagamento",
+      "instructionsTitle": "Dados bancários",
+      "afterTransfer": "Assim que sua transferência chegar até nós, confirmaremos seu pedido e o prepararemos para entrega. Você pode acompanhar o status em Meus Pedidos.",
+      "viewOrders": "Ver Meus Pedidos",
+      "continueShopping": "Continuar Comprando",
+      "cancelOrder": "Cancelar este pedido",
+      "cancelled": "Este pedido foi cancelado e seus itens liberados."
+    }
+  },
+  "market": {
+    "switchLabel": "Escolha sua loja",
+    "badge": "Sri Lanka",
+    "short": {
+      "lk": "LKR",
+      "intl": "USD"
+    },
+    "name": {
+      "lk": "Sri Lanka",
+      "intl": "Internacional"
+    },
+    "detail": {
+      "lk": "Preços em rupias (LKR)",
+      "intl": "Preços em dólares americanos (USD)"
+    }
+  },
+  "lk": {
+    "strip": {
+      "pricesTitle": "Preços em rupias",
+      "pricesBody": "Todos os preços nesta loja estão em rupias do Sri Lanka, definidos para o Sri Lanka — sem conversão de moeda.",
+      "payTitle": "Pague por transferência bancária",
+      "payBody": "Faça seu pedido e reservamos a peça enquanto sua transferência chega. Pagamento com cartão e pagamento na entrega estarão disponíveis em breve.",
+      "deliveryTitle": "Entregue no Sri Lanka",
+      "deliveryBody": "Os pedidos desta loja são entregues dentro do Sri Lanka, com o frete exibido no pagamento."
+    },
+    "footer": {
+      "storeTitle": "Loja Sri Lanka",
+      "storeBody": "Preços em rupias, entrega dentro do Sri Lanka.",
+      "paymentsTitle": "Opções de pagamento",
+      "bankTransfer": "Transferência bancária",
+      "card": "Pagamento com cartão",
+      "cod": "Pagamento na entrega",
+      "comingSoon": "Em breve",
+      "switchTitle": "Comprando do exterior?"
+    }
+  },
+  "catalog": {
+    "gems": {
+      "kicker": "Gemas Soltas",
+      "title": "Comprar Gemas do Ceilão",
+      "intro": "Cada pedra é listada com sua especificação completa — corte, cor, tom e pureza. Navegue livremente; solicite um orçamento quando algo chamar sua atenção.",
+      "empty": "Nenhuma gema corresponde aos seus filtros ainda."
+    },
+    "jewelry": {
+      "kicker": "Joias Finas",
+      "title": "Comprar Joias",
+      "intro": "Anéis, pingentes e brincos criados em torno de gemas do Ceilão. Solicite um orçamento para qualquer peça, ou peça-nos para engastar uma gema que você mesmo configurou.",
+      "empty": "Nenhuma peça de joia corresponde aos seus filtros ainda."
+    },
+    "filters": {
+      "search": "Buscar",
+      "gemPlaceholder": "Safira, rubi, corte oval...",
+      "jewelryPlaceholder": "Anel, colar, safira...",
+      "filtersButton": "Filtros",
+      "mineral": "Mineral",
+      "cut": "Formato / Corte",
+      "colour": "Cor",
+      "treatment": "Tratamento",
+      "clarity": "Pureza",
+      "origin": "Origem",
+      "price": "Preço",
+      "min": "Mín",
+      "max": "Máx",
+      "carat": "Quilate",
+      "pieceType": "Tipo de peça",
+      "metal": "Metal",
+      "sortBy": "Ordenar por",
+      "newest": "Mais recente",
+      "caratWeight": "Peso em quilates",
+      "alphabetical": "Alfabética",
+      "priceLow": "Preço: menor para maior",
+      "priceHigh": "Preço: maior para menor",
+      "inStockOnly": "Somente em estoque",
+      "onPromotion": "Em promoção",
+      "filter": "Filtrar",
+      "clear": "Limpar Filtros",
+      "audience": "Projetado para"
+    },
+    "stock": {
+      "AVAILABLE": "Disponível",
+      "RESERVED": "Reservado",
+      "SOLD": "Vendido"
+    },
+    "requestQuote": "Solicitar um Orçamento →",
+    "landing": {
+      "pieces": "{count, plural, one {# peça} other {# peças}}",
+      "browse": "Navegar",
+      "gems": {
+        "kicker": "Comprar por material",
+        "title": "Gemas do Ceilão",
+        "intro": "Escolha uma pedra para explorar, ou veja todas as gemas de uma vez com os filtros completos.",
+        "viewAll": "Ver todas as gemas",
+        "allTitle": "Todas as gemas",
+        "allDescription": "Cada pedra, com os filtros completos"
+      },
+      "jewelry": {
+        "kicker": "Comprar por destinatário",
+        "title": "Joias Finas",
+        "intro": "Comece por para quem é, depois escolha o tipo de peça — ou veja tudo de uma vez.",
+        "viewAll": "Ver todas as joias",
+        "allTitle": "Todas as joias",
+        "allDescription": "Cada peça, com os filtros completos",
+        "typeKicker": "Escolha uma peça",
+        "typeIntro": "Escolha o tipo de joia que você procura, ou veja tudo nesta coleção.",
+        "viewAllFor": "Ver todas as joias para {audience}",
+        "audience": {
+          "women": "Anéis, pingentes, brincos e mais, feitos para ela.",
+          "men": "Anéis de sinete, pulseiras, abotoaduras e pingentes para ele.",
+          "couple": "Pares e conjuntos combinando, feitos para compartilhar.",
+          "unisex": "Peças atemporais que ficam bem em qualquer pessoa."
+        }
+      }
+    }
+  },
+  "product": {
+    "home": "Início",
+    "gems": "Gemas",
+    "jewelry": "Joias",
+    "ceylonOrigin": "Origem Ceilão",
+    "onlyOne": "Esta é a única — uma pedra natural única, não um design reproduzível.",
+    "onlyOneJewelry": "Uma peça única, feita à mão — uma vez vendida, não será feita novamente.",
+    "spec": {
+      "cut": "Corte",
+      "caratWeight": "Peso em Quilates",
+      "dimensions": "Dimensões",
+      "colour": "Cor",
+      "clarity": "Pureza",
+      "treatment": "Tratamento",
+      "origin": "Origem",
+      "variety": "Variedade",
+      "symmetry": "Simetria / Polimento",
+      "certification": "Certificação",
+      "metal": "Metal",
+      "purity": "Pureza",
+      "metalWeight": "Peso do Metal",
+      "ringSize": "Tamanho do Anel",
+      "style": "Estilo"
+    },
+    "gemstonesSet": "Gemas Engastadas Nesta Peça",
+    "sizeGuide": "Guia de Tamanhos",
+    "verifyCertificate": "Verificar Certificado",
+    "viewCertificate": "Ver Certificado",
+    "signInToAddPrompt": "Entre para adicionar {name} ao seu carrinho pelo preço de varejo.",
+    "signInToAdd": "Entre para adicionar ao carrinho",
+    "addToCart": "Adicionar ao Carrinho",
+    "adding": "Adicionando...",
+    "added": "Adicionado ao Carrinho",
+    "addedNote": "<link>Ver Carrinho</link> para finalizar, ou continue navegando.",
+    "moreFrom": "Mais da Coleção",
+    "youMayLove": "Você Também Pode Gostar",
+    "requestQuote": "Solicitar um Orçamento",
+    "viewOptions": "Ver Opções",
+    "chooseOption": "Escolha uma opção acima para adicioná-la ao seu carrinho.",
+    "variantSold": "Vendido",
+    "variantReserved": "Reservado"
+  },
+  "cart": {
+    "kicker": "Seu Carrinho",
+    "title": "Carrinho de Compras",
+    "empty": "Seu carrinho está vazio.",
+    "browseGems": "Navegar pelas Gemas",
+    "birthday": "🎂 Feliz mês de aniversário! Você receberá um desconto sobre a margem de lucro em itens elegíveis, aplicado automaticamente no pagamento — uma vez por ano.",
+    "subtotalItems": "Subtotal ({count, plural, one {# item} other {# itens}})",
+    "freeShippingUnlocked": "Você desbloqueou o frete grátis!",
+    "freeShippingProgress": "Adicione mais {amount} para desbloquear o frete grátis.",
+    "taxNote": "Impostos, frete e taxa de manuseio são calculados no pagamento.",
+    "removeUnavailable": "Remova o(s) item(ns) indisponível(is) acima para continuar o pagamento.",
+    "proceed": "Continuar para o Pagamento",
+    "back": "Voltar para Minha Conta",
+    "each": "{price} cada",
+    "unavailable": "Não está mais disponível — remova-o para finalizar a compra",
+    "remove": "Remover",
+    "discountCode": "Código de desconto",
+    "apply": "Aplicar",
+    "applying": "Aplicando...",
+    "removing": "Removendo...",
+    "codeApplied": "Código <mono>{code}</mono> aplicado"
+  },
+  "orders": {
+    "kicker": "Conta",
+    "title": "Meus Pedidos",
+    "none": "Ainda sem pedidos. Navegue pelas nossas <gems>gemas</gems> ou <jewelry>joias</jewelry> para comprar diretamente pelo preço de varejo.",
+    "status": {
+      "PENDING_PAYMENT": "Pagamento pendente",
+      "PAID": "Pago",
+      "SHIPPED": "Enviado",
+      "DELIVERED": "Entregue",
+      "PAYMENT_FAILED": "Pagamento falhou",
+      "CANCELLED": "Cancelado",
+      "PAYMENT_REVERSED": "Precisa de atenção"
+    },
+    "paymentReversedBanner": "Este pedido precisa de atenção",
+    "items": "{count, plural, one {# item} other {# itens}}",
+    "paymentInstructions": "Instruções de pagamento",
+    "checkStatus": "Verificar status",
+    "placed": "Feito em {date}",
+    "total": "Total",
+    "noneInTab": "Nenhum pedido nesta aba.",
+    "tabs": {
+      "all": "Todos",
+      "pending": "Aguardando pagamento",
+      "paid": "Pagos",
+      "closed": "Cancelados"
+    },
+    "viewDetails": "Ver detalhes",
+    "detail": {
+      "kicker": "Pedido",
+      "backToOrders": "Voltar para Meus Pedidos",
+      "items": "Itens",
+      "tracking": "Rastreamento",
+      "carrier": "Transportadora",
+      "trackingNumber": "Número de rastreamento",
+      "shippingAddress": "Endereço de Entrega",
+      "paymentInfo": "Pagamento",
+      "method": "Forma de pagamento",
+      "reference": "Referência de pagamento",
+      "paidOn": "Pago em {date}",
+      "subtotal": "Subtotal",
+      "discount": "Desconto",
+      "birthday": "Desconto de aniversário",
+      "bundle": "Desconto de pacote",
+      "points": "Pontos de recompensa usados",
+      "tax": "Imposto",
+      "shipping": "Frete",
+      "handling": "Taxa de manuseio",
+      "total": "Total",
+      "completePayment": "Concluir pagamento"
+    }
+  },
+  "checkoutPage": {
+    "kicker": "Checkout",
+    "title": "Entrega e Pagamento",
+    "estimateNote": "O imposto final, o frete EMS e a taxa de manuseio são calculados após você inserir seu endereço de entrega abaixo."
+  },
+  "breadcrumb": {
+    "home": "Início",
+    "gems": "Gemas",
+    "jewelry": "Joias",
+    "allGems": "Todas as gemas",
+    "allJewelry": "Todas as joias",
+    "about": "Nossa História",
+    "auctions": "Leilões",
+    "promotions": "Promoções",
+    "sourcing": "Abastecimento de Gemas",
+    "configurator": "Crie sua Gema",
+    "sizeGuide": "Guia de Tamanhos",
+    "terms": "Termos",
+    "search": "Buscar",
+    "account": "Minha Conta",
+    "results": "Resultados"
   }
 }

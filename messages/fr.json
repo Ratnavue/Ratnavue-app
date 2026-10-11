@@ -40,5 +40,313 @@
   },
   "localeSwitcher": {
     "label": "Langue"
+  },
+  "checkout": {
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "phone": "Téléphone",
+    "address": "Adresse",
+    "city": "Ville",
+    "country": "Pays",
+    "countryPlaceholder": "p. ex. Sri Lanka",
+    "deliveryNote": "Livraison au Sri Lanka uniquement.",
+    "paymentMethod": "Mode de paiement",
+    "comingSoon": "Bientôt disponible",
+    "methods": {
+      "WIRE_TRANSFER": {
+        "name": "Virement bancaire",
+        "hint": "Payez par virement bancaire. Nous vous indiquerons ensuite nos coordonnées bancaires et votre référence de paiement, et nous conserverons vos articles en attendant le virement."
+      },
+      "PAYHERE_CARD": {
+        "name": "Paiement par carte",
+        "hint": "Payez en toute sécurité par carte de crédit ou de débit."
+      },
+      "COD": {
+        "name": "Paiement à la livraison",
+        "hint": "Disponible pour les clients inscrits."
+      }
+    },
+    "agreeToTerms": "J'accepte les <link>Conditions Générales</link>",
+    "placeOrder": "Passer la Commande",
+    "continueToPayment": "Continuer vers le Paiement",
+    "preparing": "Préparation du paiement...",
+    "placing": "Passage de votre commande...",
+    "payhereNote": "Vous serez redirigé vers PayHere pour finaliser le paiement en toute sécurité.",
+    "wireNote": "Votre commande est créée dès maintenant et ses articles sont réservés jusqu'à la confirmation du virement.",
+    "summary": {
+      "title": "Récapitulatif de la Commande",
+      "subtotal": "Sous-total",
+      "discount": "Remise",
+      "birthday": "Remise d'anniversaire",
+      "bundle": "Remise de lot",
+      "points": "Points de fidélité",
+      "tax": "TVA",
+      "shipping": "Livraison",
+      "total": "Total"
+    },
+    "wire": {
+      "kicker": "Commande passée",
+      "title": "Finalisez votre virement bancaire",
+      "intro": "Vos articles sont réservés pour vous. Veuillez virer le montant total ci-dessous en utilisant votre numéro de commande comme référence de paiement afin que nous puissions l'identifier.",
+      "amount": "Montant à virer",
+      "reference": "Référence de paiement",
+      "instructionsTitle": "Coordonnées bancaires",
+      "afterTransfer": "Dès que votre virement nous parvient, nous confirmerons votre commande et la préparerons pour la livraison. Vous pouvez suivre son statut dans Mes Commandes.",
+      "viewOrders": "Voir Mes Commandes",
+      "continueShopping": "Continuer mes Achats",
+      "cancelOrder": "Annuler cette commande",
+      "cancelled": "Cette commande a été annulée et ses articles libérés."
+    }
+  },
+  "market": {
+    "switchLabel": "Choisissez votre boutique",
+    "badge": "Sri Lanka",
+    "short": {
+      "lk": "LKR",
+      "intl": "USD"
+    },
+    "name": {
+      "lk": "Sri Lanka",
+      "intl": "International"
+    },
+    "detail": {
+      "lk": "Prix en roupies (LKR)",
+      "intl": "Prix en dollars américains (USD)"
+    }
+  },
+  "lk": {
+    "strip": {
+      "pricesTitle": "Prix en roupies",
+      "pricesBody": "Tous les prix de cette boutique sont en roupies sri-lankaises, fixés pour le Sri Lanka — sans conversion de devise.",
+      "payTitle": "Payez par virement bancaire",
+      "payBody": "Passez votre commande et nous réservons la pièce en attendant votre virement. Le paiement par carte et le paiement à la livraison seront bientôt disponibles.",
+      "deliveryTitle": "Livré au Sri Lanka",
+      "deliveryBody": "Les commandes de cette boutique sont livrées au Sri Lanka, avec les frais de livraison indiqués lors du paiement."
+    },
+    "footer": {
+      "storeTitle": "Boutique Sri Lanka",
+      "storeBody": "Prix en roupies, livraison au Sri Lanka.",
+      "paymentsTitle": "Options de paiement",
+      "bankTransfer": "Virement bancaire",
+      "card": "Paiement par carte",
+      "cod": "Paiement à la livraison",
+      "comingSoon": "Bientôt disponible",
+      "switchTitle": "Vous achetez depuis l'étranger ?"
+    }
+  },
+  "catalog": {
+    "gems": {
+      "kicker": "Pierres Précieuses en Vrac",
+      "title": "Acheter des Gemmes de Ceylan",
+      "intro": "Chaque pierre est présentée avec sa spécification complète — taille, couleur, ton et pureté. Parcourez librement ; demandez un devis dès que quelque chose attire votre œil.",
+      "empty": "Aucune gemme ne correspond encore à vos filtres."
+    },
+    "jewelry": {
+      "kicker": "Bijoux Fins",
+      "title": "Acheter des Bijoux",
+      "intro": "Bagues, pendentifs et boucles d'oreilles conçus autour de gemmes de Ceylan. Demandez un devis pour n'importe quelle pièce, ou demandez-nous de sertir une gemme que vous avez vous-même configurée.",
+      "empty": "Aucun bijou ne correspond encore à vos filtres."
+    },
+    "filters": {
+      "search": "Rechercher",
+      "gemPlaceholder": "Saphir, rubis, taille ovale...",
+      "jewelryPlaceholder": "Bague, collier, saphir...",
+      "filtersButton": "Filtres",
+      "mineral": "Minéral",
+      "cut": "Forme / Taille",
+      "colour": "Couleur",
+      "treatment": "Traitement",
+      "clarity": "Pureté",
+      "origin": "Origine",
+      "price": "Prix",
+      "min": "Min",
+      "max": "Max",
+      "carat": "Carat",
+      "pieceType": "Type de pièce",
+      "metal": "Métal",
+      "sortBy": "Trier par",
+      "newest": "Plus récent",
+      "caratWeight": "Poids en carats",
+      "alphabetical": "Alphabétique",
+      "priceLow": "Prix : croissant",
+      "priceHigh": "Prix : décroissant",
+      "inStockOnly": "En stock uniquement",
+      "onPromotion": "En promotion",
+      "filter": "Filtrer",
+      "clear": "Effacer les Filtres",
+      "audience": "Conçu pour"
+    },
+    "stock": {
+      "AVAILABLE": "Disponible",
+      "RESERVED": "Réservé",
+      "SOLD": "Vendu"
+    },
+    "requestQuote": "Demander un Devis →",
+    "landing": {
+      "pieces": "{count, plural, one {# pièce} other {# pièces}}",
+      "browse": "Parcourir",
+      "gems": {
+        "kicker": "Acheter par matière",
+        "title": "Gemmes de Ceylan",
+        "intro": "Choisissez une pierre à explorer, ou parcourez toutes les gemmes à la fois avec les filtres complets.",
+        "viewAll": "Voir toutes les gemmes",
+        "allTitle": "Toutes les gemmes",
+        "allDescription": "Chaque pierre, avec les filtres complets"
+      },
+      "jewelry": {
+        "kicker": "Acheter selon la personne",
+        "title": "Bijoux Fins",
+        "intro": "Commencez par la personne concernée, puis choisissez le type de pièce — ou parcourez tout à la fois.",
+        "viewAll": "Voir tous les bijoux",
+        "allTitle": "Tous les bijoux",
+        "allDescription": "Chaque pièce, avec les filtres complets",
+        "typeKicker": "Choisissez une pièce",
+        "typeIntro": "Choisissez le type de bijou que vous recherchez, ou voyez tout dans cette collection.",
+        "viewAllFor": "Voir tous les bijoux {audience}",
+        "audience": {
+          "women": "Bagues, pendentifs, boucles d'oreilles et plus, conçus pour elle.",
+          "men": "Chevalières, bracelets, boutons de manchette et pendentifs pour lui.",
+          "couple": "Paires et ensembles assortis, faits pour être partagés.",
+          "unisex": "Des pièces intemporelles qui conviennent à tous."
+        }
+      }
+    }
+  },
+  "product": {
+    "home": "Accueil",
+    "gems": "Gemmes",
+    "jewelry": "Bijoux",
+    "ceylonOrigin": "Origine Ceylan",
+    "onlyOne": "C'est la seule — une pierre naturelle unique, et non un modèle reproductible.",
+    "onlyOneJewelry": "Une seule pièce, faite à la main — une fois vendue, elle ne sera plus refaite.",
+    "spec": {
+      "cut": "Taille",
+      "caratWeight": "Poids en Carats",
+      "dimensions": "Dimensions",
+      "colour": "Couleur",
+      "clarity": "Pureté",
+      "treatment": "Traitement",
+      "origin": "Origine",
+      "variety": "Variété",
+      "symmetry": "Symétrie / Polissage",
+      "certification": "Certification",
+      "metal": "Métal",
+      "purity": "Pureté",
+      "metalWeight": "Poids du Métal",
+      "ringSize": "Taille de Bague",
+      "style": "Style"
+    },
+    "gemstonesSet": "Gemmes Serties sur Cette Pièce",
+    "sizeGuide": "Guide des Tailles",
+    "verifyCertificate": "Vérifier le Certificat",
+    "viewCertificate": "Voir le Certificat",
+    "signInToAddPrompt": "Connectez-vous pour ajouter {name} à votre panier au prix de détail.",
+    "signInToAdd": "Connectez-vous pour ajouter au panier",
+    "addToCart": "Ajouter au Panier",
+    "adding": "Ajout en cours...",
+    "added": "Ajouté au Panier",
+    "addedNote": "<link>Voir le Panier</link> pour finaliser, ou continuez à parcourir.",
+    "moreFrom": "Plus de la Collection",
+    "youMayLove": "Vous Aimerez Aussi",
+    "requestQuote": "Demander un Devis",
+    "viewOptions": "Voir les Options",
+    "chooseOption": "Choisissez une option ci-dessus pour l'ajouter à votre panier.",
+    "variantSold": "Vendu",
+    "variantReserved": "Réservé"
+  },
+  "cart": {
+    "kicker": "Votre Panier",
+    "title": "Panier d'Achat",
+    "empty": "Votre panier est vide.",
+    "browseGems": "Parcourir les Gemmes",
+    "birthday": "🎂 Joyeux mois d'anniversaire ! Vous obtiendrez une remise sur la marge des articles éligibles, appliquée automatiquement au paiement — une fois par an.",
+    "subtotalItems": "Sous-total ({count, plural, one {# article} other {# articles}})",
+    "freeShippingUnlocked": "Vous avez débloqué la livraison gratuite !",
+    "freeShippingProgress": "Ajoutez {amount} de plus pour débloquer la livraison gratuite.",
+    "taxNote": "Les taxes, la livraison et les frais de traitement sont calculés au moment du paiement.",
+    "removeUnavailable": "Retirez le(s) article(s) indisponible(s) ci-dessus pour continuer le paiement.",
+    "proceed": "Procéder au Paiement",
+    "back": "Retour à Mon Compte",
+    "each": "{price} chacun",
+    "unavailable": "Plus disponible — veuillez le retirer pour continuer",
+    "remove": "Retirer",
+    "discountCode": "Code de réduction",
+    "apply": "Appliquer",
+    "applying": "Application en cours...",
+    "removing": "Suppression en cours...",
+    "codeApplied": "Code <mono>{code}</mono> appliqué"
+  },
+  "orders": {
+    "kicker": "Compte",
+    "title": "Mes Commandes",
+    "none": "Pas encore de commande. Parcourez nos <gems>gemmes</gems> ou nos <jewelry>bijoux</jewelry> pour acheter directement au prix de détail.",
+    "status": {
+      "PENDING_PAYMENT": "Paiement en attente",
+      "PAID": "Payée",
+      "SHIPPED": "Expédiée",
+      "DELIVERED": "Livrée",
+      "PAYMENT_FAILED": "Paiement échoué",
+      "CANCELLED": "Annulée",
+      "PAYMENT_REVERSED": "Nécessite une attention"
+    },
+    "paymentReversedBanner": "Cette commande nécessite une attention",
+    "items": "{count, plural, one {# article} other {# articles}}",
+    "paymentInstructions": "Instructions de paiement",
+    "checkStatus": "Vérifier le statut",
+    "placed": "Passée le {date}",
+    "total": "Total",
+    "noneInTab": "Aucune commande dans cet onglet.",
+    "tabs": {
+      "all": "Toutes",
+      "pending": "En attente de paiement",
+      "paid": "Payées",
+      "closed": "Annulées"
+    },
+    "viewDetails": "Voir les détails",
+    "detail": {
+      "kicker": "Commande",
+      "backToOrders": "Retour à Mes Commandes",
+      "items": "Articles",
+      "tracking": "Suivi",
+      "carrier": "Transporteur",
+      "trackingNumber": "Numéro de suivi",
+      "shippingAddress": "Adresse de Livraison",
+      "paymentInfo": "Paiement",
+      "method": "Mode de paiement",
+      "reference": "Référence de paiement",
+      "paidOn": "Payée le {date}",
+      "subtotal": "Sous-total",
+      "discount": "Remise",
+      "birthday": "Remise d'anniversaire",
+      "bundle": "Remise de lot",
+      "points": "Points de fidélité utilisés",
+      "tax": "Taxe",
+      "shipping": "Livraison",
+      "handling": "Frais de traitement",
+      "total": "Total",
+      "completePayment": "Finaliser le paiement"
+    }
+  },
+  "checkoutPage": {
+    "kicker": "Paiement",
+    "title": "Livraison et Paiement",
+    "estimateNote": "La taxe finale, les frais de livraison EMS et les frais de traitement sont calculés après avoir saisi votre adresse de livraison ci-dessous."
+  },
+  "breadcrumb": {
+    "home": "Accueil",
+    "gems": "Gemmes",
+    "jewelry": "Bijoux",
+    "allGems": "Toutes les gemmes",
+    "allJewelry": "Tous les bijoux",
+    "about": "Notre Histoire",
+    "auctions": "Enchères",
+    "promotions": "Promotions",
+    "sourcing": "Approvisionnement en Gemmes",
+    "configurator": "Concevez votre Gemme",
+    "sizeGuide": "Guide des Tailles",
+    "terms": "Conditions",
+    "search": "Rechercher",
+    "account": "Mon Compte",
+    "results": "Résultats"
   }
 }
