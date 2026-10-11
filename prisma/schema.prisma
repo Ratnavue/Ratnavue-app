@@ -665,6 +665,22 @@ model TranslationOverride {
   @@index([key])
 }
 
+// An admin-added language on top of the 7 built into the code
+// (SUPPORTED_LOCALES, src/i18n/request.ts) — purely additive, the built-in
+// ones are untouched and keep their own shipped messages/*.json file. A
+// custom locale has no such file: its only text comes from English plus
+// whatever TranslationOverride rows an admin fills in for it over time
+// (see lib/locales.ts). `active: false` hides it from the public switcher
+// without losing any overrides already entered for it.
+model Locale {
+  code       String   @id
+  name       String
+  nativeName String
+  active     Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+}
+
 // ---------- Quotes & sourcing ----------
 
 enum QuoteStatus {

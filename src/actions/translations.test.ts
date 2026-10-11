@@ -46,4 +46,14 @@ describe("saveTranslationOverride", () => {
     expect(result).toEqual({ ok: true });
     expect(prismaMock.translationOverride.deleteMany).toHaveBeenCalledWith({ where: { key: "nav.shopGems", locale: "es" } });
   });
+
+  it("accepts a locale that isn't built in but was added as a custom language", async () => {
+    prismaMock.locale.count.mockResolvedValue(1);
+    prismaMock.translationOverride.upsert.mockResolvedValue({} as never);
+    const result = await saveTranslationOverride(formData({ key: "nav.shopGems", locale: "ja", value: "ジェム" }));
+    expect(result).toEqual({ ok: true });
+    expect(prismaMock.translationOverride.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { key_locale: { key: "nav.shopGems", locale: "ja" } } }),
+    );
+  });
 });

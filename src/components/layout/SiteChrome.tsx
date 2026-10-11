@@ -9,6 +9,7 @@ import { FloatingChatButton } from "./FloatingChatButton";
 import { BackToTop } from "./BackToTop";
 import type { AppLocale } from "@/i18n/request";
 import type { FooterMessages, TrustBarMessages } from "@/lib/i18n-messages";
+import type { CustomLocale } from "@/lib/locales";
 
 interface SiteChromeUser {
   name?: string | null;
@@ -32,6 +33,7 @@ export function SiteChrome({
   cartItemCount,
   promotionsThemeIsDark,
   locale,
+  customLocales,
   children,
 }: {
   user: SiteChromeUser | null;
@@ -64,6 +66,10 @@ export function SiteChrome({
    * and threaded down as a plain prop, same "compute where it's cheap"
    * reasoning as `year`. Navbar needs it for LocaleSwitcher's own highlight. */
   locale: AppLocale;
+  /** Admin-added languages beyond the 7 built into the code (lib/locales.ts)
+   * — read once in RootLayout and threaded down the same way as `locale`
+   * itself, so LocaleSwitcher can show the full, current list. */
+  customLocales: CustomLocale[];
   children: React.ReactNode;
 }) {
   const pathname = useAppPathname();
@@ -83,6 +89,7 @@ export function SiteChrome({
         cartItemCount={cartItemCount}
         promotionsThemeIsDark={promotionsThemeIsDark}
         locale={locale}
+        customLocales={customLocales}
       />
       {children}
       <Footer messages={footerMessages} trustBarMessages={trustBarMessages} showTrustBar={pathname !== "/"} />

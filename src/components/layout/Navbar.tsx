@@ -15,6 +15,7 @@ import { MarketSwitcher, MarketSwitcherInline } from "@/components/layout/Market
 import { KandyanBand } from "@/components/decor/Kandyan";
 import { HeaderSearch } from "@/components/layout/HeaderSearch";
 import type { AppLocale } from "@/i18n/request";
+import type { CustomLocale } from "@/lib/locales";
 
 // `key` looks up the label in messages/*.json's "nav" namespace (see
 // useTranslations("nav") below) — kept separate from `href` since a route
@@ -69,6 +70,7 @@ export function Navbar({
   cartItemCount,
   promotionsThemeIsDark,
   locale,
+  customLocales,
 }: {
   user: { name?: string | null; email?: string | null; hasAdminAccess?: boolean } | null;
   /** True when the seasonal promotions page is Coming Soon or Live (see
@@ -94,6 +96,8 @@ export function Navbar({
   promotionsThemeIsDark: boolean;
   /** The active UI language — see SiteChrome's own comment. */
   locale: AppLocale;
+  /** Admin-added languages — see SiteChrome's own comment. */
+  customLocales: CustomLocale[];
 }) {
   const t = useTranslations("nav");
   const tMarket = useTranslations("market");
@@ -276,7 +280,7 @@ export function Navbar({
             </Link>
           )}
           <MarketSwitcher transparent={transparent} />
-          <LocaleSwitcher locale={locale} transparent={transparent} />
+          <LocaleSwitcher locale={locale} transparent={transparent} customLocales={customLocales} />
         </div>
 
         <div className={cn(wide ? "2xl:hidden" : "lg:hidden", "flex items-center gap-2.5 min-[430px]:gap-4")}>
@@ -307,7 +311,7 @@ export function Navbar({
             </Link>
           )}
           <MarketSwitcher transparent={transparent} />
-          <LocaleSwitcher locale={locale} transparent={transparent} />
+          <LocaleSwitcher locale={locale} transparent={transparent} customLocales={customLocales} />
           <button
             className={cn("transition-colors duration-300", transparent ? "text-ivory" : "text-charcoal")}
             onClick={() => setOpen((v) => !v)}

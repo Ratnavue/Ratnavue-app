@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/rbac";
 import { setTranslationOverride } from "@/lib/translations";
+import { customLocaleExists } from "@/lib/locales";
 import { SUPPORTED_LOCALES } from "@/i18n/request";
 import type { ActionResult } from "./auth";
 
@@ -18,7 +19,8 @@ export async function saveTranslationOverride(formData: FormData): Promise<Actio
   const value = String(formData.get("value") ?? "");
 
   if (!key) return { ok: false, error: "Missing translation key." };
-  if (!(SUPPORTED_LOCALES as readonly string[]).includes(locale)) return { ok: false, error: "Unsupported locale." };
+  const isBuiltIn = (SUPPORTED_LOCALES as readonly string[]).includes(locale);
+  if (!isBuiltIn && !(await customLocaleExists(locale))) return { ok: false, error: "Unsupported locale." };
 
   await setTranslationOverride(key, locale, value);
   revalidatePath("/admin/translations");

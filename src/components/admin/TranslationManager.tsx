@@ -8,13 +8,9 @@ import { Input, Textarea } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
-const LOCALE_NAMES: Record<string, string> = {
-  es: "Español", fr: "Français", de: "Deutsch", pt: "Português", si: "සිංහල", ta: "தமிழ்",
-};
-
 interface TranslationManagerProps {
   keys: { key: string; english: string }[];
-  locales: readonly string[];
+  locales: { code: string; name: string }[];
   localeFileValues: Record<string, Record<string, string>>;
   overridesByKey: Record<string, Record<string, string>>;
 }
@@ -35,7 +31,7 @@ export function TranslationManager({ keys, locales, localeFileValues, overridesB
 
   function translatedCount(key: string): number {
     const overrides = liveOverrides[key] ?? {};
-    return locales.filter((l) => overrides[l] != null || localeFileValues[l]?.[key] != null).length;
+    return locales.filter((l) => overrides[l.code] != null || localeFileValues[l.code]?.[key] != null).length;
   }
 
   function handleSaved(key: string, locale: string, value: string) {
@@ -87,13 +83,14 @@ export function TranslationManager({ keys, locales, localeFileValues, overridesB
                 <div className="space-y-4 border-t border-border-subtle bg-ivory-soft px-4 py-4">
                   {locales.map((locale) => (
                     <LocaleRow
-                      key={locale}
+                      key={locale.code}
                       translationKey={item.key}
-                      locale={locale}
+                      locale={locale.code}
+                      localeName={locale.name}
                       english={item.english}
-                      override={liveOverrides[item.key]?.[locale]}
-                      localeFileValue={localeFileValues[locale]?.[item.key]}
-                      onSaved={(value) => handleSaved(item.key, locale, value)}
+                      override={liveOverrides[item.key]?.[locale.code]}
+                      localeFileValue={localeFileValues[locale.code]?.[item.key]}
+                      onSaved={(value) => handleSaved(item.key, locale.code, value)}
                     />
                   ))}
                 </div>
@@ -113,6 +110,7 @@ export function TranslationManager({ keys, locales, localeFileValues, overridesB
 function LocaleRow({
   translationKey,
   locale,
+  localeName,
   english,
   override,
   localeFileValue,
@@ -120,6 +118,7 @@ function LocaleRow({
 }: {
   translationKey: string;
   locale: string;
+  localeName: string;
   english: string;
   override: string | undefined;
   localeFileValue: string | undefined;
@@ -130,7 +129,7 @@ function LocaleRow({
   const [saved, setSaved] = useState(false);
   const { pending, error, run } = useAdminAction();
 
-  const source = override != null ? "your override" : localeFileValue != null ? `the ${locale}.json file` : "the English fallback";
+  const source = override != null ? "your override" : localeFileValue != null ? "its existing translation" : "the English fallback";
 
   function handleSubmit() {
     setSaved(false);
@@ -150,7 +149,7 @@ function LocaleRow({
   return (
     <div>
       <div className="flex items-center justify-between gap-2">
-        <label className="text-xs font-medium uppercase tracking-wide text-charcoal/70">{LOCALE_NAMES[locale] ?? locale}</label>
+        <label className="text-xs font-medium uppercase tracking-wide text-charcoal/70">{localeName}</label>
         <span className="text-xs text-charcoal/50">Currently showing: {source}</span>
       </div>
       <Textarea

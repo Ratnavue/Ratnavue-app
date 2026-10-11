@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { SUPPORTED_LOCALES, LOCALE_COOKIE, type AppLocale } from "@/i18n/request";
+import { getActiveCustomLocales } from "@/lib/locales";
 
 // A year — this is a customer's standing language preference, not a
 // session-scoped setting, so it should survive well past a single visit
@@ -10,7 +11,11 @@ import { SUPPORTED_LOCALES, LOCALE_COOKIE, type AppLocale } from "@/i18n/request
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
 export async function setLocale(locale: AppLocale): Promise<void> {
-  if (!SUPPORTED_LOCALES.includes(locale)) return;
+  const isBuiltIn = (SUPPORTED_LOCALES as readonly string[]).includes(locale);
+  if (!isBuiltIn) {
+    const customLocales = await getActiveCustomLocales();
+    if (!customLocales.some((l) => l.code === locale)) return;
+  }
   const cookieStore = await cookies();
   cookieStore.set(LOCALE_COOKIE, locale, {
     maxAge: COOKIE_MAX_AGE_SECONDS,

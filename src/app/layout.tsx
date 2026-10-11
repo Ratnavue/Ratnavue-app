@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { marketVisibilityKey } from "@/lib/page-visibility";
 import { getCachedPageVisibilities, getCachedSeasonalContent } from "@/lib/site-config-cache";
+import { getActiveCustomLocales } from "@/lib/locales";
 import { SEASONAL_THEMES } from "@/lib/seasonal-themes";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { MainWrapper } from "@/components/layout/MainWrapper";
@@ -78,11 +79,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const market = await getMarket();
   const seasonalKey = marketVisibilityKey("seasonal", market);
   const auctionKey = marketVisibilityKey("auction", market);
-  const [session, visibilities, seasonalContent, locale] = await Promise.all([
+  const [session, visibilities, seasonalContent, locale, customLocales] = await Promise.all([
     auth(),
     getCachedPageVisibilities([seasonalKey, auctionKey, "design-studio"]),
     getCachedSeasonalContent(market),
     getLocale(),
+    getActiveCustomLocales(),
   ]);
   // Navbar's transparent-over-hero treatment on /promotions is only safe
   // when that season's hero is actually dark (Halloween) — Spring/Summer/
@@ -126,6 +128,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               cartItemCount={cartItemCount}
               promotionsThemeIsDark={promotionsThemeIsDark}
               locale={locale as AppLocale}
+              customLocales={customLocales}
             >
               <MainWrapper>{children}</MainWrapper>
             </SiteChrome>
