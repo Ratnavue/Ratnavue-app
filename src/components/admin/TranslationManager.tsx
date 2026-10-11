@@ -173,7 +173,6 @@ function LocaleRow({
             variant="ghost"
             disabled={pending}
             onClick={() => {
-              setValue("");
               setSaved(false);
               const fd = new FormData();
               fd.set("key", translationKey);
@@ -181,7 +180,14 @@ function LocaleRow({
               fd.set("value", "");
               run(
                 async () => saveTranslationOverride(fd),
-                () => onSaved(""),
+                () => {
+                  // Falls back to what will actually render now (the
+                  // locale's own JSON value, or blank if it has none) —
+                  // not a bare "", which would misleadingly suggest this
+                  // locale has no text at all for this key.
+                  setValue(localeFileValue ?? "");
+                  onSaved("");
+                },
               );
             }}
           >
