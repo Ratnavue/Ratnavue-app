@@ -4,7 +4,15 @@ import { AUCTION_STATE_LABELS, type AuctionDisplayState } from "@/lib/auctions";
 export const STOCK_STYLES: Record<string, string> = {
   AVAILABLE: "bg-emerald-50 text-emerald-800 border-emerald-200",
   RESERVED: "bg-amber-50 text-amber-800 border-amber-200",
-  SOLD: "bg-charcoal/5 text-charcoal/60 border-charcoal/15",
+  // Unlike the two above, this used to be bg-charcoal/5 — a 5%-opacity
+  // tint, not a solid fill like emerald-50/amber-50 are. Fine against a
+  // plain page background, but this badge is also rendered as a photo
+  // overlay on catalog cards (GemCard/JewelryCard), where a near-
+  // transparent fill just lets whatever's behind it (often a light/white
+  // product photo) show straight through — unreadable. A solid dark pill
+  // reads clearly against any photo, same family as those cards' own
+  // "Ceylon" origin badge (bg-charcoal/85 + text-ivory).
+  SOLD: "bg-charcoal/90 text-ivory border-charcoal/90",
 };
 
 const QUOTE_STATUS_STYLES: Record<string, string> = {

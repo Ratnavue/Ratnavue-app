@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createJewelry, updateJewelry, deleteJewelry } from "@/actions/catalog-admin";
 import { useConfirm } from "@/components/providers/ConfirmProvider";
+import { useToast } from "@/components/providers/ToastProvider";
 import { Input, Textarea, Select, Label, FieldError } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { StoreField, type ListingMarket } from "@/components/admin/StoreField";
@@ -55,6 +56,7 @@ export function JewelryForm({ shippingWeightTiers, initial, defaultMarket, staff
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const confirm = useConfirm();
+  const toast = useToast();
   const [shippingWeightTierId, setShippingWeightTierId] = useState(initial?.shippingWeightTierId ?? "");
   const [quoteShipping, setQuoteShipping] = useState(initial?.quoteShipping ?? false);
 
@@ -66,6 +68,11 @@ export function JewelryForm({ shippingWeightTiers, initial, defaultMarket, staff
       if (result && !result.ok) {
         setError(result.error);
       } else if (initial) {
+        // A new piece instead redirects (createJewelry calls redirect()
+        // server-side), so a toast there would fire right as the page
+        // navigates away — not worth it. An update stays on the same page
+        // (router.refresh()), where the confirmation is actually visible.
+        toast("Saved");
         router.refresh();
       }
     } catch {

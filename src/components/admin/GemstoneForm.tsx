@@ -6,6 +6,7 @@ import { GemVisualizer } from "@/components/gem-visualizer/GemVisualizer";
 import { hueAtPercent, percentAtHue, resolveGemColor } from "@/components/gem-visualizer/color";
 import { createGemstone, updateGemstone, deleteGemstone } from "@/actions/catalog-admin";
 import { useConfirm } from "@/components/providers/ConfirmProvider";
+import { useToast } from "@/components/providers/ToastProvider";
 import { Input, Textarea, Select, Label, FieldError } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { StoreField, type ListingMarket } from "@/components/admin/StoreField";
@@ -82,6 +83,7 @@ export function GemstoneForm({ minerals, cuts, clarityGrades, treatments, origin
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const confirm = useConfirm();
+  const toast = useToast();
   const [shippingWeightTierId, setShippingWeightTierId] = useState(initial?.shippingWeightTierId ?? "");
   const [quoteShipping, setQuoteShipping] = useState(initial?.quoteShipping ?? false);
 
@@ -125,6 +127,9 @@ export function GemstoneForm({ minerals, cuts, clarityGrades, treatments, origin
       if (result && !result.ok) {
         setError(result.error);
       } else if (initial) {
+        // See JewelryForm's matching comment — a new gem instead redirects
+        // server-side, where a toast wouldn't be visible.
+        toast("Saved");
         router.refresh();
       }
     } catch {
