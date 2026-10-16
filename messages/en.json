@@ -92,7 +92,7 @@
       "reference": "Payment reference",
       "instructionsTitle": "Bank details",
       "afterTransfer": "Once your transfer reaches us we'll confirm your order and prepare it for delivery. You can follow its status under My Orders.",
-      "viewOrders": "View My Orders",
+      "viewOrders": "View Order",
       "continueShopping": "Continue Shopping",
       "cancelOrder": "Cancel this order",
       "cancelled": "This order has been cancelled and its items released."

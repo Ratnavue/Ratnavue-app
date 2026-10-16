@@ -66,7 +66,7 @@ export default async function WireInstructionsPage({ searchParams }: PageProps<"
       <p className="mt-6 text-sm text-charcoal/70">{t("afterTransfer")}</p>
 
       <div className="mt-8 flex flex-wrap items-center gap-6">
-        <LinkButton href="/account/orders" variant="primary">{t("viewOrders")}</LinkButton>
+        <LinkButton href={`/account/orders/${order.id}`} variant="primary">{t("viewOrders")}</LinkButton>
         {order.status === "PENDING_PAYMENT" && <CancelWireOrderButton orderId={order.id} />}
       </div>
     </div>

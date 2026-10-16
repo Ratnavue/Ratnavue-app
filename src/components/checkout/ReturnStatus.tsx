@@ -39,12 +39,11 @@ export function ReturnStatus({ orderRecordId, initial }: { orderRecordId: string
     if (result?.status === "PAID" && !redirectedRef.current) {
       redirectedRef.current = true;
       const timer = setTimeout(() => {
-        const orderNumber = encodeURIComponent(result.orderNumber);
-        router.push(withMarket(`/account/orders?highlight=${orderNumber}#${orderNumber}`, market));
+        router.push(withMarket(`/account/orders/${orderRecordId}`, market));
       }, 900);
       return () => clearTimeout(timer);
     }
-  }, [result, router, market]);
+  }, [result, router, market, orderRecordId]);
 
   if (!result) {
     return (
@@ -93,7 +92,7 @@ export function ReturnStatus({ orderRecordId, initial }: { orderRecordId: string
           This is taking longer than usual. Order <span className="font-mono">{result.orderNumber}</span> will update
           automatically once PayHere confirms it — check your orders in a few minutes.
         </p>
-        <LinkButton href="/account/orders" variant="primary" className="mt-8">My Orders</LinkButton>
+        <LinkButton href={`/account/orders/${orderRecordId}`} variant="primary" className="mt-8">View Order</LinkButton>
       </StatusShell>
     );
   }
