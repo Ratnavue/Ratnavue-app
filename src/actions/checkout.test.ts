@@ -62,6 +62,7 @@ describe("initiateRetailCheckout", () => {
     vi.mocked(auth).mockResolvedValue({ user: { id: "user-1" } } as never);
     vi.mocked(getMarket).mockResolvedValue("intl");
     prismaMock.user.findUnique.mockResolvedValue({ id: "user-1", email: "jane@example.com", businessAccountId: null } as never);
+    prismaMock.paymentMethodOverride.findMany.mockResolvedValue([]);
     vi.mocked(buildCheckoutBreakdown).mockResolvedValue({
       currency: "USD", market: "intl", discountCodeId: null, items: [], subtotal: 100, birthdayDiscount: 0,
       birthdayEligible: false, codeDiscount: 0, pointsRedeemed: 0, pointsDiscount: 0, tax: 0, shipping: 0,

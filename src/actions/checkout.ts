@@ -7,7 +7,8 @@ import { buildPayhereCheckoutFields, payhereCheckoutUrl, type PayhereCheckoutFie
 import { nextOrderNumber, cancelPendingOrder as cancelOrder, recomputeJewelryAvailability } from "@/lib/orders";
 import { getMarket } from "@/lib/market";
 import { LK_PREFIX } from "@/lib/market-shared";
-import { defaultPaymentMethod, isPaymentMethodLive } from "@/lib/payment-methods";
+import { defaultPaymentMethod, isPaymentMethodLive, resolvePaymentMethods } from "@/lib/payment-methods";
+import { getPaymentMethodOverrides } from "@/lib/payment-method-settings";
 import { shippingSchema, agreedToTermsSchema } from "@/lib/validation/checkout";
 
 // Not ActionResult — that type's success case is a bare { ok: true },
@@ -56,8 +57,12 @@ export async function initiateRetailCheckout(formData: FormData): Promise<Initia
     return { ok: false, error: parsedTerms.error.issues[0]?.message ?? "Please agree to the Terms & Conditions to continue." };
   }
 
-  const requestedMethod = String(formData.get("paymentMethod") ?? "") || defaultPaymentMethod(market);
-  if (!isPaymentMethodLive(market, requestedMethod)) {
+  // Re-resolved here (not trusted from whatever the form showed) so an
+  // admin flipping a method's status via /admin/commerce-settings takes
+  // effect on the very next submission.
+  const resolvedMethods = resolvePaymentMethods(await getPaymentMethodOverrides());
+  const requestedMethod = String(formData.get("paymentMethod") ?? "") || defaultPaymentMethod(market, resolvedMethods);
+  if (!isPaymentMethodLive(market, requestedMethod, resolvedMethods)) {
     return { ok: false, error: "That payment method isn't available yet — please choose another." };
   }
   const paymentMethod = requestedMethod;

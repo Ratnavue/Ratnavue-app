@@ -681,6 +681,23 @@ model Locale {
   createdAt  DateTime @default(now())
 }
 
+// An admin-editable override on top of the hardcoded default
+// live/coming_soon status for a (market, payment method) pair (see
+// lib/payment-methods.ts's METHODS and lib/payment-method-settings.ts) —
+// lets an admin flip a payment method live or back to coming-soon with
+// no deploy. Absence of a row for a given pair means "use the hardcoded
+// default", not "disabled" — this ships with zero rows and changes
+// nothing until an admin actually sets one.
+model PaymentMethodOverride {
+  id        String   @id @default(cuid())
+  market    String
+  methodKey String
+  status    String
+  updatedAt DateTime @updatedAt
+
+  @@unique([market, methodKey])
+}
+
 // ---------- Quotes & sourcing ----------
 
 enum QuoteStatus {

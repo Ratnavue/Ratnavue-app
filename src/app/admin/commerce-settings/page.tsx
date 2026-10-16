@@ -1,10 +1,23 @@
 import Link from "next/link";
 import { getCommerceSettings } from "@/lib/commerce-settings";
 import { CommerceSettingsForm } from "@/components/admin/CommerceSettingsForm";
+import { PaymentMethodsManager, type PaymentMethodRow } from "@/components/admin/PaymentMethodsManager";
 import { BackLink } from "@/components/admin/BackLink";
+import { resolvePaymentMethods, paymentMethodsFor } from "@/lib/payment-methods";
+import { getPaymentMethodOverrides } from "@/lib/payment-method-settings";
+import { MARKETS, type Market } from "@/lib/market-shared";
 
 export default async function AdminCommerceSettingsPage() {
-  const settings = await getCommerceSettings();
+  const [settings, overrides] = await Promise.all([getCommerceSettings(), getPaymentMethodOverrides()]);
+  const resolved = resolvePaymentMethods(overrides);
+  const paymentMethodRows: PaymentMethodRow[] = (Object.keys(MARKETS) as Market[]).flatMap((market) =>
+    paymentMethodsFor(market, resolved).map((m) => ({
+      market,
+      key: m.key,
+      status: m.status,
+      overridden: overrides[`${market}:${m.key}`] != null,
+    })),
+  );
 
   return (
     <div>
@@ -17,6 +30,10 @@ export default async function AdminCommerceSettingsPage() {
 
       <div className="mt-6">
         <CommerceSettingsForm settings={settings} />
+      </div>
+
+      <div className="mt-6">
+        <PaymentMethodsManager rows={paymentMethodRows} />
       </div>
     </div>
   );

@@ -7,6 +7,8 @@ import { buildCheckoutBreakdown, type CheckoutBreakdown } from "@/lib/checkout";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { formatPrice } from "@/lib/utils";
 import { getTranslations } from "next-intl/server";
+import { paymentMethodsFor, defaultPaymentMethod, resolvePaymentMethods } from "@/lib/payment-methods";
+import { getPaymentMethodOverrides } from "@/lib/payment-method-settings";
 
 export const metadata: Metadata = { title: "Checkout" };
 
@@ -29,7 +31,8 @@ export default async function CheckoutPage() {
 
   const lines = cart.items.map((item) => ({ item, unitPrice: retailCartUnitPrice(item, market) }));
   const subtotal = retailCartSubtotal(lines.map(({ item, unitPrice }) => ({ unitPrice, quantity: item.quantity })));
-  const [t, tPage] = await Promise.all([getTranslations("checkout"), getTranslations("checkoutPage")]);
+  const [t, tPage, paymentMethodOverrides] = await Promise.all([getTranslations("checkout"), getTranslations("checkoutPage"), getPaymentMethodOverrides()]);
+  const resolvedMethods = resolvePaymentMethods(paymentMethodOverrides);
 
   // The Sri Lanka store always ships domestically with no gateway fee, so
   // the full total is known up front and worth showing before the customer
@@ -88,7 +91,7 @@ export default async function CheckoutPage() {
       </div>
 
       <div className="mt-8">
-        <CheckoutForm />
+        <CheckoutForm methods={paymentMethodsFor(market, resolvedMethods)} defaultMethod={defaultPaymentMethod(market, resolvedMethods)} />
       </div>
     </div>
   );

@@ -10,7 +10,7 @@ import { Input, Label, FieldError } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { useMarket } from "@/components/providers/MarketProvider";
 import { withMarket } from "@/lib/market-shared";
-import { defaultPaymentMethod, paymentMethodsFor } from "@/lib/payment-methods";
+import type { PaymentMethodKey, PaymentMethodOption } from "@/lib/payment-methods";
 import { cn } from "@/lib/utils";
 
 // A country select would need a full ISO list — a plain text field here
@@ -20,12 +20,19 @@ import { cn } from "@/lib/utils";
 // business actually ships to today; a real dropdown is a easy follow-up
 // once the shipping zone list is finalized. On the Sri Lanka store (/lk)
 // the country isn't asked at all: it delivers within Sri Lanka only.
-export function CheckoutForm() {
+export function CheckoutForm({ methods, defaultMethod }: {
+  /** Resolved server-side in the checkout page (lib/payment-methods.ts's
+   * resolvePaymentMethods, layering any /admin/commerce-settings override
+   * on top of the hardcoded defaults) — this component no longer resolves
+   * them itself so an admin's change is reflected on the very next page
+   * load, not baked into client-bundled code. */
+  methods: PaymentMethodOption[];
+  defaultMethod: PaymentMethodKey;
+}) {
   const t = useTranslations("checkout");
   const router = useRouter();
   const market = useMarket();
-  const methods = paymentMethodsFor(market);
-  const [method, setMethod] = useState(defaultPaymentMethod(market));
+  const [method, setMethod] = useState(defaultMethod);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
