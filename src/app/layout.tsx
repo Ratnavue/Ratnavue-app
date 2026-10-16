@@ -19,6 +19,7 @@ import { APP_PATH_HEADER, withMarket } from "@/lib/market-shared";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { MarketProvider } from "@/components/providers/MarketProvider";
 import { ConfirmProvider } from "@/components/providers/ConfirmProvider";
+import { ToastProvider } from "@/components/providers/ToastProvider";
 import type { AppLocale } from "@/i18n/request";
 
 const cormorant = Cormorant_Garamond({
@@ -118,6 +119,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <MarketProvider market={market}>
         <NextIntlClientProvider>
           <ConfirmProvider>
+          <ToastProvider>
             <SiteChrome
               user={session?.user ? { name: session.user.name, email: session.user.email, hasAdminAccess: hasAdminPortalAccess(session.user) } : null}
               footerMessages={footerMessages}
@@ -132,6 +134,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             >
               <MainWrapper>{children}</MainWrapper>
             </SiteChrome>
+          </ToastProvider>
           </ConfirmProvider>
         </NextIntlClientProvider>
         </MarketProvider>

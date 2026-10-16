@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useOptionalToast } from "@/components/providers/ToastProvider";
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -12,12 +13,20 @@ type ActionResult = { ok: true } | { ok: false; error: string };
  * leaving nothing shown to the user; under `useTransition` `pending`
  * still resolves, but under a plain `useState` pending flag it doesn't
  * either, so the button is stuck on its loading label forever.
+ *
+ * On success, also fires a brief confirmation toast (see ToastProvider) —
+ * `successMessage` defaults to "Saved" since most call sites are a plain
+ * edit-and-save; pass a more specific one (e.g. "Order marked paid") where
+ * it's worth being precise. useOptionalToast (not useToast) so this still
+ * works in an isolated unit test that renders the hook with no provider
+ * tree around it — it just silently skips the toast in that case.
  */
 export function useAdminAction() {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const toast = useOptionalToast();
 
-  function run(fn: () => Promise<ActionResult>, onSuccess?: () => void) {
+  function run(fn: () => Promise<ActionResult>, onSuccess?: () => void, successMessage = "Saved") {
     setError(null);
     startTransition(async () => {
       try {
@@ -26,6 +35,7 @@ export function useAdminAction() {
           setError(result.error);
           return;
         }
+        toast?.(successMessage, "success");
         onSuccess?.();
       } catch {
         setError("Something went wrong. Please try again.");
