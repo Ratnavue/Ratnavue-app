@@ -4,7 +4,7 @@ import type { ComponentType } from "react";
 import Link from "@/components/ui/MarketLink";
 import PlainLink from "next/link";
 import { useAppPathname } from "@/components/providers/MarketProvider";
-import { Building2, CreditCard, FileText, Gift, LayoutDashboard, LogOut, MessageCircle, Package, PenTool, Search, ShieldCheck, ShoppingBag } from "lucide-react";
+import { Building2, CreditCard, FileText, Gift, LayoutDashboard, LogOut, MessageCircle, Package, PenTool, Percent, Search, ShieldCheck, ShoppingBag } from "lucide-react";
 import { signOutAction } from "@/actions/auth";
 import { cn } from "@/lib/utils";
 import type { HubCounts } from "@/lib/account-hub";
@@ -49,23 +49,40 @@ const GROUPS: { title: string; items: NavItem[] }[] = [
 ];
 
 const BUSINESS_ITEM: NavItem = { href: "/account/business", label: "Business", icon: Building2 };
+// Only shown for a user an admin has designated a sales referral promoter
+// (see AccountHubLayout's salesReferralPromoter check) — most users never
+// see this item at all.
+const SALES_REFERRAL_ITEM: NavItem = { href: "/account/sales-referral", label: "Sales Referral", icon: Percent };
 
 // /account/support is the "Chat with Support" thread — it lives inside Messages
 // now, so the Messages item stays lit while you're on it.
 const ALIASES: Record<string, string> = { "/account/support": "/account/messages" };
 
-export function AccountSidebar({ user, counts, showBusiness, showAdminPortal }: { user: { name?: string | null; email?: string | null }; counts: HubCounts; showBusiness?: boolean; showAdminPortal?: boolean }) {
+export function AccountSidebar({
+  user,
+  counts,
+  showBusiness,
+  showAdminPortal,
+  showSalesReferral,
+}: {
+  user: { name?: string | null; email?: string | null };
+  counts: HubCounts;
+  showBusiness?: boolean;
+  showAdminPortal?: boolean;
+  showSalesReferral?: boolean;
+}) {
   const pathname = useAppPathname();
   const current = ALIASES[pathname] ?? pathname;
   const initial = (user.name?.trim()?.[0] ?? user.email?.[0] ?? "?").toUpperCase();
 
   const isActive = (item: NavItem) => (item.exact ? current === item.href : current === item.href || current.startsWith(`${item.href}/`));
 
-  // A wholesale team member's extra "Business" item, appended to the same
-  // Rewards group rather than a whole new one-item group — only shown for
-  // an account with businessRole set (see AccountHubLayout).
-  const groups = showBusiness
-    ? GROUPS.map((g) => (g.title === "Rewards" ? { ...g, items: [...g.items, BUSINESS_ITEM] } : g))
+  // Extra Rewards-group items appended conditionally, rather than whole new
+  // one-item groups — a wholesale team member's "Business" (businessRole
+  // set) and a designated promoter's "Sales Referral" (see AccountHubLayout).
+  const extraRewardsItems = [...(showBusiness ? [BUSINESS_ITEM] : []), ...(showSalesReferral ? [SALES_REFERRAL_ITEM] : [])];
+  const groups = extraRewardsItems.length > 0
+    ? GROUPS.map((g) => (g.title === "Rewards" ? { ...g, items: [...g.items, ...extraRewardsItems] } : g))
     : GROUPS;
 
   return (

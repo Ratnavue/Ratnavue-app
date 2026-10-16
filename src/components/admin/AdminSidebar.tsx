@@ -31,6 +31,7 @@ const NAV = [
   { href: "/admin/commerce-settings", label: "Commerce Settings" },
   { href: "/admin/shipping-zones", label: "Shipping Zones" },
   { href: "/admin/translations", label: "Translations" },
+  { href: "/admin/sales-referrals", label: "Sales Referrals" },
 ];
 
 const MASTER_DATA = [

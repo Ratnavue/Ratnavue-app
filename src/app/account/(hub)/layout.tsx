@@ -20,7 +20,10 @@ export default async function AccountHubLayout({ children }: { children: React.R
   const market = await getMarket();
   const [counts, user] = await Promise.all([
     getHubCounts(session.user.id, market),
-    prisma.user.findUniqueOrThrow({ where: { id: session.user.id }, select: { businessRole: true, disabledAt: true, disabledUntil: true } }),
+    prisma.user.findUniqueOrThrow({
+      where: { id: session.user.id },
+      select: { businessRole: true, disabledAt: true, disabledUntil: true, salesReferralPromoter: { select: { id: true } } },
+    }),
   ]);
 
   // A disabled account's existing session can't be revoked from here, so
@@ -34,6 +37,7 @@ export default async function AccountHubLayout({ children }: { children: React.R
         counts={counts}
         showBusiness={user.businessRole != null}
         showAdminPortal={hasAdminPortalAccess(session.user)}
+        showSalesReferral={user.salesReferralPromoter != null}
       />
       <div className="mt-6 min-w-0 lg:mt-0">
         <AccountBreadcrumbs />

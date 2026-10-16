@@ -226,6 +226,36 @@ describe("finalizePaidOrder", () => {
     expect(warnSpy).toHaveBeenCalled();
     warnSpy.mockRestore();
   });
+
+  it("settles a sales referral commission when the order was attributed to an active promoter", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({
+      ...baseOrder,
+      referredByPromoterId: "promo-1",
+      taxAmount: 10,
+      handlingFeeAmount: 5,
+    } as never);
+    prismaMock.salesReferralPromoter.findUnique.mockResolvedValue({ active: true } as never);
+    // settleSalesReferralCommission re-queries the order's items with cost
+    // selects itself (same pattern as notifyGemDigAvailable) — a separate
+    // mock from the outer findUniqueOrThrow above.
+    prismaMock.order.findUnique.mockResolvedValue({
+      items: [{ quantity: 1, lineTotal: 100, gemstone: { costPrice: 20 }, jewelry: null, jewelryVariant: null }],
+    } as never);
+
+    await finalizePaidOrder("order-1");
+
+    expect(prismaMock.salesReferralCommission.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ promoterId: "promo-1", orderId: "order-1", profit: 65, commissionAmount: 32.5 }),
+    });
+  });
+
+  it("does not settle a commission when the order was never attributed", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({ ...baseOrder, referredByPromoterId: null } as never);
+
+    await finalizePaidOrder("order-1");
+
+    expect(prismaMock.salesReferralCommission.create).not.toHaveBeenCalled();
+  });
 });
 
 describe("cancelPendingOrder", () => {

@@ -156,6 +156,9 @@ model User {
   referralsAsReferrer  Referral[]          @relation("ReferralReferrer")
   referralAsReferee    Referral?           @relation("ReferralReferee")
   ownedBusinessAccount BusinessAccount?    @relation("BusinessAccountOwner")
+  // Set only if an admin has designated this user as a sales-referral
+  // promoter (lib/sales-referrals.ts) — most users have none.
+  salesReferralPromoter SalesReferralPromoter?
   passwordResetTokens  PasswordResetToken[]
   wishlistItems        WishlistItem[]
   reviews              Review[]
@@ -1852,6 +1855,16 @@ model Order {
   discountCodeId String?
   discountCode   DiscountCode? @relation(fields: [discountCodeId], references: [id])
 
+  // Set at checkout (initiateRetailCheckout) from the sales_ref attribution
+  // cookie, if a live one resolves to an active SalesReferralPromoter — see
+  // lib/sales-referrals.ts. Snapshotted here rather than re-derived later,
+  // since the cookie that set it may be long gone (expired, or the browser
+  // that placed it was never seen again) by the time this order is paid —
+  // the SalesReferralCommission row settled in finalizePaidOrder reads
+  // this field, not the cookie.
+  referredByPromoterId String?
+  referredByPromoter   SalesReferralPromoter? @relation(fields: [referredByPromoterId], references: [id])
+
   // Set the moment an admin accepts a quote/sourcing request — see
   // ensureOrderForQuote/ensureOrderForSourcing in lib/orders.ts, which
   // replaced the old accept-time CartItem for these two request types.
@@ -1934,6 +1947,10 @@ model Order {
   termsAcceptedAt DateTime?
 
   refundRequest RefundRequest?
+  // The attributed-sale side of the sales referral program — see
+  // referredByPromoterId above and lib/sales-referrals.ts. Null for any
+  // order with no attribution, or one not yet settled PAID.
+  salesReferralCommission SalesReferralCommission?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1941,6 +1958,7 @@ model Order {
   @@index([userId])
   @@index([status])
   @@index([discountCodeId])
+  @@index([referredByPromoterId])
   @@index([businessAccountId])
   @@index([market])
   // Serves the admin analytics dashboard's "paid orders in the last N
@@ -2008,6 +2026,92 @@ model RefundRequest {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([status])
+}
+
+// A sales-affiliate program distinct from the customer refer-a-friend one
+// above (Referral/User.referralCode) — an admin designates an existing
+// ADMIN or STAFF user (see requireAnyAdminAccess in lib/rbac.ts) as a
+// promoter; their link (?ref=<token> on any page, captured site-wide as a
+// 24h cookie in src/proxy.ts) attributes whatever a visitor buys in that
+// window to them. See lib/sales-referrals.ts for the full mechanics.
+model SalesReferralPromoter {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Opaque, unguessable — the ?ref= query value. Deliberately not the raw
+  // user id (avoids exposing/enumerating ids, and can be rotated without
+  // changing who the promoter is), same "separate token" idea as
+  // User.referralCode.
+  token  String  @unique @default(cuid())
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  orders         Order[]
+  commissions    SalesReferralCommission[]
+  payoutRequests SalesReferralPayoutRequest[]
+}
+
+// One row per attributed, PAID order — created once in finalizePaidOrder
+// (lib/orders.ts), never re-derived afterward, same snapshot discipline
+// as Order's own discountAmount/taxAmount fields.
+model SalesReferralCommission {
+  id         String                 @id @default(cuid())
+  promoterId String
+  promoter   SalesReferralPromoter  @relation(fields: [promoterId], references: [id])
+  orderId    String                 @unique
+  order      Order                  @relation(fields: [orderId], references: [id])
+
+  currency         String // snapshot of Order.currency
+  orderTotal       Float  // snapshot of Order.total, for display/audit
+  // (orderTotal - itemCost - taxAmount - handlingFeeAmount), floored at 0 —
+  // the order's *real* VAT/handling, not a fixed rate. See
+  // computeSalesReferralCommission in lib/sales-referrals.ts.
+  profit           Float
+  commissionAmount Float // profit * 0.5
+
+  // order.paidAt + 30 days — see lib/sales-referrals.ts's
+  // eligiblePayoutCommissions. Cashout-eligible once this passes.
+  eligibleAt      DateTime
+  payoutRequestId String?
+  payoutRequest   SalesReferralPayoutRequest? @relation(fields: [payoutRequestId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([promoterId])
+}
+
+enum PayoutRequestStatus {
+  REQUESTED
+  PAID
+  DENIED
+}
+
+// A promoter's request to cash out every currently-eligible commission in
+// one currency at once — same "request now, admin resolves later" shape
+// as RefundRequest above.
+model SalesReferralPayoutRequest {
+  id         String                @id @default(cuid())
+  promoterId String
+  promoter   SalesReferralPromoter @relation(fields: [promoterId], references: [id])
+
+  currency String
+  amount   Float // sum of the included commissions, snapshotted at request time
+
+  status           PayoutRequestStatus @default(REQUESTED)
+  // Freeform note for how it was actually paid (e.g. a bank transfer
+  // reference) — set only on resolving PAID.
+  paymentReference String?
+  adminNotes       String?             @db.Text
+  resolvedAt       DateTime?
+
+  createdAt DateTime @default(now())
+
+  commissions SalesReferralCommission[]
+
+  @@index([promoterId])
   @@index([status])
 }
 

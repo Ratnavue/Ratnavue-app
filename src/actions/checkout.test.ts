@@ -8,6 +8,7 @@ import { buildCheckoutBreakdown } from "@/lib/checkout";
 vi.mock("@/lib/auth", () => ({ auth: vi.fn() }));
 vi.mock("@/lib/market", () => ({ getMarket: vi.fn() }));
 vi.mock("@/lib/checkout", () => ({ buildCheckoutBreakdown: vi.fn() }));
+vi.mock("next/headers", () => ({ cookies: vi.fn().mockResolvedValue({ get: () => undefined }) }));
 
 function checkoutFormData(overrides: Record<string, string> = {}): FormData {
   const fd = new FormData();

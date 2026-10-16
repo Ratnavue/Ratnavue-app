@@ -3,6 +3,7 @@ import NextAuth from "next-auth";
 import authConfig from "@/lib/auth.config";
 import { staffAreaForPath } from "@/lib/staff-permissions";
 import { APP_PATH_HEADER, LK_PREFIX, MARKET_HEADER, isLkPath, stripMarket } from "@/lib/market-shared";
+import { SALES_REF_COOKIE, SALES_REF_COOKIE_MAX_AGE_SECONDS } from "@/lib/sales-referrals-shared";
 
 // Deliberately NOT `import { auth } from "@/lib/auth"` — that config pulls in
 // PrismaAdapter, Prisma Client, and the Credentials/Google providers
@@ -156,12 +157,34 @@ export default auth(async (req) => {
   // (layouts can't read the URL themselves). Overwritten for the same reason.
   headers.set(APP_PATH_HEADER, pathname);
 
-  if (isLkPath(rawPath)) {
-    const rewritten = req.nextUrl.clone();
-    rewritten.pathname = pathname;
-    return NextResponse.rewrite(rewritten, { request: { headers } });
+  const response = isLkPath(rawPath)
+    ? NextResponse.rewrite((() => {
+        const rewritten = req.nextUrl.clone();
+        rewritten.pathname = pathname;
+        return rewritten;
+      })(), { request: { headers } })
+    : NextResponse.next({ request: { headers } });
+
+  // Sales-referral link capture (lib/sales-referrals.ts): any ?ref=<token>
+  // on any page refreshes a 24h cookie, no DB lookup here on purpose —
+  // this file deliberately stays Prisma-free (see the auth() comment up
+  // top). An unknown/stale token just never resolves to a real promoter
+  // later (actions/checkout.ts), which is harmless. Last click always
+  // wins: landing on a (possibly different) referral link resets the
+  // clock to a fresh token. The query param itself is left in the URL,
+  // same "doesn't need cleaning up" treatment a UTM param gets — the
+  // cookie, not the param, is what actually persists across the site.
+  const refToken = req.nextUrl.searchParams.get("ref");
+  if (refToken) {
+    response.cookies.set(SALES_REF_COOKIE, refToken, {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: SALES_REF_COOKIE_MAX_AGE_SECONDS,
+    });
   }
-  return NextResponse.next({ request: { headers } });
+
+  return response;
 });
 
 export const config = {

@@ -13,6 +13,7 @@ import { quoteItemLabel } from "@/lib/cart";
 import { getOrCreateChatThread } from "@/lib/chat";
 import { notifyGemDigAvailable } from "@/lib/gem-dig";
 import { notifyReviewPromptAvailable } from "@/lib/reviews";
+import { settleSalesReferralCommission } from "@/lib/sales-referrals";
 
 // Order lifecycle steps shared by every way an order gets settled: PayHere's
 // notify webhook (card) and an admin confirming a bank transfer landed
@@ -139,6 +140,20 @@ export async function finalizePaidOrder(orderId: string, payment: { gatewayPayme
       requestId: settledReferral.referralId,
     });
   }
+
+  // Sales referral (affiliate) commission — see lib/sales-referrals.ts.
+  // Separate from the rewards settlement above (different program,
+  // different beneficiary): best-effort, and a no-op unless this order
+  // was actually attributed to an active promoter with real profit.
+  await settleSalesReferralCommission({
+    id: order.id,
+    referredByPromoterId: order.referredByPromoterId,
+    currency: order.currency,
+    total: order.total,
+    taxAmount: order.taxAmount,
+    handlingFeeAmount: order.handlingFeeAmount,
+    paidAt: new Date(),
+  });
 
   // Empty the retail cart now that it's been paid for — a fresh one is
   // implicitly available for the next purchase (getOrCreateRetailCart).

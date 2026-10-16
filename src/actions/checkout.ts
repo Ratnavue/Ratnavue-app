@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { buildCheckoutBreakdown } from "@/lib/checkout";
@@ -9,6 +10,8 @@ import { getMarket } from "@/lib/market";
 import { LK_PREFIX } from "@/lib/market-shared";
 import { defaultPaymentMethod, isPaymentMethodLive, resolvePaymentMethods } from "@/lib/payment-methods";
 import { getPaymentMethodOverrides } from "@/lib/payment-method-settings";
+import { getActivePromoterIdByToken } from "@/lib/sales-referrals";
+import { SALES_REF_COOKIE } from "@/lib/sales-referrals-shared";
 import { shippingSchema, agreedToTermsSchema } from "@/lib/validation/checkout";
 
 // Not ActionResult — that type's success case is a bare { ok: true },
@@ -82,11 +85,20 @@ export async function initiateRetailCheckout(formData: FormData): Promise<Initia
     return { ok: false, error: error instanceof Error ? error.message : "Couldn't build your order." };
   }
 
+  // Read now, at order creation — not re-derived at payment time, since a
+  // wire-transfer order can take hours (or longer) to actually pay, long
+  // after a 24h attribution cookie might be gone. An unknown/expired
+  // token just resolves to null — no attribution, no error. See
+  // lib/sales-referrals.ts.
+  const refToken = (await cookies()).get(SALES_REF_COOKIE)?.value;
+  const referredByPromoterId = refToken ? await getActivePromoterIdByToken(refToken) : null;
+
   const orderNumber = await nextOrderNumber();
   const orderData = {
       orderNumber,
       userId: session.user.id,
       market,
+      referredByPromoterId,
       paymentMethod,
       paymentGateway: paymentMethod === "PAYHERE_CARD" ? "payhere" : "wire",
       currency: breakdown.currency,
