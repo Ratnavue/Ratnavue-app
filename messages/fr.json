@@ -59,7 +59,7 @@
       },
       "PAYHERE_CARD": {
         "name": "Paiement par carte",
-        "hint": "Payez en toute sécurité par carte de crédit ou de débit."
+        "hint": "Payez en toute sécurité par carte de crédit ou de débit. Des frais supplémentaires peuvent s'appliquer."
       },
       "COD": {
         "name": "Paiement à la livraison",

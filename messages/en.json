@@ -59,7 +59,7 @@
       },
       "PAYHERE_CARD": {
         "name": "Card payment",
-        "hint": "Pay securely with a credit or debit card."
+        "hint": "Pay securely with a credit or debit card. Additional fees may apply."
       },
       "COD": {
         "name": "Cash on delivery",

@@ -59,7 +59,7 @@
       },
       "PAYHERE_CARD": {
         "name": "Pagamento com cartão",
-        "hint": "Pague com segurança usando um cartão de crédito ou débito."
+        "hint": "Pague com segurança usando um cartão de crédito ou débito. Taxas adicionais podem ser aplicadas."
       },
       "COD": {
         "name": "Pagamento na entrega",

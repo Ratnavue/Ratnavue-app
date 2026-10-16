@@ -59,7 +59,7 @@
       },
       "PAYHERE_CARD": {
         "name": "Kartenzahlung",
-        "hint": "Zahlen Sie sicher mit einer Kredit- oder Debitkarte."
+        "hint": "Zahlen Sie sicher mit einer Kredit- oder Debitkarte. Es können zusätzliche Gebühren anfallen."
       },
       "COD": {
         "name": "Nachnahme",

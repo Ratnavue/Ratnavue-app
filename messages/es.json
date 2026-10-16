@@ -59,7 +59,7 @@
       },
       "PAYHERE_CARD": {
         "name": "Pago con tarjeta",
-        "hint": "Pague de forma segura con una tarjeta de crédito o débito."
+        "hint": "Pague de forma segura con una tarjeta de crédito o débito. Pueden aplicarse cargos adicionales."
       },
       "COD": {
         "name": "Pago contra entrega",
