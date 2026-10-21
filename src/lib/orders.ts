@@ -5,7 +5,7 @@ import { createNotification } from "@/lib/notifications";
 import { settlePointsForPaidOrder, settleReferralForPaidOrder } from "@/lib/rewards";
 import { getLoyaltySettings } from "@/lib/loyalty-settings";
 import { getCommerceSettings } from "@/lib/commerce-settings";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, SUPPORT_EMAIL } from "@/lib/email";
 import { orderConfirmationEmail, shipmentStatusEmail } from "@/lib/email-templates";
 import { registerTracking } from "@/lib/track17";
 import { withMarket, type Market } from "@/lib/market-shared";
@@ -201,7 +201,7 @@ export async function finalizePaidOrder(orderId: string, payment: { gatewayPayme
     items: order.items.map((item) => ({ label: item.label, quantity: item.quantity, lineTotal: item.lineTotal })),
     orderUrl,
   });
-  const emailResult = await sendEmail({ to: order.user.email, subject, html, text });
+  const emailResult = await sendEmail({ to: order.user.email, subject, html, text, replyTo: SUPPORT_EMAIL });
   if (!emailResult.ok) console.warn(`Order confirmation email not sent for order ${order.orderNumber}: ${emailResult.error}`);
 
   return { alreadyPaid: false };
@@ -288,7 +288,7 @@ export async function markOrderShipped(
   const { subject, html, text } = shipmentStatusEmail({
     orderNumber: order.orderNumber, status: "SHIPPED", carrier: input.carrier, trackingNumber: input.trackingNumber, orderUrl,
   });
-  const emailResult = await sendEmail({ to: order.user.email, subject, html, text });
+  const emailResult = await sendEmail({ to: order.user.email, subject, html, text, replyTo: SUPPORT_EMAIL });
   if (!emailResult.ok) console.warn(`Shipment email not sent for order ${order.orderNumber}: ${emailResult.error}`);
 
   return { ok: true };
@@ -319,7 +319,7 @@ export async function markOrderDelivered(orderId: string, options: { source: "ad
     requestId: order.id,
   });
   const { subject, html, text } = shipmentStatusEmail({ orderNumber: order.orderNumber, status: "DELIVERED", orderUrl });
-  const emailResult = await sendEmail({ to: order.user.email, subject, html, text });
+  const emailResult = await sendEmail({ to: order.user.email, subject, html, text, replyTo: SUPPORT_EMAIL });
   if (!emailResult.ok) console.warn(`Delivery email not sent for order ${order.orderNumber} (source: ${options.source}): ${emailResult.error}`);
 
   return { ok: true };

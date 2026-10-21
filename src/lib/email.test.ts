@@ -59,6 +59,17 @@ describe("sendEmail", () => {
     });
   });
 
+  it("forwards replyTo through to Resend when given", async () => {
+    process.env.RESEND_API_KEY = "re_test_key";
+    process.env.EMAIL_FROM = "Ratnavue <no-reply@example.com>";
+    sendMock.mockResolvedValue({ data: { id: "email_123" }, error: null });
+    const { sendEmail } = await import("@/lib/email");
+
+    await sendEmail({ to: "customer@example.com", subject: "Hi", html: "<p>Hi</p>", text: "Hi", replyTo: "support@ratnavue.com" });
+
+    expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({ replyTo: "support@ratnavue.com" }));
+  });
+
   it("reports failure when Resend's API itself returns an error", async () => {
     process.env.RESEND_API_KEY = "re_test_key";
     process.env.EMAIL_FROM = "Ratnavue <no-reply@example.com>";

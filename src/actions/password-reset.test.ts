@@ -7,7 +7,7 @@ import { verifyPasswordResetToken, consumePasswordResetToken } from "@/lib/passw
 
 vi.mock("@/lib/rate-limit", () => ({ checkRateLimit: vi.fn(), getClientIp: vi.fn().mockResolvedValue("203.0.113.4") }));
 vi.mock("@/lib/market", () => ({ getMarket: vi.fn().mockResolvedValue("intl"), withMarket: (path: string) => path }));
-vi.mock("@/lib/email", () => ({ sendEmail: vi.fn() }));
+vi.mock("@/lib/email", () => ({ sendEmail: vi.fn(), SUPPORT_EMAIL: "support@ratnavue.com", SALES_EMAIL: "sales@ratnavue.com" }));
 vi.mock("@/lib/password-reset", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/password-reset")>();
   return { ...actual, verifyPasswordResetToken: vi.fn(), consumePasswordResetToken: vi.fn() };

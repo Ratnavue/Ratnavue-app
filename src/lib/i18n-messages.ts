@@ -51,6 +51,7 @@ export interface FooterMessages {
   company: string;
   ourStory: string;
   myAccount: string;
+  contact: string;
   pricingNoteTitle: string;
   pricingNoteBody: string;
   /** Pre-interpolated with the current year — see RootLayout, which is
@@ -72,6 +73,7 @@ export async function getFooterMessages(year: number): Promise<FooterMessages> {
     company: t("company"),
     ourStory: t("ourStory"),
     myAccount: t("myAccount"),
+    contact: t("contact"),
     pricingNoteTitle: t("pricingNoteTitle"),
     pricingNoteBody: t("pricingNoteBody"),
     rights: t("rights", { year }),

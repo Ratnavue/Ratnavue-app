@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/rbac";
 import { createWholesaleAccountSchema } from "@/lib/validation/auth";
 import { createNotification } from "@/lib/notifications";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, SALES_EMAIL } from "@/lib/email";
 import { wholesaleAccountCreatedEmail } from "@/lib/email-templates";
 import { withMarket } from "@/lib/market-shared";
 import type { ActionResult } from "./auth";
@@ -98,6 +98,7 @@ export async function createWholesaleAccount(formData: FormData): Promise<Action
   const emailResult = await sendEmail({
     to: email,
     ...wholesaleAccountCreatedEmail({ email, temporaryPassword, changePasswordUrl }),
+    replyTo: SALES_EMAIL,
   });
   if (!emailResult.ok) console.warn(`Wholesale account email not sent for ${email}: ${emailResult.error}`);
 

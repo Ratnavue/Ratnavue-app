@@ -6,7 +6,7 @@ import { sendEmail } from "@/lib/email";
 
 vi.mock("@/lib/rbac", () => ({ requireAdmin: vi.fn().mockResolvedValue({ id: "admin-1", role: "ADMIN" }) }));
 vi.mock("@/lib/notifications", () => ({ createNotification: vi.fn() }));
-vi.mock("@/lib/email", () => ({ sendEmail: vi.fn() }));
+vi.mock("@/lib/email", () => ({ sendEmail: vi.fn(), SUPPORT_EMAIL: "support@ratnavue.com", SALES_EMAIL: "sales@ratnavue.com" }));
 
 function formData(fields: Record<string, string>): FormData {
   const fd = new FormData();

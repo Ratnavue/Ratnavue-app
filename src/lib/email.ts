@@ -18,6 +18,12 @@ export interface SendEmailResult {
   error?: string;
 }
 
+// Real, monitored mailboxes — distinct from EMAIL_FROM (a no-reply sending
+// address), so a customer hitting "reply" on an order/account email lands
+// somewhere a human actually reads, instead of bouncing.
+export const SUPPORT_EMAIL = "support@ratnavue.com";
+export const SALES_EMAIL = "sales@ratnavue.com";
+
 let client: Resend | null | undefined;
 
 function getClient(): Resend | null {
@@ -27,7 +33,7 @@ function getClient(): Resend | null {
   return client;
 }
 
-export async function sendEmail(input: { to: string; subject: string; html: string; text: string }): Promise<SendEmailResult> {
+export async function sendEmail(input: { to: string; subject: string; html: string; text: string; replyTo?: string }): Promise<SendEmailResult> {
   const resend = getClient();
   const from = process.env.EMAIL_FROM;
   if (!resend || !from) {
@@ -35,7 +41,7 @@ export async function sendEmail(input: { to: string; subject: string; html: stri
   }
 
   try {
-    const result = await resend.emails.send({ from, to: input.to, subject: input.subject, html: input.html, text: input.text });
+    const result = await resend.emails.send({ from, to: input.to, subject: input.subject, html: input.html, text: input.text, replyTo: input.replyTo });
     if (result.error) return { ok: false, error: result.error.message };
     return { ok: true };
   } catch (error) {

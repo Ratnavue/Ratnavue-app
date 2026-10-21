@@ -6,7 +6,7 @@ import { getMarket, withMarket } from "@/lib/market";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { createPasswordResetToken, verifyPasswordResetToken, consumePasswordResetToken, RESET_TOKEN_TTL_MINUTES } from "@/lib/password-reset";
 import { requestPasswordResetSchema, resetPasswordSchema } from "@/lib/validation/auth";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, SUPPORT_EMAIL } from "@/lib/email";
 import { passwordResetEmail } from "@/lib/email-templates";
 import type { ActionResult } from "./auth";
 
@@ -43,7 +43,7 @@ export async function requestPasswordReset(formData: FormData): Promise<ActionRe
     const resetUrl = `${process.env.AUTH_URL ?? "http://localhost:3000"}${withMarket(`/account/reset-password?token=${rawToken}`, market)}`;
     const { subject, html, text } = passwordResetEmail({ resetUrl, expiresInMinutes: RESET_TOKEN_TTL_MINUTES });
 
-    const result = await sendEmail({ to: user.email, subject, html, text });
+    const result = await sendEmail({ to: user.email, subject, html, text, replyTo: SUPPORT_EMAIL });
     if (!result.ok) {
       // Best-effort, like every other email send in this app — but a
       // reset request has nothing else to fall back on, so at minimum log

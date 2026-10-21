@@ -59,6 +59,7 @@ export function Footer({
             <ul className="mt-3 space-y-2 text-sm text-charcoal/70">
               <li><Link href="/about" className="hover:text-charcoal">{messages.ourStory}</Link></li>
               <li><Link href="/account" className="hover:text-charcoal">{messages.myAccount}</Link></li>
+              <li><Link href="/contact" className="hover:text-charcoal">{messages.contact}</Link></li>
             </ul>
           </div>
           <div>

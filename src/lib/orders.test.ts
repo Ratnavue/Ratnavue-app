@@ -4,7 +4,7 @@ import { finalizePaidOrder, cancelPendingOrder, markOrderShipped, markOrderDeliv
 import { sendEmail } from "@/lib/email";
 import { registerTracking } from "@/lib/track17";
 
-vi.mock("@/lib/email", () => ({ sendEmail: vi.fn() }));
+vi.mock("@/lib/email", () => ({ sendEmail: vi.fn(), SUPPORT_EMAIL: "support@ratnavue.com", SALES_EMAIL: "sales@ratnavue.com" }));
 vi.mock("@/lib/track17", () => ({ registerTracking: vi.fn() }));
 
 const baseOrder = {

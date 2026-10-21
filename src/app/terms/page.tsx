@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import Link from "@/components/ui/MarketLink";
 
 export const metadata: Metadata = { title: "Terms & Conditions" };
 
@@ -96,7 +97,10 @@ export default function TermsPage() {
       </Section>
 
       <Section title="Contact">
-        <p>Questions about these terms, or about an existing order, can be sent through your account&apos;s message threads or our contact details elsewhere on the site.</p>
+        <p>
+          Questions about these terms, or about an existing order, can be sent through your account&apos;s message
+          threads or our <Link href="/contact" className="text-gold-deep underline hover:text-charcoal">contact page</Link>.
+        </p>
       </Section>
     </div>
   );
