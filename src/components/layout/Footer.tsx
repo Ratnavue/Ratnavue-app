@@ -13,6 +13,7 @@ export function Footer({
   messages,
   trustBarMessages,
   showTrustBar = true,
+  paymentMethodsLive,
 }: {
   messages: FooterMessages;
   trustBarMessages: TrustBarMessages;
@@ -20,6 +21,10 @@ export function Footer({
    * shows these same four claims one screen above the footer — repeating
    * them back to back reads as filler rather than reassurance. */
   showTrustBar?: boolean;
+  /** Real resolved live/coming-soon status for card and COD on the Sri
+   * Lanka store, from RootLayout — so this blurb can't say "Coming soon"
+   * for a method an admin has already turned live on /checkout. */
+  paymentMethodsLive: { card: boolean; cod: boolean };
 }) {
   const market = useMarket();
   const t = useTranslations("lk.footer");
@@ -71,8 +76,8 @@ export function Footer({
               <p className="text-xs font-medium uppercase tracking-wide text-charcoal/65">{t("paymentsTitle")}</p>
               <ul className="mt-3 space-y-2 text-sm text-charcoal/70">
                 <li>{t("bankTransfer")}</li>
-                <li className="text-charcoal/65">{t("card")} · {t("comingSoon")}</li>
-                <li className="text-charcoal/65">{t("cod")} · {t("comingSoon")}</li>
+                <li className="text-charcoal/65">{t("card")}{!paymentMethodsLive.card && <> · {t("comingSoon")}</>}</li>
+                <li className="text-charcoal/65">{t("cod")}{!paymentMethodsLive.cod && <> · {t("comingSoon")}</>}</li>
               </ul>
             </div>
             <div>

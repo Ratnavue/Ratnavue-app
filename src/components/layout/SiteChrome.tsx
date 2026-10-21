@@ -34,6 +34,7 @@ export function SiteChrome({
   promotionsThemeIsDark,
   locale,
   customLocales,
+  lkPaymentMethodsLive,
   children,
 }: {
   user: SiteChromeUser | null;
@@ -70,6 +71,12 @@ export function SiteChrome({
    * — read once in RootLayout and threaded down the same way as `locale`
    * itself, so LocaleSwitcher can show the full, current list. */
   customLocales: CustomLocale[];
+  /** Real resolved live/coming-soon status for the Sri Lanka store's card
+   * and COD methods (lib/payment-methods.ts's resolvePaymentMethods,
+   * layering any /admin/commerce-settings override on the hardcoded
+   * defaults) — threaded to Footer so its "Payment Options" blurb can't
+   * drift from what /checkout itself actually offers. */
+  lkPaymentMethodsLive: { card: boolean; cod: boolean };
   children: React.ReactNode;
 }) {
   const pathname = useAppPathname();
@@ -92,7 +99,7 @@ export function SiteChrome({
         customLocales={customLocales}
       />
       {children}
-      <Footer messages={footerMessages} trustBarMessages={trustBarMessages} showTrustBar={pathname !== "/"} />
+      <Footer messages={footerMessages} trustBarMessages={trustBarMessages} showTrustBar={pathname !== "/"} paymentMethodsLive={lkPaymentMethodsLive} />
       <BackToTop />
       {user && <FloatingChatButton />}
     </>

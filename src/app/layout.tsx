@@ -9,6 +9,8 @@ import { prisma } from "@/lib/prisma";
 import { marketVisibilityKey } from "@/lib/page-visibility";
 import { getCachedPageVisibilities, getCachedSeasonalContent } from "@/lib/site-config-cache";
 import { getActiveCustomLocales } from "@/lib/locales";
+import { resolvePaymentMethods, paymentMethodsFor } from "@/lib/payment-methods";
+import { getPaymentMethodOverrides } from "@/lib/payment-method-settings";
 import { SEASONAL_THEMES } from "@/lib/seasonal-themes";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { MainWrapper } from "@/components/layout/MainWrapper";
@@ -80,13 +82,24 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const market = await getMarket();
   const seasonalKey = marketVisibilityKey("seasonal", market);
   const auctionKey = marketVisibilityKey("auction", market);
-  const [session, visibilities, seasonalContent, locale, customLocales] = await Promise.all([
+  const [session, visibilities, seasonalContent, locale, customLocales, paymentMethodOverrides] = await Promise.all([
     auth(),
     getCachedPageVisibilities([seasonalKey, auctionKey, "design-studio"]),
     getCachedSeasonalContent(market),
     getLocale(),
     getActiveCustomLocales(),
+    getPaymentMethodOverrides(),
   ]);
+  // The Sri Lanka footer's own "Payment Options" blurb (Footer.tsx) used to
+  // hardcode every non-wire method as "Coming soon" — stale the moment an
+  // admin actually turns one on via /admin/commerce-settings. Resolved here
+  // the same way /checkout itself does, so the two can't say different
+  // things about what's actually live.
+  const lkMethods = paymentMethodsFor("lk", resolvePaymentMethods(paymentMethodOverrides));
+  const lkPaymentMethodsLive = {
+    card: lkMethods.find((m) => m.key === "PAYHERE_CARD")?.status === "live",
+    cod: lkMethods.find((m) => m.key === "COD")?.status === "live",
+  };
   // Navbar's transparent-over-hero treatment on /promotions is only safe
   // when that season's hero is actually dark (Halloween) — Spring/Summer/
   // Autumn/Winter's are light, where transparent ivory nav text would go
@@ -131,6 +144,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               promotionsThemeIsDark={promotionsThemeIsDark}
               locale={locale as AppLocale}
               customLocales={customLocales}
+              lkPaymentMethodsLive={lkPaymentMethodsLive}
             >
               <MainWrapper>{children}</MainWrapper>
             </SiteChrome>
