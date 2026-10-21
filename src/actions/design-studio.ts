@@ -140,3 +140,43 @@ export async function listMyDesigns(): Promise<MyDesignSummary[]> {
     select: { id: true, name: true, thumbnailUrl: true, updatedAt: true },
   });
 }
+
+/** The signed-in customer's own sketches that haven't been submitted yet
+ * (quoteRequestId still null) — backs the "Continue a sketch" section on
+ * /account/custom-designs, so a customer who saved or autosaved a design
+ * and left has somewhere to come back to it instead of it being
+ * permanently stranded (the editor itself never resumed one on its own —
+ * see app/design-studio/page.tsx's ?design= handling). A submitted
+ * design drops out of this list on its own (it already has somewhere to
+ * live — its quote's own detail page). */
+export async function listMyInProgressDesigns(): Promise<MyDesignSummary[]> {
+  const user = await requireUser();
+  return prisma.jewelryDesign.findMany({
+    where: { userId: user.id, source: "CUSTOMER", quoteRequestId: null },
+    orderBy: { updatedAt: "desc" },
+    take: 50,
+    select: { id: true, name: true, thumbnailUrl: true, updatedAt: true },
+  });
+}
+
+/** Deletes one of the signed-in customer's own not-yet-submitted
+ * sketches — the "Discard" action next to "Continue a sketch". Never
+ * touches a design once it's linked to a submitted quote (that's the
+ * quote's own editable version, not a loose sketch to discard from here). */
+export async function discardMyDesign(designId: string): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    const design = await prisma.jewelryDesign.findUnique({ where: { id: designId }, select: { userId: true, quoteRequestId: true } });
+    if (!design || design.userId !== user.id) return { ok: false, error: "Design not found." };
+    if (design.quoteRequestId) return { ok: false, error: "This sketch has already been submitted." };
+
+    await prisma.jewelryDesign.delete({ where: { id: designId } });
+    revalidatePath("/account/custom-designs");
+    return { ok: true };
+  } catch (err) {
+    if (err instanceof Error && (err.message === "UNAUTHENTICATED" || err.message === "ACCOUNT_DISABLED")) {
+      return { ok: false, error: "Please sign in." };
+    }
+    return { ok: false, error: "Could not discard this sketch." };
+  }
+}

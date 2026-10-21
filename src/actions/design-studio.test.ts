@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { prismaMock } from "@/test/prisma-mock";
-import { saveDesign, submitDesignStudioRequest } from "@/actions/design-studio";
+import { saveDesign, submitDesignStudioRequest, listMyInProgressDesigns, discardMyDesign } from "@/actions/design-studio";
 import { requireUser, hasStaffArea } from "@/lib/rbac";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { emptyStudioState } from "@/lib/design-studio/types";
@@ -134,5 +134,70 @@ describe("submitDesignStudioRequest", () => {
 
     expect(result).toEqual({ ok: false, error: "Tell us a bit more about what you'd like made." });
     expect(prismaMock.jewelryDesign.findUnique).not.toHaveBeenCalled();
+  });
+});
+
+describe("listMyInProgressDesigns", () => {
+  it("only queries the signed-in customer's own not-yet-submitted CUSTOMER-sourced designs", async () => {
+    vi.mocked(requireUser).mockResolvedValue(CUSTOMER as never);
+    prismaMock.jewelryDesign.findMany.mockResolvedValue([{ id: "design-1", name: "My Ring", thumbnailUrl: null, updatedAt: new Date() }] as never);
+
+    const result = await listMyInProgressDesigns();
+
+    expect(result).toHaveLength(1);
+    expect(prismaMock.jewelryDesign.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { userId: "user-1", source: "CUSTOMER", quoteRequestId: null } }),
+    );
+  });
+});
+
+describe("discardMyDesign", () => {
+  it("returns a clean error when the design doesn't exist", async () => {
+    vi.mocked(requireUser).mockResolvedValue(CUSTOMER as never);
+    prismaMock.jewelryDesign.findUnique.mockResolvedValue(null);
+
+    const result = await discardMyDesign("design-1");
+
+    expect(result).toEqual({ ok: false, error: "Design not found." });
+    expect(prismaMock.jewelryDesign.delete).not.toHaveBeenCalled();
+  });
+
+  it("refuses to discard a design owned by someone else", async () => {
+    vi.mocked(requireUser).mockResolvedValue(CUSTOMER as never);
+    prismaMock.jewelryDesign.findUnique.mockResolvedValue({ userId: "someone-else", quoteRequestId: null } as never);
+
+    const result = await discardMyDesign("design-1");
+
+    expect(result).toEqual({ ok: false, error: "Design not found." });
+    expect(prismaMock.jewelryDesign.delete).not.toHaveBeenCalled();
+  });
+
+  it("refuses to discard a design that's already been submitted", async () => {
+    vi.mocked(requireUser).mockResolvedValue(CUSTOMER as never);
+    prismaMock.jewelryDesign.findUnique.mockResolvedValue({ userId: "user-1", quoteRequestId: "quote-1" } as never);
+
+    const result = await discardMyDesign("design-1");
+
+    expect(result).toEqual({ ok: false, error: "This sketch has already been submitted." });
+    expect(prismaMock.jewelryDesign.delete).not.toHaveBeenCalled();
+  });
+
+  it("deletes an owned, not-yet-submitted design", async () => {
+    vi.mocked(requireUser).mockResolvedValue(CUSTOMER as never);
+    prismaMock.jewelryDesign.findUnique.mockResolvedValue({ userId: "user-1", quoteRequestId: null } as never);
+    prismaMock.jewelryDesign.delete.mockResolvedValue({} as never);
+
+    const result = await discardMyDesign("design-1");
+
+    expect(result).toEqual({ ok: true });
+    expect(prismaMock.jewelryDesign.delete).toHaveBeenCalledWith({ where: { id: "design-1" } });
+  });
+
+  it("surfaces a sign-in prompt when there's no session", async () => {
+    vi.mocked(requireUser).mockRejectedValue(new Error("UNAUTHENTICATED"));
+
+    const result = await discardMyDesign("design-1");
+
+    expect(result).toEqual({ ok: false, error: "Please sign in." });
   });
 });

@@ -269,18 +269,23 @@ export function PaneSVG({ pane, active, selectedIds, onActivate, onSelect, onMov
                     {selected && (
                       <>
                         <rect x={shape.x - shape.w / 2 - 4} y={shape.y - shape.h / 2 - 4} width={shape.w + 8} height={shape.h + 8} fill="none" stroke="#c9a04d" strokeDasharray="4 3" strokeWidth={1.5} />
+                        {/* Each handle's hit area (r=16) is well past its
+                            visible dot (r=6) — on a touchscreen the pane
+                            often renders at well under 1 viewBox unit per
+                            CSS pixel, so a hit area sized to the dot alone
+                            is far smaller than a finger. */}
                         <circle
                           cx={shape.x + shape.w / 2 + 4}
                           cy={shape.y + shape.h / 2 + 4}
-                          r={6}
-                          fill="#c9a04d"
-                          stroke="#fff"
-                          strokeWidth={1.5}
+                          r={16}
+                          fill="transparent"
                           className="cursor-nwse-resize"
                           onPointerDown={(e) => beginResize(e, shape)}
                         />
-                        <circle cx={shape.x} cy={shape.y - shape.h / 2 - 22} r={6} fill="#2f4f9b" stroke="#fff" strokeWidth={1.5} className="cursor-grab" onPointerDown={(e) => beginRotate(e, shape)} />
+                        <circle cx={shape.x + shape.w / 2 + 4} cy={shape.y + shape.h / 2 + 4} r={6} fill="#c9a04d" stroke="#fff" strokeWidth={1.5} className="pointer-events-none" />
                         <line x1={shape.x} y1={shape.y - shape.h / 2} x2={shape.x} y2={shape.y - shape.h / 2 - 22} stroke="#2f4f9b" strokeWidth={1} />
+                        <circle cx={shape.x} cy={shape.y - shape.h / 2 - 22} r={16} fill="transparent" className="cursor-grab" onPointerDown={(e) => beginRotate(e, shape)} />
+                        <circle cx={shape.x} cy={shape.y - shape.h / 2 - 22} r={6} fill="#2f4f9b" stroke="#fff" strokeWidth={1.5} className="pointer-events-none" />
                       </>
                     )}
                   </g>

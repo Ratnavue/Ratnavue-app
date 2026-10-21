@@ -6,6 +6,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getUnreadCountsFor } from "@/lib/chat";
 import { DESIGN_QUOTE_WHERE, designKind, designLabel } from "@/lib/account-hub";
+import { listMyInProgressDesigns } from "@/actions/design-studio";
+import { DiscardDesignButton } from "@/components/account/DiscardDesignButton";
 import { QuoteStatusBadge } from "@/components/ui/Badge";
 import { LinkButton } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/utils";
@@ -21,10 +23,13 @@ export default async function AccountCustomDesignsPage() {
   const session = await auth();
   if (!session?.user) return null; // proxy.ts guards this route
 
-  const designs = await prisma.quoteRequest.findMany({
-    where: { userId: session.user.id, ...DESIGN_QUOTE_WHERE },
-    orderBy: { createdAt: "desc" },
-  });
+  const [designs, sketches] = await Promise.all([
+    prisma.quoteRequest.findMany({
+      where: { userId: session.user.id, ...DESIGN_QUOTE_WHERE },
+      orderBy: { createdAt: "desc" },
+    }),
+    listMyInProgressDesigns(),
+  ]);
   const unreadCounts = await getUnreadCountsFor(designs.map((d) => ({ requestType: "quote" as const, requestId: d.id })), "CUSTOMER");
 
   return (
@@ -39,6 +44,34 @@ export default async function AccountCustomDesignsPage() {
           <PenTool size={14} /> Design a gem
         </LinkButton>
       </div>
+
+      {sketches.length > 0 && (
+        <div className="mt-6">
+          <p className="mb-2 text-xs uppercase tracking-wide text-charcoal/50">Continue a sketch</p>
+          <div className="flex flex-wrap gap-3">
+            {sketches.map((s) => (
+              <div key={s.id} className="w-32 rounded-lg border border-border-subtle bg-surface p-1.5">
+                <Link href={`/design-studio?design=${s.id}`} className="block">
+                  <span className="flex h-24 w-full items-center justify-center overflow-hidden rounded bg-[#faf7f2]">
+                    {s.thumbnailUrl ? (
+                      <Image src={s.thumbnailUrl} alt="" width={128} height={96} className="h-full w-full object-cover" />
+                    ) : (
+                      <PenTool size={20} strokeWidth={1.2} className="text-charcoal/30" />
+                    )}
+                  </span>
+                </Link>
+                <div className="mt-1 flex items-start justify-between gap-1">
+                  <Link href={`/design-studio?design=${s.id}`} className="min-w-0 flex-1">
+                    <span className="block truncate text-xs text-charcoal/70">{s.name}</span>
+                    <span className="block text-[10px] text-charcoal/45">{s.updatedAt.toLocaleDateString()}</span>
+                  </Link>
+                  <DiscardDesignButton designId={s.id} designName={s.name} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {designs.length === 0 ? (
         <div className="mt-8 rounded-xl border border-dashed border-border-subtle bg-surface px-6 py-12 text-center">

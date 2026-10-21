@@ -123,11 +123,17 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
   // Debounced autosave of the editor state (not the thumbnail — that's
   // only regenerated on an explicit Save, see doSave below) a couple of
   // seconds after the last edit, rather than on every shape nudge.
+  // Skipped entirely for a signed-out customer (admin mode is always
+  // signed in) — saveDesign would just fail every 2 seconds and leave a
+  // "Please sign in" error banner up the whole time someone is trying the
+  // tool out anonymously. They're only asked to sign in once they
+  // actually try to Save or Submit, a deliberate action worth prompting for.
   useEffect(() => {
     if (!mounted.current) {
       mounted.current = true;
       return;
     }
+    if (!isAuthenticated) return;
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(() => {
       void doSave(false);
@@ -136,7 +142,7 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
       if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- doSave closes over state that changes every render; re-running on `studio`/`name` alone is the intent.
-  }, [studio, name]);
+  }, [studio, name, isAuthenticated]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -442,7 +448,17 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
     updatePane(paneId, (shapes) => shapes.map((s) => (s.id === id ? { ...s, rotation } : s)));
   }
 
-  async function doSaveInner(withThumbnail: boolean): Promise<string | null> {
+  interface SaveOutcome {
+    id: string;
+    /** False when a thumbnail was requested but couldn't be produced —
+     * the sketch itself still saved fine either way. A caller that needs
+     * the thumbnail (customer submit) checks this directly instead of
+     * racing the `saveError` state, which a stale closure could still
+     * read as whatever it was before this save even ran. */
+    thumbnailOk: boolean;
+  }
+
+  async function doSaveInner(withThumbnail: boolean): Promise<SaveOutcome | null> {
     setSaving(true);
     setSaveError(null);
     try {
@@ -453,22 +469,27 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
       }
       designIdRef.current = result.id;
 
+      let thumbnailOk = true;
       if (withThumbnail && canvasRef.current) {
         try {
           const blob = await exportPanesToPngBlob(canvasRef.current);
           const formData = new FormData();
           formData.set("thumbnail", new File([blob], "design.png", { type: "image/png" }));
           const uploaded = await uploadDesignThumbnail(result.id, formData);
-          if (!uploaded.ok) setSaveError(uploaded.error);
+          if (!uploaded.ok) {
+            setSaveError(uploaded.error);
+            thumbnailOk = false;
+          }
         } catch (err) {
           // A failed thumbnail export shouldn't block saving the sketch
           // data itself, but a caller relying on the thumbnail (customer
           // submit) needs to know it didn't happen.
           setSaveError(err instanceof Error ? err.message : "Could not export the sketch.");
+          thumbnailOk = false;
         }
       }
       setLastSavedAt(new Date());
-      return result.id;
+      return { id: result.id, thumbnailOk };
     } finally {
       setSaving(false);
     }
@@ -478,7 +499,7 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
   // alike — runs through this one queue, so a manual save that lands while
   // an autosave from a moment earlier is still in flight waits its turn
   // instead of racing it (see saveChain's own comment).
-  function doSave(withThumbnail: boolean): Promise<string | null> {
+  function doSave(withThumbnail: boolean): Promise<SaveOutcome | null> {
     const run = saveChain.current.then(() => doSaveInner(withThumbnail));
     saveChain.current = run.catch(() => undefined);
     return run;
@@ -492,12 +513,16 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
     }
     setSubmitting(true);
     try {
-      const id = await doSave(true);
-      if (!id) {
+      const saved = await doSave(true);
+      if (!saved) {
         setSubmitError(saveError ?? "Could not save the sketch.");
         return;
       }
-      const result = await submitDesignStudioRequest(id, description);
+      if (!saved.thumbnailOk) {
+        setSubmitError("Could not create a preview image of your sketch — please try again.");
+        return;
+      }
+      const result = await submitDesignStudioRequest(saved.id, description);
       if (!result.ok) {
         setSubmitError(result.error);
         return;
