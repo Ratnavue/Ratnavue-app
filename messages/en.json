@@ -64,7 +64,7 @@
       },
       "COD": {
         "name": "Cash on delivery",
-        "hint": "Available to registered customers."
+        "hint": "Available to registered customers. Orders over a certain amount require a deposit by bank transfer first — the rest is paid in cash at delivery."
       }
     },
     "agreeToTerms": "I agree to the <link>Terms & Conditions</link>",
@@ -74,6 +74,7 @@
     "placing": "Placing your order...",
     "payhereNote": "You'll be redirected to PayHere to complete payment securely.",
     "wireNote": "Your order is created now and its items are held for you until the transfer is confirmed.",
+    "codNote": "Your order is created now. If a deposit is required we'll show you how to pay it next — the rest is collected in cash when it's delivered.",
     "summary": {
       "title": "Order Summary",
       "subtotal": "Subtotal",
@@ -93,6 +94,25 @@
       "reference": "Payment reference",
       "instructionsTitle": "Bank details",
       "afterTransfer": "Once your transfer reaches us we'll confirm your order and prepare it for delivery. You can follow its status under My Orders.",
+      "viewOrders": "View Order",
+      "continueShopping": "Continue Shopping",
+      "cancelOrder": "Cancel this order",
+      "cancelled": "This order has been cancelled and its items released."
+    },
+    "cod": {
+      "kicker": "Order placed",
+      "title": "Cash on Delivery",
+      "introNoDeposit": "Nothing to pay now — we'll collect the full amount in cash when your order is delivered.",
+      "introDeposit": "Your items are being held for you. Please transfer the deposit below and use your order number as the payment reference so we can match it — the rest is paid in cash at delivery.",
+      "introDepositReceived": "Deposit received — we're preparing your order for delivery. The remaining balance is paid in cash when it arrives.",
+      "introShipped": "Your order is on its way.",
+      "amount": "Deposit amount",
+      "balanceDue": "Due in cash at delivery",
+      "reference": "Payment reference",
+      "instructionsTitle": "Bank details",
+      "afterTransfer": "Once your deposit reaches us we'll confirm it and prepare your order for delivery. You can follow its status under My Orders.",
+      "agentLabel": "Delivery agent",
+      "trackDelivery": "Track delivery",
       "viewOrders": "View Order",
       "continueShopping": "Continue Shopping",
       "cancelOrder": "Cancel this order",
@@ -325,7 +345,11 @@
       "shipping": "Shipping",
       "handling": "Handling fee",
       "total": "Total",
-      "completePayment": "Complete payment"
+      "completePayment": "Complete payment",
+      "codDetails": "Cash on delivery details",
+      "agentName": "Delivery agent",
+      "agentReference": "Agent reference",
+      "trackDelivery": "Track delivery"
     }
   },
   "checkoutPage": {

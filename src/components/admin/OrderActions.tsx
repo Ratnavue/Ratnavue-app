@@ -6,11 +6,18 @@ import { useAdminAction } from "@/lib/hooks/useAdminAction";
 import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { Button } from "@/components/ui/Button";
 
-// Shown only for a bank-transfer order still awaiting payment. canCancel
-// defaults true (every existing admin caller) — staff-facing callers pass
-// false, since cancelling (releasing the held item back to sale) wasn't
-// part of what staff was granted, only marking paid.
-export function OrderActions({ orderId, orderNumber, canCancel = true, canMarkPaid = true }: { orderId: string; orderNumber: string; canCancel?: boolean; canMarkPaid?: boolean }) {
+// Shown only for a bank-transfer or COD order still awaiting payment.
+// canCancel defaults true (every existing admin caller) — staff-facing
+// callers pass false, since cancelling (releasing the held item back to
+// sale) wasn't part of what staff was granted, only marking paid.
+// canMarkPaid is false for COD (there's nothing to "mark paid" here —
+// see ConfirmCodDepositButton/MarkCodCollectedButton instead).
+// cancelConfirmText overrides the default cancel confirmation — used for
+// a COD order whose deposit already landed, to warn it isn't refunded
+// automatically.
+export function OrderActions({
+  orderId, orderNumber, canCancel = true, canMarkPaid = true, cancelConfirmText,
+}: { orderId: string; orderNumber: string; canCancel?: boolean; canMarkPaid?: boolean; cancelConfirmText?: string }) {
   const router = useRouter();
   const { pending, error, run } = useAdminAction();
   const confirm = useConfirm();
@@ -40,7 +47,7 @@ export function OrderActions({ orderId, orderNumber, canCancel = true, canMarkPa
             size="sm"
             variant="outline"
             disabled={pending}
-            onClick={() => handleClick(cancelOrderAsAdmin, `Cancel ${orderNumber}? Its held items go back on sale.`)}
+            onClick={() => handleClick(cancelOrderAsAdmin, cancelConfirmText ?? `Cancel ${orderNumber}? Its held items go back on sale.`)}
           >
             Cancel
           </Button>

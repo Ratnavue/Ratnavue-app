@@ -7,7 +7,8 @@ vi.mock("@/lib/rbac", () => ({ requireAdmin: vi.fn().mockResolvedValue({ id: "ad
 const settingsFixture = {
   id: "singleton", vatPercent: 18, applyVatToInternational: false, gatewayCommissionPercent: 3.5,
   handlingFeeMarginPercent: 1, birthdayDiscountPercent: 10, usdToLkrRate: 300,
-  freeShippingThresholdUsd: null, freeShippingThresholdLkr: null, updatedAt: new Date(),
+  freeShippingThresholdUsd: null, freeShippingThresholdLkr: null,
+  codDepositThresholdLkr: 10000, codDepositPercent: 25, updatedAt: new Date(),
 };
 
 function formData(fields: Record<string, string>): FormData {
@@ -61,6 +62,42 @@ describe("updateCommerceSettings — free shipping thresholds", () => {
     const result = await updateCommerceSettings(formData({ ...validFields, freeShippingThresholdUsd: "abc", freeShippingThresholdLkr: "" }));
     expect(result.ok).toBe(false);
     expect(prismaMock.commerceSettings.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("updateCommerceSettings — COD deposit rule", () => {
+  it("stores valid threshold/percent values", async () => {
+    const result = await updateCommerceSettings(formData({ ...validFields, codDepositThresholdLkr: "15000", codDepositPercent: "30" }));
+    expect(result.ok).toBe(true);
+    expect(prismaMock.commerceSettings.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ codDepositThresholdLkr: 15000, codDepositPercent: 30 }) }),
+    );
+  });
+
+  it("rejects a negative threshold", async () => {
+    const result = await updateCommerceSettings(formData({ ...validFields, codDepositThresholdLkr: "-10", codDepositPercent: "25" }));
+    expect(result.ok).toBe(false);
+    expect(prismaMock.commerceSettings.update).not.toHaveBeenCalled();
+  });
+
+  it("rejects a percent above 100", async () => {
+    const result = await updateCommerceSettings(formData({ ...validFields, codDepositThresholdLkr: "10000", codDepositPercent: "101" }));
+    expect(result.ok).toBe(false);
+    expect(prismaMock.commerceSettings.update).not.toHaveBeenCalled();
+  });
+
+  it("rejects a negative percent", async () => {
+    const result = await updateCommerceSettings(formData({ ...validFields, codDepositThresholdLkr: "10000", codDepositPercent: "-5" }));
+    expect(result.ok).toBe(false);
+    expect(prismaMock.commerceSettings.update).not.toHaveBeenCalled();
+  });
+
+  it("accepts 0% (admins can effectively disable the deposit while keeping COD live)", async () => {
+    const result = await updateCommerceSettings(formData({ ...validFields, codDepositThresholdLkr: "10000", codDepositPercent: "0" }));
+    expect(result.ok).toBe(true);
+    expect(prismaMock.commerceSettings.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ codDepositPercent: 0 }) }),
+    );
   });
 });
 

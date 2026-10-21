@@ -64,7 +64,7 @@
       },
       "COD": {
         "name": "Pagamento na entrega",
-        "hint": "Disponível para clientes registrados."
+        "hint": "Disponível para clientes registrados. Pedidos acima de determinado valor exigem primeiro um depósito por transferência bancária — o restante é pago em dinheiro na entrega."
       }
     },
     "agreeToTerms": "Eu concordo com os <link>Termos e Condições</link>",
@@ -74,6 +74,7 @@
     "placing": "Realizando seu pedido...",
     "payhereNote": "Você será redirecionado ao PayHere para concluir o pagamento com segurança.",
     "wireNote": "Seu pedido é criado agora e seus itens ficam reservados até a confirmação da transferência.",
+    "codNote": "Seu pedido é criado agora. Se for necessário um depósito, mostraremos a seguir como pagá-lo — o restante é cobrado em dinheiro na entrega.",
     "summary": {
       "title": "Resumo do Pedido",
       "subtotal": "Subtotal",
@@ -93,6 +94,25 @@
       "reference": "Referência de pagamento",
       "instructionsTitle": "Dados bancários",
       "afterTransfer": "Assim que sua transferência chegar até nós, confirmaremos seu pedido e o prepararemos para entrega. Você pode acompanhar o status em Meus Pedidos.",
+      "viewOrders": "Ver Pedido",
+      "continueShopping": "Continuar Comprando",
+      "cancelOrder": "Cancelar este pedido",
+      "cancelled": "Este pedido foi cancelado e seus itens liberados."
+    },
+    "cod": {
+      "kicker": "Pedido realizado",
+      "title": "Pagamento na Entrega",
+      "introNoDeposit": "Nada a pagar agora — cobraremos o valor total em dinheiro na entrega.",
+      "introDeposit": "Seus itens estão sendo reservados para você. Transfira o depósito abaixo e use o número do seu pedido como referência de pagamento para que possamos identificá-lo — o restante é pago em dinheiro na entrega.",
+      "introDepositReceived": "Depósito recebido — estamos preparando seu pedido para entrega. O saldo restante é pago em dinheiro na entrega.",
+      "introShipped": "Seu pedido está a caminho.",
+      "amount": "Valor do depósito",
+      "balanceDue": "A pagar em dinheiro na entrega",
+      "reference": "Referência de pagamento",
+      "instructionsTitle": "Dados bancários",
+      "afterTransfer": "Assim que seu depósito chegar até nós, confirmaremos e prepararemos seu pedido para entrega. Você pode acompanhar o status em Meus Pedidos.",
+      "agentLabel": "Agente de entrega",
+      "trackDelivery": "Rastrear entrega",
       "viewOrders": "Ver Pedido",
       "continueShopping": "Continuar Comprando",
       "cancelOrder": "Cancelar este pedido",
@@ -325,7 +345,11 @@
       "shipping": "Frete",
       "handling": "Taxa de manuseio",
       "total": "Total",
-      "completePayment": "Concluir pagamento"
+      "completePayment": "Concluir pagamento",
+      "codDetails": "Detalhes do pagamento na entrega",
+      "agentName": "Agente de entrega",
+      "agentReference": "Referência do agente",
+      "trackDelivery": "Rastrear entrega"
     }
   },
   "checkoutPage": {

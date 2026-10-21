@@ -73,6 +73,13 @@ export interface CheckoutBreakdown {
   needsPointsApproval: boolean;
   handlingFee: number;
   total: number;
+  /** CommerceSettings' current COD deposit rule, passed through so
+   * initiateRetailCheckout can compute Order.codDepositRequired/
+   * codDepositAmount without a second DB round-trip. Present
+   * unconditionally — meaningless outside paymentMethod COD / market lk,
+   * same as every other field here that's currency/market-specific. */
+  codDepositThresholdLkr: number;
+  codDepositPercent: number;
 }
 
 // The one place retail pricing math happens — used both to preview the
@@ -308,5 +315,7 @@ export async function buildCheckoutBreakdown(input: {
     needsPointsApproval,
     handlingFee,
     total,
+    codDepositThresholdLkr: settings.codDepositThresholdLkr,
+    codDepositPercent: settings.codDepositPercent,
   };
 }

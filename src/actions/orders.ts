@@ -4,8 +4,11 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { requireAdmin, requireStaffArea, requireMarketAccess } from "@/lib/rbac";
-import { finalizePaidOrder, cancelPendingOrder, markOrderShipped, markOrderDelivered, submitOrderShippingDetails, revertOrderToUnpaid } from "@/lib/orders";
-import { shipOrderSchema } from "@/lib/validation/orders";
+import {
+  finalizePaidOrder, cancelPendingOrder, markOrderShipped, markOrderDelivered, submitOrderShippingDetails, revertOrderToUnpaid,
+  confirmCodDepositReceived, collectCodPaymentAndDeliver, setCodDeliveryDetails,
+} from "@/lib/orders";
+import { shipOrderSchema, codDeliveryDetailsSchema } from "@/lib/validation/orders";
 import { shippingSchema } from "@/lib/validation/checkout";
 import type { ActionResult } from "./auth";
 
@@ -35,7 +38,10 @@ export async function markOrderPaid(orderId: string): Promise<ActionResult> {
 }
 
 // Releases a bank-transfer order (transfer never came, customer changed
-// their mind) and puts its held items back on sale.
+// their mind) and puts its held items back on sale. Also covers a COD
+// order — including one whose deposit already landed (cancelPendingOrder
+// itself is payment-method-agnostic); the admin UI warns in that case
+// that the deposit isn't refunded automatically.
 export async function cancelOrderAsAdmin(orderId: string): Promise<ActionResult> {
   await requireAdmin();
   const order = await prisma.order.findUnique({ where: { id: orderId }, select: { auctionId: true } });
@@ -46,6 +52,58 @@ export async function cancelOrderAsAdmin(orderId: string): Promise<ActionResult>
     revalidatePath("/admin/auctions");
     revalidatePath("/auction");
   }
+  revalidateOrders();
+  return { ok: true };
+}
+
+// An admin confirming a COD order's required deposit bank transfer
+// landed — see confirmCodDepositReceived's own doc comment for why this
+// never calls finalizePaidOrder (it's a partial payment).
+export async function confirmCodDepositReceivedByAdmin(orderId: string): Promise<ActionResult> {
+  const user = await requireStaffArea("orders");
+  const order = await prisma.order.findUnique({ where: { id: orderId }, select: { market: true } });
+  if (!order) return { ok: false, error: "Order not found." };
+  await requireMarketAccess(user, order.market);
+
+  const result = await confirmCodDepositReceived(orderId);
+  if (!result.ok) return { ok: false, error: result.error ?? "Couldn't confirm the deposit." };
+  revalidateOrders();
+  return { ok: true };
+}
+
+// The courier collected the cash and handed over the parcel — see
+// collectCodPaymentAndDeliver's own doc comment for why this is one
+// combined action rather than "mark paid" then separately "mark
+// delivered". Staff-scoped, same as confirming a wire transfer today.
+export async function markCodCollectedByAdmin(orderId: string): Promise<ActionResult> {
+  const user = await requireStaffArea("orders");
+  const order = await prisma.order.findUnique({ where: { id: orderId }, select: { market: true } });
+  if (!order) return { ok: false, error: "Order not found." };
+  await requireMarketAccess(user, order.market);
+
+  const result = await collectCodPaymentAndDeliver(orderId);
+  if (!result.ok) return { ok: false, error: result.error ?? "Couldn't record this order as collected." };
+  revalidateOrders();
+  return { ok: true };
+}
+
+// An admin recording/updating who's collecting the cash at the door for a
+// COD order, and the link the customer can track it with.
+export async function setCodDeliveryDetailsByAdmin(orderId: string, formData: FormData): Promise<ActionResult> {
+  const user = await requireStaffArea("orders");
+  const order = await prisma.order.findUnique({ where: { id: orderId }, select: { market: true } });
+  if (!order) return { ok: false, error: "Order not found." };
+  await requireMarketAccess(user, order.market);
+
+  const parsed = codDeliveryDetailsSchema.safeParse({
+    agentName: formData.get("agentName") ?? "",
+    agentReference: formData.get("agentReference") ?? "",
+    trackingUrl: formData.get("trackingUrl") ?? "",
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Check the details you entered." };
+
+  const result = await setCodDeliveryDetails(orderId, parsed.data);
+  if (!result.ok) return { ok: false, error: result.error ?? "Couldn't save delivery-agent details." };
   revalidateOrders();
   return { ok: true };
 }
@@ -117,6 +175,23 @@ export async function cancelMyWireOrder(orderId: string): Promise<ActionResult> 
 
   // Their own action — no "your order was cancelled" notification for
   // something they just did themselves (see cancelPendingOrder's own comment).
+  const { cancelled } = await cancelPendingOrder(orderId, { notifyCustomer: false });
+  if (!cancelled) return { ok: false, error: "This order can no longer be cancelled." };
+  revalidateOrders();
+  return { ok: true };
+}
+
+// The customer backing out of their own unpaid COD order — mirrors
+// cancelMyWireOrder, but additionally refuses once a deposit has already
+// landed: self-service cancellation after paying real money isn't safe
+// without a refund mechanism, so they're asked to contact support instead.
+export async function cancelMyCodOrder(orderId: string): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, error: "Sign in required." };
+  const order = await prisma.order.findUnique({ where: { id: orderId }, select: { userId: true, paymentMethod: true, codDepositPaidAt: true } });
+  if (!order || order.userId !== session.user.id || order.paymentMethod !== "COD") return { ok: false, error: "Order not found." };
+  if (order.codDepositPaidAt) return { ok: false, error: "Your deposit has already been received — please contact us to cancel this order." };
+
   const { cancelled } = await cancelPendingOrder(orderId, { notifyCustomer: false });
   if (!cancelled) return { ok: false, error: "This order can no longer be cancelled." };
   revalidateOrders();

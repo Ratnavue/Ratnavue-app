@@ -15,6 +15,8 @@ interface Settings {
   usdToLkrRate: number;
   freeShippingThresholdUsd: number | null;
   freeShippingThresholdLkr: number | null;
+  codDepositThresholdLkr: number;
+  codDepositPercent: number;
 }
 
 export function CommerceSettingsForm({ settings }: { settings: Settings }) {
@@ -107,6 +109,19 @@ export function CommerceSettingsForm({ settings }: { settings: Settings }) {
             placeholder="Disabled"
           />
           <FieldHint>Same, for the Sri Lanka store — set independently since it&apos;s in its own currency, not converted.</FieldHint>
+        </div>
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div>
+          <Label htmlFor="codDepositThresholdLkr">COD Deposit Threshold (LKR)</Label>
+          <Input id="codDepositThresholdLkr" name="codDepositThresholdLkr" type="number" step="1" min="0" defaultValue={settings.codDepositThresholdLkr} />
+          <FieldHint>Orders over this amount require a bank-transfer deposit before they ship; at or under it, the full amount is cash on delivery.</FieldHint>
+        </div>
+        <div>
+          <Label htmlFor="codDepositPercent">COD Deposit (%)</Label>
+          <Input id="codDepositPercent" name="codDepositPercent" type="number" step="1" min="0" max="100" defaultValue={settings.codDepositPercent} />
+          <FieldHint>Percentage of the order total required as a deposit when the threshold above is exceeded.</FieldHint>
         </div>
       </div>
 

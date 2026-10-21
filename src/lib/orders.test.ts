@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { prismaMock } from "@/test/prisma-mock";
-import { finalizePaidOrder, cancelPendingOrder, markOrderShipped, markOrderDelivered, ensureOrderForQuote, ensureOrderForSourcing, submitOrderShippingDetails, recomputeJewelryAvailability, createManualSaleOrder, createOrderFromSourcing, ensureOrderForAuctionWin, revertOrderToUnpaid } from "@/lib/orders";
+import {
+  finalizePaidOrder, cancelPendingOrder, markOrderShipped, markOrderDelivered, ensureOrderForQuote, ensureOrderForSourcing,
+  submitOrderShippingDetails, recomputeJewelryAvailability, createManualSaleOrder, createOrderFromSourcing, ensureOrderForAuctionWin,
+  revertOrderToUnpaid, confirmCodDepositReceived, collectCodPaymentAndDeliver, setCodDeliveryDetails,
+} from "@/lib/orders";
 import { sendEmail } from "@/lib/email";
 import { registerTracking } from "@/lib/track17";
 
@@ -415,6 +419,38 @@ describe("markOrderShipped", () => {
     );
     expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "customer@example.com", subject: expect.stringContaining("shipped") }));
   });
+
+  it("ships a no-deposit COD order straight from PENDING_PAYMENT — true cash-on-delivery", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({
+      ...baseOrder, status: "PENDING_PAYMENT", paymentMethod: "COD", codDepositRequired: false, codDepositPaidAt: null,
+    } as never);
+
+    const result = await markOrderShipped("order-1", { carrier: "Local Rider", trackingNumber: "COD-1" });
+
+    expect(result).toEqual({ ok: true });
+    expect(prismaMock.order.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: "SHIPPED" }) }));
+  });
+
+  it("refuses to ship a deposit-required COD order whose deposit hasn't been confirmed", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({
+      ...baseOrder, status: "PENDING_PAYMENT", paymentMethod: "COD", codDepositRequired: true, codDepositPaidAt: null,
+    } as never);
+
+    const result = await markOrderShipped("order-1", { carrier: "Local Rider", trackingNumber: "COD-1" });
+
+    expect(result).toEqual({ ok: false, error: "This order needs its deposit confirmed before it can ship." });
+    expect(prismaMock.order.update).not.toHaveBeenCalled();
+  });
+
+  it("ships a deposit-required COD order once the deposit is confirmed", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({
+      ...baseOrder, status: "PENDING_PAYMENT", paymentMethod: "COD", codDepositRequired: true, codDepositPaidAt: new Date(),
+    } as never);
+
+    const result = await markOrderShipped("order-1", { carrier: "Local Rider", trackingNumber: "COD-1" });
+
+    expect(result).toEqual({ ok: true });
+  });
 });
 
 describe("revertOrderToUnpaid", () => {
@@ -514,6 +550,155 @@ describe("markOrderDelivered", () => {
 
     expect(result).toEqual({ ok: true });
     expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ subject: expect.stringContaining("delivered") }));
+  });
+
+  it("delivers a COD order straight from PAID — true cash-on-delivery skips a separate SHIPPED-to-PAID step", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({ ...baseOrder, status: "PAID", paymentMethod: "COD" } as never);
+
+    const result = await markOrderDelivered("order-1");
+
+    expect(result).toEqual({ ok: true });
+    expect(prismaMock.order.update).toHaveBeenCalledWith({ where: { id: "order-1" }, data: { status: "DELIVERED", deliveredAt: expect.any(Date) } });
+  });
+
+  it("regression: a non-COD order sitting at PAID is still refused — the COD loosening must not leak to other methods", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({ ...baseOrder, status: "PAID", paymentMethod: "WIRE_TRANSFER" } as never);
+
+    const result = await markOrderDelivered("order-1");
+
+    expect(result).toEqual({ ok: false });
+    expect(prismaMock.order.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("confirmCodDepositReceived", () => {
+  beforeEach(() => {
+    prismaMock.order.update.mockResolvedValue({} as never);
+    prismaMock.notification.create.mockResolvedValue({} as never);
+  });
+
+  it("rejects a non-COD order", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({ ...baseOrder, paymentMethod: "WIRE_TRANSFER", codDepositRequired: true, codDepositPaidAt: null } as never);
+
+    const result = await confirmCodDepositReceived("order-1");
+
+    expect(result).toEqual({ ok: false, error: "Only a cash-on-delivery order can have a deposit confirmed." });
+    expect(prismaMock.order.update).not.toHaveBeenCalled();
+  });
+
+  it("rejects a COD order that doesn't require a deposit", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({ ...baseOrder, paymentMethod: "COD", codDepositRequired: false, codDepositPaidAt: null } as never);
+
+    const result = await confirmCodDepositReceived("order-1");
+
+    expect(result).toEqual({ ok: false, error: "This order doesn't require a deposit." });
+  });
+
+  it("sets codDepositPaidAt and notifies the customer", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({ ...baseOrder, paymentMethod: "COD", codDepositRequired: true, codDepositPaidAt: null } as never);
+
+    const result = await confirmCodDepositReceived("order-1");
+
+    expect(result).toEqual({ ok: true });
+    expect(prismaMock.order.update).toHaveBeenCalledWith({ where: { id: "order-1" }, data: { codDepositPaidAt: expect.any(Date) } });
+    expect(prismaMock.notification.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ userId: "user-1", requestType: "order", requestId: "order-1" }) }),
+    );
+  });
+
+  it("is idempotent — confirming twice is a no-op the second time", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({ ...baseOrder, paymentMethod: "COD", codDepositRequired: true, codDepositPaidAt: new Date() } as never);
+
+    const result = await confirmCodDepositReceived("order-1");
+
+    expect(result).toEqual({ ok: true });
+    expect(prismaMock.order.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("collectCodPaymentAndDeliver", () => {
+  beforeEach(() => {
+    mockCommonDependencies();
+  });
+
+  it("rejects a non-COD order", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({ ...baseOrder, paymentMethod: "WIRE_TRANSFER", status: "SHIPPED" } as never);
+
+    const result = await collectCodPaymentAndDeliver("order-1");
+
+    expect(result).toEqual({ ok: false, error: "Only a cash-on-delivery order is collected this way." });
+  });
+
+  it("refuses an order that isn't shipped or already paid", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({ ...baseOrder, paymentMethod: "COD", status: "PENDING_PAYMENT" } as never);
+
+    const result = await collectCodPaymentAndDeliver("order-1");
+
+    expect(result).toEqual({ ok: false, error: "This order isn't marked shipped yet." });
+  });
+
+  it("runs the full paid pipeline and marks delivered, from SHIPPED", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({ ...baseOrder, paymentMethod: "COD", status: "SHIPPED" } as never);
+
+    const result = await collectCodPaymentAndDeliver("order-1");
+
+    expect(result).toEqual({ ok: true });
+    expect(prismaMock.order.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: "PAID" }) }));
+    expect(prismaMock.order.update).toHaveBeenCalledWith({ where: { id: "order-1" }, data: { status: "DELIVERED", deliveredAt: expect.any(Date) } });
+  });
+
+  it("is retryable from PAID if the delivered step failed on an earlier attempt", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({ ...baseOrder, paymentMethod: "COD", status: "PAID" } as never);
+
+    const result = await collectCodPaymentAndDeliver("order-1");
+
+    expect(result).toEqual({ ok: true });
+    expect(prismaMock.order.update).toHaveBeenCalledWith({ where: { id: "order-1" }, data: { status: "DELIVERED", deliveredAt: expect.any(Date) } });
+  });
+});
+
+describe("setCodDeliveryDetails", () => {
+  beforeEach(() => {
+    prismaMock.order.update.mockResolvedValue({} as never);
+  });
+
+  it("rejects a non-COD order", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({ ...baseOrder, paymentMethod: "WIRE_TRANSFER", status: "SHIPPED" } as never);
+
+    const result = await setCodDeliveryDetails("order-1", { agentName: "Kasun" });
+
+    expect(result).toEqual({ ok: false, error: "Only a cash-on-delivery order has delivery-agent details." });
+  });
+
+  it("rejects an order still awaiting shipment", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({ ...baseOrder, paymentMethod: "COD", status: "PENDING_PAYMENT" } as never);
+
+    const result = await setCodDeliveryDetails("order-1", { agentName: "Kasun" });
+
+    expect(result).toEqual({ ok: false, error: "Ship this order before adding delivery-agent details." });
+  });
+
+  it("sets all three fields", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({ ...baseOrder, paymentMethod: "COD", status: "SHIPPED" } as never);
+
+    const result = await setCodDeliveryDetails("order-1", { agentName: "Kasun", agentReference: "REF-1", trackingUrl: "https://example.com/track" });
+
+    expect(result).toEqual({ ok: true });
+    expect(prismaMock.order.update).toHaveBeenCalledWith({
+      where: { id: "order-1" },
+      data: { codAgentName: "Kasun", codAgentReference: "REF-1", codTrackingUrl: "https://example.com/track" },
+    });
+  });
+
+  it("clears a field when given a blank value", async () => {
+    prismaMock.order.findUniqueOrThrow.mockResolvedValue({ ...baseOrder, paymentMethod: "COD", status: "SHIPPED" } as never);
+
+    await setCodDeliveryDetails("order-1", { agentName: "", agentReference: "", trackingUrl: "" });
+
+    expect(prismaMock.order.update).toHaveBeenCalledWith({
+      where: { id: "order-1" },
+      data: { codAgentName: null, codAgentReference: null, codTrackingUrl: null },
+    });
   });
 });
 

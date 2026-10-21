@@ -23,7 +23,11 @@ export type InitiateCheckoutResult =
   | { ok: true; method: "PAYHERE_CARD"; checkoutUrl: string; fields: PayhereCheckoutFields }
   // A bank-transfer order is already created (and its items held) — the
   // browser goes on to the page that shows where to send the money.
-  | { ok: true; method: "WIRE_TRANSFER"; orderRecordId: string };
+  | { ok: true; method: "WIRE_TRANSFER"; orderRecordId: string }
+  // A COD order is already created (and its items held) and may require a
+  // deposit — the browser goes on to the page that shows either "pay
+  // nothing now" or the deposit bank-transfer instructions.
+  | { ok: true; method: "COD"; orderRecordId: string };
 
 // Creates the Order (PENDING_PAYMENT) and its OrderItems up front — the
 // order_id has to exist before redirecting to PayHere, since it's a
@@ -93,6 +97,16 @@ export async function initiateRetailCheckout(formData: FormData): Promise<Initia
   const refToken = (await cookies()).get(SALES_REF_COOKIE)?.value;
   const referredByPromoterId = refToken ? await getActivePromoterIdByToken(refToken) : null;
 
+  // Rs {threshold} is CommerceSettings' own current value, snapshotted
+  // here (not re-read later) — same "snapshot, don't re-derive" treatment
+  // as every other admin-configurable rate on this order. COD only ever
+  // resolves on market "lk" (payment-methods.ts's intl METHODS table has
+  // no COD entry at all, so isPaymentMethodLive would already have
+  // rejected it above on the international site), so there's no
+  // currency-conversion question here.
+  const codDepositRequired = paymentMethod === "COD" && breakdown.total > breakdown.codDepositThresholdLkr;
+  const codDepositAmount = codDepositRequired ? Math.round(breakdown.total * (breakdown.codDepositPercent / 100)) : null;
+
   const orderNumber = await nextOrderNumber();
   const orderData = {
       orderNumber,
@@ -100,7 +114,9 @@ export async function initiateRetailCheckout(formData: FormData): Promise<Initia
       market,
       referredByPromoterId,
       paymentMethod,
-      paymentGateway: paymentMethod === "PAYHERE_CARD" ? "payhere" : "wire",
+      paymentGateway: paymentMethod === "PAYHERE_CARD" ? "payhere" : paymentMethod === "COD" ? "cod" : "wire",
+      codDepositRequired,
+      codDepositAmount,
       currency: breakdown.currency,
       subtotal: breakdown.subtotal,
       discountAmount: breakdown.codeDiscount,
@@ -162,6 +178,36 @@ export async function initiateRetailCheckout(formData: FormData): Promise<Initia
         return created;
       });
       return { ok: true, method: "WIRE_TRANSFER", orderRecordId: wireOrder.id };
+    } catch (error) {
+      if (error instanceof Error && error.message === "ITEM_UNAVAILABLE") {
+        return { ok: false, error: "One of the items in your cart was just taken by another customer — please review your cart." };
+      }
+      throw error;
+    }
+  }
+
+  if (paymentMethod === "COD") {
+    // Same reservation shape as WIRE_TRANSFER above — a COD order is held
+    // the exact same way while it waits (first for its deposit, if any,
+    // then for delivery), just paid off differently once it ships. See
+    // that branch's own comment for the full rationale.
+    const gemstoneIds = breakdown.items.map((i) => i.gemstoneId).filter((id): id is string => id != null);
+    const variantItems = breakdown.items.filter((i) => i.jewelryVariantId != null);
+    const plainJewelryIds = breakdown.items.filter((i) => i.jewelryId != null && i.jewelryVariantId == null).map((i) => i.jewelryId!);
+    try {
+      const codOrder = await prisma.$transaction(async (tx) => {
+        const created = await tx.order.create({ data: orderData });
+        const gems = await tx.gemstone.updateMany({ where: { id: { in: gemstoneIds }, stockStatus: "AVAILABLE" }, data: { stockStatus: "RESERVED" } });
+        const jewels = await tx.jewelryPiece.updateMany({ where: { id: { in: plainJewelryIds }, stockStatus: "AVAILABLE" }, data: { stockStatus: "RESERVED" } });
+        const variantIds = variantItems.map((i) => i.jewelryVariantId!);
+        const variants = variantIds.length > 0
+          ? await tx.jewelryVariant.updateMany({ where: { id: { in: variantIds }, stockStatus: "AVAILABLE" }, data: { stockStatus: "RESERVED" } })
+          : { count: 0 };
+        if (gems.count !== gemstoneIds.length || jewels.count !== plainJewelryIds.length || variants.count !== variantIds.length) throw new Error("ITEM_UNAVAILABLE");
+        if (variantIds.length > 0) await recomputeJewelryAvailability(tx, variantItems.map((i) => i.jewelryId!));
+        return created;
+      });
+      return { ok: true, method: "COD", orderRecordId: codOrder.id };
     } catch (error) {
       if (error instanceof Error && error.message === "ITEM_UNAVAILABLE") {
         return { ok: false, error: "One of the items in your cart was just taken by another customer — please review your cart." };

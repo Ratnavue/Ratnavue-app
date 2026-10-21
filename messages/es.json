@@ -64,7 +64,7 @@
       },
       "COD": {
         "name": "Pago contra entrega",
-        "hint": "Disponible para clientes registrados."
+        "hint": "Disponible para clientes registrados. Los pedidos por encima de cierto monto requieren primero un depósito por transferencia bancaria — el resto se paga en efectivo al momento de la entrega."
       }
     },
     "agreeToTerms": "Acepto los <link>Términos y Condiciones</link>",
@@ -74,6 +74,7 @@
     "placing": "Realizando su pedido...",
     "payhereNote": "Será redirigido a PayHere para completar el pago de forma segura.",
     "wireNote": "Su pedido se crea ahora y sus artículos se reservan para usted hasta que se confirme la transferencia.",
+    "codNote": "Su pedido se crea ahora. Si se requiere un depósito, le mostraremos a continuación cómo pagarlo — el resto se cobra en efectivo al momento de la entrega.",
     "summary": {
       "title": "Resumen del Pedido",
       "subtotal": "Subtotal",
@@ -93,6 +94,25 @@
       "reference": "Referencia de pago",
       "instructionsTitle": "Datos bancarios",
       "afterTransfer": "Una vez que recibamos su transferencia, confirmaremos su pedido y lo prepararemos para la entrega. Puede seguir su estado en Mis Pedidos.",
+      "viewOrders": "Ver Pedido",
+      "continueShopping": "Seguir Comprando",
+      "cancelOrder": "Cancelar este pedido",
+      "cancelled": "Este pedido ha sido cancelado y sus artículos liberados."
+    },
+    "cod": {
+      "kicker": "Pedido realizado",
+      "title": "Pago contra entrega",
+      "introNoDeposit": "No hay nada que pagar ahora — cobraremos el monto completo en efectivo al momento de la entrega.",
+      "introDeposit": "Sus artículos están siendo reservados para usted. Transfiera el depósito indicado a continuación y use su número de pedido como referencia de pago para que podamos identificarlo — el resto se paga en efectivo al momento de la entrega.",
+      "introDepositReceived": "Depósito recibido — estamos preparando su pedido para la entrega. El saldo restante se paga en efectivo al momento de la entrega.",
+      "introShipped": "Su pedido está en camino.",
+      "amount": "Monto del depósito",
+      "balanceDue": "A pagar en efectivo en la entrega",
+      "reference": "Referencia de pago",
+      "instructionsTitle": "Datos bancarios",
+      "afterTransfer": "Una vez que recibamos su depósito, lo confirmaremos y prepararemos su pedido para la entrega. Puede seguir su estado en Mis Pedidos.",
+      "agentLabel": "Agente de entrega",
+      "trackDelivery": "Seguir la entrega",
       "viewOrders": "Ver Pedido",
       "continueShopping": "Seguir Comprando",
       "cancelOrder": "Cancelar este pedido",
@@ -325,7 +345,11 @@
       "shipping": "Envío",
       "handling": "Tarifa de manipulación",
       "total": "Total",
-      "completePayment": "Completar pago"
+      "completePayment": "Completar pago",
+      "codDetails": "Detalles del pago contra entrega",
+      "agentName": "Agente de entrega",
+      "agentReference": "Referencia del agente",
+      "trackDelivery": "Seguir la entrega"
     }
   },
   "checkoutPage": {

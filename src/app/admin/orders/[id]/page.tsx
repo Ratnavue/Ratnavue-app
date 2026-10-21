@@ -9,6 +9,9 @@ import { BackLink } from "@/components/admin/BackLink";
 import { OrderActions } from "@/components/admin/OrderActions";
 import { ShipOrderForm } from "@/components/admin/ShipOrderForm";
 import { MarkDeliveredButton } from "@/components/admin/MarkDeliveredButton";
+import { ConfirmCodDepositButton } from "@/components/admin/ConfirmCodDepositButton";
+import { MarkCodCollectedButton } from "@/components/admin/MarkCodCollectedButton";
+import { CodDeliveryDetailsForm } from "@/components/admin/CodDeliveryDetailsForm";
 import { ClearShippingToBeArrangedButton } from "@/components/admin/ClearShippingToBeArrangedButton";
 import { ClearPointsApprovalButton } from "@/components/admin/ClearPointsApprovalButton";
 import { RefundResolutionPanel } from "@/components/admin/RefundResolutionPanel";
@@ -155,6 +158,40 @@ export default async function AdminOrderDetailPage({ params }: PageProps<"/admin
                 <dt className="text-charcoal/60">Payment method</dt>
                 <dd className="text-charcoal">{METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}</dd>
               </div>
+              {order.codDepositRequired && (
+                <div className="flex justify-between gap-3">
+                  <dt className="text-charcoal/60">Deposit</dt>
+                  <dd className="text-charcoal">
+                    {formatPrice(order.codDepositAmount!, currency)} {order.codDepositPaidAt ? "— received" : "— awaiting transfer"}
+                  </dd>
+                </div>
+              )}
+              {order.paymentMethod === "COD" && (order.codAgentName || order.codAgentReference || order.codTrackingUrl) && (
+                <>
+                  {order.codAgentName && (
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-charcoal/60">Delivery agent</dt>
+                      <dd className="text-charcoal">{order.codAgentName}</dd>
+                    </div>
+                  )}
+                  {order.codAgentReference && (
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-charcoal/60">Agent reference</dt>
+                      <dd className="text-charcoal">{order.codAgentReference}</dd>
+                    </div>
+                  )}
+                  {order.codTrackingUrl && (
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-charcoal/60">Tracking</dt>
+                      <dd>
+                        <a href={order.codTrackingUrl} target="_blank" rel="noopener noreferrer" className="text-gold-deep underline hover:text-charcoal">
+                          Track delivery
+                        </a>
+                      </dd>
+                    </div>
+                  )}
+                </>
+              )}
               {order.pointsRedeemed > 0 && (
                 <div className="flex justify-between gap-3">
                   <dt className="text-charcoal/60">Points used</dt>
@@ -209,9 +246,40 @@ export default async function AdminOrderDetailPage({ params }: PageProps<"/admin
               {order.status === "PENDING_PAYMENT" && order.paymentMethod === "WIRE_TRANSFER" && (!order.needsShippingDetails || !isStaff) && (
                 <OrderActions orderId={order.id} orderNumber={order.orderNumber} canCancel={!isStaff} canMarkPaid={!order.needsShippingDetails} />
               )}
-              {!order.needsShippingDetails && order.status === "PAID" && <ShipOrderForm orderId={order.id} orderNumber={order.orderNumber} />}
-              {order.status === "PAID" && <RevertToUnpaidForm orderId={order.id} orderNumber={order.orderNumber} />}
-              {!isStaff && order.status === "SHIPPED" && <MarkDeliveredButton orderId={order.id} orderNumber={order.orderNumber} />}
+              {order.status === "PENDING_PAYMENT" && order.paymentMethod === "COD" && (
+                <OrderActions
+                  orderId={order.id}
+                  orderNumber={order.orderNumber}
+                  canCancel={!isStaff}
+                  canMarkPaid={false}
+                  cancelConfirmText={
+                    order.codDepositPaidAt
+                      ? `Cancel ${order.orderNumber}? Its deposit has already been received and will NOT be refunded automatically — arrange that separately before cancelling.`
+                      : undefined
+                  }
+                />
+              )}
+              {order.paymentMethod === "COD" && order.codDepositRequired && !order.codDepositPaidAt && order.status === "PENDING_PAYMENT" && (
+                <ConfirmCodDepositButton orderId={order.id} orderNumber={order.orderNumber} amount={order.codDepositAmount!} currency={currency} />
+              )}
+              {!order.needsShippingDetails && (
+                order.status === "PAID"
+                || (order.paymentMethod === "COD" && order.status === "PENDING_PAYMENT" && (!order.codDepositRequired || order.codDepositPaidAt != null))
+              ) && <ShipOrderForm orderId={order.id} orderNumber={order.orderNumber} />}
+              {order.status === "PAID" && order.paymentMethod !== "COD" && <RevertToUnpaidForm orderId={order.id} orderNumber={order.orderNumber} />}
+              {!isStaff && order.status === "SHIPPED" && order.paymentMethod !== "COD" && <MarkDeliveredButton orderId={order.id} orderNumber={order.orderNumber} />}
+              {order.paymentMethod === "COD" && (order.status === "SHIPPED" || order.status === "PAID") && (
+                <MarkCodCollectedButton orderId={order.id} orderNumber={order.orderNumber} />
+              )}
+              {order.paymentMethod === "COD" && (order.status === "SHIPPED" || order.status === "PAID" || order.status === "DELIVERED") && (
+                <CodDeliveryDetailsForm
+                  orderId={order.id}
+                  orderNumber={order.orderNumber}
+                  defaultAgentName={order.codAgentName}
+                  defaultAgentReference={order.codAgentReference}
+                  defaultTrackingUrl={order.codTrackingUrl}
+                />
+              )}
               {order.status === "PAYMENT_REVERSED" && order.paymentReversedReason && (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
                   <p className="font-medium">Reverted to unpaid</p>

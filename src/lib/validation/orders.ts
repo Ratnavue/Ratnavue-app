@@ -8,6 +8,17 @@ export const shipOrderSchema = z.object({
 
 export type ShipOrderInput = z.infer<typeof shipOrderSchema>;
 
+// Who's actually collecting cash at the door for a COD order — every
+// field optional (an admin may only know some of this yet), and a blank
+// value clears whatever was there before (see setCodDeliveryDetails).
+export const codDeliveryDetailsSchema = z.object({
+  agentName: z.string().max(100).optional().or(z.literal("")),
+  agentReference: z.string().max(100).optional().or(z.literal("")),
+  trackingUrl: z.string().url("Enter a valid URL").max(500).optional().or(z.literal("")),
+});
+
+export type CodDeliveryDetailsInput = z.infer<typeof codDeliveryDetailsSchema>;
+
 // Shared by every admin form that builds an order line-by-line from
 // catalog items (manual sales, sourcing orders): which item, and the
 // price actually agreed for it — not necessarily the catalog's own

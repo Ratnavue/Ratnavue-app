@@ -64,7 +64,7 @@
       },
       "COD": {
         "name": "Nachnahme",
-        "hint": "Verfügbar für registrierte Kunden."
+        "hint": "Verfügbar für registrierte Kunden. Bestellungen über einem bestimmten Betrag erfordern zuerst eine Anzahlung per Banküberweisung — der Rest wird bei Lieferung in bar bezahlt."
       }
     },
     "agreeToTerms": "Ich stimme den <link>Allgemeinen Geschäftsbedingungen</link> zu",
@@ -74,6 +74,7 @@
     "placing": "Ihre Bestellung wird aufgegeben...",
     "payhereNote": "Sie werden zu PayHere weitergeleitet, um die Zahlung sicher abzuschließen.",
     "wireNote": "Ihre Bestellung wird jetzt erstellt und ihre Artikel werden für Sie zurückgehalten, bis die Überweisung bestätigt ist.",
+    "codNote": "Ihre Bestellung wird jetzt erstellt. Falls eine Anzahlung erforderlich ist, zeigen wir Ihnen als Nächstes, wie Sie sie bezahlen — der Rest wird bei Lieferung in bar eingezogen.",
     "summary": {
       "title": "Bestellübersicht",
       "subtotal": "Zwischensumme",
@@ -93,6 +94,25 @@
       "reference": "Zahlungsreferenz",
       "instructionsTitle": "Bankdaten",
       "afterTransfer": "Sobald Ihre Überweisung bei uns eingeht, bestätigen wir Ihre Bestellung und bereiten sie für die Lieferung vor. Sie können den Status unter Meine Bestellungen verfolgen.",
+      "viewOrders": "Bestellung Ansehen",
+      "continueShopping": "Weiter Einkaufen",
+      "cancelOrder": "Diese Bestellung stornieren",
+      "cancelled": "Diese Bestellung wurde storniert und ihre Artikel freigegeben."
+    },
+    "cod": {
+      "kicker": "Bestellung aufgegeben",
+      "title": "Nachnahme",
+      "introNoDeposit": "Jetzt ist nichts zu zahlen — wir ziehen den vollen Betrag bei Lieferung in bar ein.",
+      "introDeposit": "Ihre Artikel werden für Sie zurückgehalten. Bitte überweisen Sie die unten genannte Anzahlung und verwenden Sie Ihre Bestellnummer als Zahlungsreferenz, damit wir sie zuordnen können — der Rest wird bei Lieferung in bar bezahlt.",
+      "introDepositReceived": "Anzahlung erhalten — wir bereiten Ihre Bestellung für die Lieferung vor. Der restliche Betrag wird bei Lieferung in bar bezahlt.",
+      "introShipped": "Ihre Bestellung ist auf dem Weg.",
+      "amount": "Anzahlungsbetrag",
+      "balanceDue": "Bei Lieferung in bar fällig",
+      "reference": "Zahlungsreferenz",
+      "instructionsTitle": "Bankdaten",
+      "afterTransfer": "Sobald Ihre Anzahlung bei uns eingeht, bestätigen wir sie und bereiten Ihre Bestellung für die Lieferung vor. Sie können den Status unter Meine Bestellungen verfolgen.",
+      "agentLabel": "Zustellbote",
+      "trackDelivery": "Lieferung verfolgen",
       "viewOrders": "Bestellung Ansehen",
       "continueShopping": "Weiter Einkaufen",
       "cancelOrder": "Diese Bestellung stornieren",
@@ -325,7 +345,11 @@
       "shipping": "Versand",
       "handling": "Bearbeitungsgebühr",
       "total": "Gesamt",
-      "completePayment": "Zahlung Abschließen"
+      "completePayment": "Zahlung Abschließen",
+      "codDetails": "Details zur Nachnahme",
+      "agentName": "Zustellbote",
+      "agentReference": "Referenz des Zustellboten",
+      "trackDelivery": "Lieferung verfolgen"
     }
   },
   "checkoutPage": {

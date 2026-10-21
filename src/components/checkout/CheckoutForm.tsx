@@ -36,7 +36,9 @@ export function CheckoutForm({ methods, defaultMethod }: {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const isWire = method === "WIRE_TRANSFER";
+  // Both of these redirect the browser away to a holding page instead of
+  // posting to PayHere — see handleSubmit's method branches below.
+  const redirectsAway = method === "WIRE_TRANSFER" || method === "COD";
 
   function handleSubmit(formData: FormData) {
     setError(null);
@@ -48,6 +50,10 @@ export function CheckoutForm({ methods, defaultMethod }: {
       }
       if (result.method === "WIRE_TRANSFER") {
         router.push(withMarket(`/checkout/wire?order=${encodeURIComponent(result.orderRecordId)}`, market));
+        return;
+      }
+      if (result.method === "COD") {
+        router.push(withMarket(`/checkout/cod?order=${encodeURIComponent(result.orderRecordId)}`, market));
         return;
       }
       submitToPayhere(result.checkoutUrl, result.fields);
@@ -172,9 +178,11 @@ export function CheckoutForm({ methods, defaultMethod }: {
 
       <FieldError>{error ?? undefined}</FieldError>
       <Button type="submit" variant="gold" size="lg" className="w-full" disabled={pending || !agreedToTerms}>
-        {isWire ? (pending ? t("placing") : t("placeOrder")) : pending ? t("preparing") : t("continueToPayment")}
+        {redirectsAway ? (pending ? t("placing") : t("placeOrder")) : pending ? t("preparing") : t("continueToPayment")}
       </Button>
-      <p className="text-center text-xs text-charcoal/65">{isWire ? t("wireNote") : t("payhereNote")}</p>
+      <p className="text-center text-xs text-charcoal/65">
+        {method === "WIRE_TRANSFER" ? t("wireNote") : method === "COD" ? t("codNote") : t("payhereNote")}
+      </p>
     </form>
   );
 }

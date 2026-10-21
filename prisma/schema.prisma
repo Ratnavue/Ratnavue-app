@@ -1838,6 +1838,32 @@ model Order {
   shippedAt      DateTime?
   deliveredAt    DateTime?
 
+  // ---------- Cash on delivery (lk market only) ----------
+  // Snapshotted at checkout from CommerceSettings' deposit rule — never
+  // recomputed later, same "snapshot, don't re-derive" convention as
+  // birthdayDiscountAmount. codDepositRequired is always false and
+  // codDepositAmount/codDepositPaidAt always null for any non-COD order.
+  codDepositRequired Boolean   @default(false)
+  codDepositAmount   Float?
+  // Set once an admin confirms the customer's deposit bank transfer landed
+  // (see lib/orders.ts's confirmCodDepositReceived) — required before a
+  // COD order that needed a deposit can be shipped (see markOrderShipped's
+  // own comment). Stays null for a no-deposit COD order (nothing to
+  // confirm) and for every non-COD order.
+  codDepositPaidAt   DateTime?
+
+  // Who's actually collecting the cash at the door — distinct from
+  // carrier/trackingNumber/trackingUrl above, which track the parcel's own
+  // shipment and feed 17track's registerTracking. A COD cash-collection leg
+  // can run through a separate, non-17track-integrated local agent/rider,
+  // so these are plain admin-entered fields, never auto-registered
+  // anywhere, and freely editable after the fact (see
+  // lib/orders.ts's setCodDeliveryDetails). Settable from the moment the
+  // order ships onward, never before.
+  codAgentName      String?
+  codAgentReference String?
+  codTrackingUrl    String?
+
   // Set only by revertOrderToUnpaid (lib/orders.ts) — see
   // OrderStatus.PAYMENT_REVERSED's own comment for why this is a flag,
   // not an automatic reversal of everything finalizePaidOrder did.
@@ -2229,6 +2255,17 @@ model CommerceSettings {
   // regardless of order size. See lib/checkout.ts's buildCheckoutBreakdown.
   freeShippingThresholdUsd Float?
   freeShippingThresholdLkr Float?
+
+  // Cash-on-delivery deposit rule for the Sri Lanka store (the only market
+  // COD exists on) — above this LKR total, codDepositPercent of the order
+  // must be paid by bank transfer before it ships; at or under it, the
+  // full amount is collected as cash at delivery with no deposit. See
+  // lib/checkout.ts's buildCheckoutBreakdown and actions/checkout.ts's
+  // initiateRetailCheckout, which snapshot both onto the Order at creation
+  // time (Order.codDepositRequired/codDepositAmount) so a later change
+  // here never reaches back into an already-placed order.
+  codDepositThresholdLkr Float @default(10000)
+  codDepositPercent      Float @default(25)
 
   updatedAt DateTime @updatedAt
 }

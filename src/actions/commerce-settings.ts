@@ -31,15 +31,19 @@ export async function updateCommerceSettings(formData: FormData): Promise<Action
   const usdToLkrRate = num("usdToLkrRate");
   const freeShippingThresholdUsd = optionalNonNegativeNum("freeShippingThresholdUsd");
   const freeShippingThresholdLkr = optionalNonNegativeNum("freeShippingThresholdLkr");
+  const codDepositThresholdLkr = num("codDepositThresholdLkr");
+  const codDepositPercent = num("codDepositPercent");
 
   if (
     vatPercent == null || vatPercent < 0 ||
     gatewayCommissionPercent == null || gatewayCommissionPercent < 0 ||
     handlingFeeMarginPercent == null || handlingFeeMarginPercent < 0 ||
     birthdayDiscountPercent == null || birthdayDiscountPercent < 0 ||
-    usdToLkrRate == null || usdToLkrRate <= 0
+    usdToLkrRate == null || usdToLkrRate <= 0 ||
+    codDepositThresholdLkr == null || codDepositThresholdLkr < 0 ||
+    codDepositPercent == null || codDepositPercent < 0 || codDepositPercent > 100
   ) {
-    return { ok: false, error: "Enter valid, non-negative numbers (the exchange rate must be greater than 0)." };
+    return { ok: false, error: "Enter valid, non-negative numbers (the exchange rate must be greater than 0, and the COD deposit percent must be 0–100)." };
   }
   if (freeShippingThresholdUsd === undefined || freeShippingThresholdLkr === undefined) {
     return { ok: false, error: "Free shipping thresholds must be blank (disabled) or a non-negative number." };
@@ -64,6 +68,8 @@ export async function updateCommerceSettings(formData: FormData): Promise<Action
       usdToLkrRate,
       freeShippingThresholdUsd,
       freeShippingThresholdLkr,
+      codDepositThresholdLkr,
+      codDepositPercent,
     },
   });
 

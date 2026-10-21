@@ -23,7 +23,8 @@ describe("isSriLanka", () => {
 const commerceFixture = {
   id: "singleton", vatPercent: 18, applyVatToInternational: false, gatewayCommissionPercent: 3.5,
   handlingFeeMarginPercent: 1, birthdayDiscountPercent: 10, usdToLkrRate: 300,
-  freeShippingThresholdUsd: null, freeShippingThresholdLkr: null, updatedAt: new Date(),
+  freeShippingThresholdUsd: null, freeShippingThresholdLkr: null,
+  codDepositThresholdLkr: 10000, codDepositPercent: 25, updatedAt: new Date(),
 };
 
 const userFixture = { id: "user-1", pointsBalance: 0, dateOfBirth: null, lastBirthdayDiscountAt: null };

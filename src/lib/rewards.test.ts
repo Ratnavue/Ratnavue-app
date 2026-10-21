@@ -36,6 +36,8 @@ const commerceFixture: CommerceSettings = {
   usdToLkrRate: 300,
   freeShippingThresholdUsd: null,
   freeShippingThresholdLkr: null,
+  codDepositThresholdLkr: 10000,
+  codDepositPercent: 25,
   updatedAt: new Date("2026-01-01"),
 };
 

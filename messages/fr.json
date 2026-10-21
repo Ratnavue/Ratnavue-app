@@ -64,7 +64,7 @@
       },
       "COD": {
         "name": "Paiement à la livraison",
-        "hint": "Disponible pour les clients inscrits."
+        "hint": "Disponible pour les clients inscrits. Les commandes dépassant un certain montant nécessitent d'abord un acompte par virement bancaire — le reste est payé en espèces à la livraison."
       }
     },
     "agreeToTerms": "J'accepte les <link>Conditions Générales</link>",
@@ -74,6 +74,7 @@
     "placing": "Passage de votre commande...",
     "payhereNote": "Vous serez redirigé vers PayHere pour finaliser le paiement en toute sécurité.",
     "wireNote": "Votre commande est créée dès maintenant et ses articles sont réservés jusqu'à la confirmation du virement.",
+    "codNote": "Votre commande est créée dès maintenant. Si un acompte est requis, nous vous indiquerons ensuite comment le payer — le reste est encaissé en espèces à la livraison.",
     "summary": {
       "title": "Récapitulatif de la Commande",
       "subtotal": "Sous-total",
@@ -93,6 +94,25 @@
       "reference": "Référence de paiement",
       "instructionsTitle": "Coordonnées bancaires",
       "afterTransfer": "Dès que votre virement nous parvient, nous confirmerons votre commande et la préparerons pour la livraison. Vous pouvez suivre son statut dans Mes Commandes.",
+      "viewOrders": "Voir la Commande",
+      "continueShopping": "Continuer mes Achats",
+      "cancelOrder": "Annuler cette commande",
+      "cancelled": "Cette commande a été annulée et ses articles libérés."
+    },
+    "cod": {
+      "kicker": "Commande passée",
+      "title": "Paiement à la livraison",
+      "introNoDeposit": "Rien à payer maintenant — nous encaisserons le montant total en espèces à la livraison.",
+      "introDeposit": "Vos articles sont réservés pour vous. Veuillez virer l'acompte ci-dessous en utilisant votre numéro de commande comme référence de paiement afin que nous puissions l'identifier — le reste est payé en espèces à la livraison.",
+      "introDepositReceived": "Acompte reçu — nous préparons votre commande pour la livraison. Le solde restant est payé en espèces à la livraison.",
+      "introShipped": "Votre commande est en route.",
+      "amount": "Montant de l'acompte",
+      "balanceDue": "Dû en espèces à la livraison",
+      "reference": "Référence de paiement",
+      "instructionsTitle": "Coordonnées bancaires",
+      "afterTransfer": "Dès que votre acompte nous parvient, nous le confirmerons et préparerons votre commande pour la livraison. Vous pouvez suivre son statut dans Mes Commandes.",
+      "agentLabel": "Agent de livraison",
+      "trackDelivery": "Suivre la livraison",
       "viewOrders": "Voir la Commande",
       "continueShopping": "Continuer mes Achats",
       "cancelOrder": "Annuler cette commande",
@@ -325,7 +345,11 @@
       "shipping": "Livraison",
       "handling": "Frais de traitement",
       "total": "Total",
-      "completePayment": "Finaliser le paiement"
+      "completePayment": "Finaliser le paiement",
+      "codDetails": "Détails du paiement à la livraison",
+      "agentName": "Agent de livraison",
+      "agentReference": "Référence de l'agent",
+      "trackDelivery": "Suivre la livraison"
     }
   },
   "checkoutPage": {

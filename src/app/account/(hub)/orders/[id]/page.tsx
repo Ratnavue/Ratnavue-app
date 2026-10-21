@@ -130,13 +130,21 @@ export default async function AccountOrderDetailPage({ params }: PageProps<"/acc
         </div>
       )}
 
-      {!order.needsShippingDetails && order.status === "PENDING_PAYMENT" && (
+      {!order.needsShippingDetails
+        && (order.status === "PENDING_PAYMENT" || (order.paymentMethod === "COD" && order.status === "SHIPPED")) && (
         <div className="mt-4 rounded-xl border border-gold/40 bg-gold/10 p-4">
           <NextLink
-            href={withMarket(order.paymentMethod === "WIRE_TRANSFER" ? `/checkout/wire?order=${order.id}` : `/checkout/return?order=${order.id}`, market)}
+            href={withMarket(
+              order.paymentMethod === "WIRE_TRANSFER" ? `/checkout/wire?order=${order.id}`
+                : order.paymentMethod === "COD" ? `/checkout/cod?order=${order.id}`
+                  : `/checkout/return?order=${order.id}`,
+              market,
+            )}
             className="inline-flex items-center rounded-full border border-gold bg-surface px-4 py-1.5 text-sm font-medium text-charcoal transition-colors hover:bg-gold/25"
           >
-            {order.paymentMethod === "WIRE_TRANSFER" ? t("paymentInstructions") : t("detail.completePayment")}
+            {order.paymentMethod === "WIRE_TRANSFER" ? t("paymentInstructions")
+              : order.paymentMethod === "COD" ? t("detail.codDetails")
+                : t("detail.completePayment")}
           </NextLink>
         </div>
       )}
@@ -227,6 +235,28 @@ export default async function AccountOrderDetailPage({ params }: PageProps<"/acc
                   <div className="flex justify-between gap-3">
                     <dt className="text-charcoal/60">{t("status.DELIVERED")}</dt>
                     <dd className="text-charcoal">{order.deliveredAt.toLocaleDateString()}</dd>
+                  </div>
+                )}
+                {order.paymentMethod === "COD" && order.codAgentName && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-charcoal/60">{t("detail.agentName")}</dt>
+                    <dd className="text-charcoal">{order.codAgentName}</dd>
+                  </div>
+                )}
+                {order.paymentMethod === "COD" && order.codAgentReference && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-charcoal/60">{t("detail.agentReference")}</dt>
+                    <dd className="text-charcoal">{order.codAgentReference}</dd>
+                  </div>
+                )}
+                {order.paymentMethod === "COD" && order.codTrackingUrl && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-charcoal/60">{t("detail.trackDelivery")}</dt>
+                    <dd className="text-charcoal">
+                      <a href={order.codTrackingUrl} target="_blank" rel="noopener noreferrer" className="text-gold-deep underline-offset-2 hover:underline">
+                        {t("detail.trackDelivery")}
+                      </a>
+                    </dd>
                   </div>
                 )}
               </dl>

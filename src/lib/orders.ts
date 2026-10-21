@@ -266,7 +266,21 @@ export async function markOrderShipped(
   input: { carrier: string; trackingNumber: string; trackingUrl?: string },
 ): Promise<{ ok: boolean; error?: string }> {
   const order = await prisma.order.findUniqueOrThrow({ where: { id: orderId }, include: { user: { select: { email: true } } } });
-  if (order.status !== "PAID") return { ok: false, error: "Only a paid order can be marked shipped." };
+  // True cash-on-delivery: the courier collects money AT delivery, so a
+  // COD order ships while still PENDING_PAYMENT — once any required
+  // deposit has landed (see confirmCodDepositReceived). It only becomes
+  // PAID later, at collectCodPaymentAndDeliver. Every other method still
+  // requires PAID first, unchanged.
+  const codReadyToShip = order.paymentMethod === "COD" && order.status === "PENDING_PAYMENT"
+    && (!order.codDepositRequired || order.codDepositPaidAt != null);
+  if (order.status !== "PAID" && !codReadyToShip) {
+    return {
+      ok: false,
+      error: order.paymentMethod === "COD" && order.codDepositRequired && !order.codDepositPaidAt
+        ? "This order needs its deposit confirmed before it can ship."
+        : "Only a paid order can be marked shipped.",
+    };
+  }
 
   const shippedAt = new Date();
   await prisma.order.update({
@@ -305,7 +319,11 @@ export async function markOrderShipped(
  */
 export async function markOrderDelivered(orderId: string, options: { source: "admin" | "17track" } = { source: "admin" }): Promise<{ ok: boolean }> {
   const order = await prisma.order.findUniqueOrThrow({ where: { id: orderId }, include: { user: { select: { email: true } } } });
-  if (order.status !== "SHIPPED") return { ok: false };
+  // A COD order reaches here already PAID (collectCodPaymentAndDeliver
+  // calls finalizePaidOrder immediately before this) rather than SHIPPED
+  // — every other method is unaffected, still requiring SHIPPED.
+  const codDelivering = order.paymentMethod === "COD" && order.status === "PAID";
+  if (order.status !== "SHIPPED" && !codDelivering) return { ok: false };
 
   const deliveredAt = new Date();
   await prisma.order.update({ where: { id: order.id }, data: { status: "DELIVERED", deliveredAt } });
@@ -322,6 +340,92 @@ export async function markOrderDelivered(orderId: string, options: { source: "ad
   const emailResult = await sendEmail({ to: order.user.email, subject, html, text, replyTo: SUPPORT_EMAIL });
   if (!emailResult.ok) console.warn(`Delivery email not sent for order ${order.orderNumber} (source: ${options.source}): ${emailResult.error}`);
 
+  return { ok: true };
+}
+
+/**
+ * An admin confirming a COD order's required deposit bank transfer
+ * landed — the COD counterpart of markOrderPaid for wire transfer, except
+ * this is a partial payment: it never touches Order.status or runs
+ * finalizePaidOrder (the order isn't fully paid yet — only the deposit
+ * is). Required before markOrderShipped will let a deposit-required COD
+ * order ship. Idempotent: confirming twice is a no-op the second time.
+ */
+export async function confirmCodDepositReceived(orderId: string): Promise<{ ok: boolean; error?: string }> {
+  const order = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
+  if (order.paymentMethod !== "COD") return { ok: false, error: "Only a cash-on-delivery order can have a deposit confirmed." };
+  if (!order.codDepositRequired) return { ok: false, error: "This order doesn't require a deposit." };
+  if (order.codDepositPaidAt) return { ok: true };
+
+  await prisma.order.update({ where: { id: order.id }, data: { codDepositPaidAt: new Date() } });
+
+  await createNotification({
+    userId: order.userId,
+    type: "STATUS_CHANGE",
+    message: `We've received your deposit for order ${order.orderNumber} — we're preparing it for delivery.`,
+    requestType: "order",
+    requestId: order.id,
+  });
+
+  return { ok: true };
+}
+
+/**
+ * Records that the courier collected the remaining cash (or the full
+ * amount, if no deposit was required) and handed over the parcel — in
+ * COD reality these are the same real-world moment, so this is one admin
+ * action, not two. Runs the exact same full-payment pipeline every other
+ * payment path shares (finalizePaidOrder: items SOLD, discount
+ * redemption, rewards, cart clear, "payment received" notification +
+ * confirmation email — fires exactly once here, regardless of whether a
+ * deposit was involved), then immediately marks the order DELIVERED (same
+ * pipeline markOrderDelivered already runs for every other method).
+ * Only reachable from SHIPPED (or, to retry after a partial failure,
+ * already PAID but not yet DELIVERED — see below) — a COD order must
+ * already be shipped before cash can be collected at the door. Both
+ * inner calls are individually idempotent: finalizePaidOrder no-ops if
+ * already PAID, and this function's own guard lets a retry reach
+ * markOrderDelivered again even after that first call already succeeded.
+ */
+export async function collectCodPaymentAndDeliver(orderId: string): Promise<{ ok: boolean; error?: string }> {
+  const order = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
+  if (order.paymentMethod !== "COD") return { ok: false, error: "Only a cash-on-delivery order is collected this way." };
+  if (order.status !== "SHIPPED" && order.status !== "PAID") return { ok: false, error: "This order isn't marked shipped yet." };
+
+  await finalizePaidOrder(orderId);
+  const delivered = await markOrderDelivered(orderId, { source: "admin" });
+  if (!delivered.ok) return { ok: false, error: "Payment was recorded, but marking delivered failed — try again." };
+  return { ok: true };
+}
+
+/**
+ * Records (or updates) who's actually responsible for collecting cash at
+ * the door for a COD order — agent name, their own reference/code for
+ * this delivery, and a plain tracking link for the customer. Deliberately
+ * separate from carrier/trackingNumber/trackingUrl (which track the
+ * parcel's own shipment and feed 17track) — never auto-registered
+ * anywhere, just free-text + a link. Callable any time from the moment
+ * the order ships onward (not before — there's nothing to name yet), and
+ * freely re-callable afterward if the agent or link changes. A blank
+ * field clears it (null), matching every other optional-text-field
+ * convention in this app.
+ */
+export async function setCodDeliveryDetails(
+  orderId: string,
+  input: { agentName?: string; agentReference?: string; trackingUrl?: string },
+): Promise<{ ok: boolean; error?: string }> {
+  const order = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
+  if (order.paymentMethod !== "COD") return { ok: false, error: "Only a cash-on-delivery order has delivery-agent details." };
+  if (order.status === "PENDING_PAYMENT") return { ok: false, error: "Ship this order before adding delivery-agent details." };
+
+  await prisma.order.update({
+    where: { id: order.id },
+    data: {
+      codAgentName: input.agentName?.trim() || null,
+      codAgentReference: input.agentReference?.trim() || null,
+      codTrackingUrl: input.trackingUrl?.trim() || null,
+    },
+  });
   return { ok: true };
 }
 
