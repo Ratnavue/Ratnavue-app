@@ -1,4 +1,4 @@
-import { Input, Label } from "@/components/ui/Field";
+import { Input, Label, Select } from "@/components/ui/Field";
 import { Button, HardLinkButton } from "@/components/ui/Button";
 import { FilterCollapse } from "@/components/catalog/FilterCollapse";
 import { PIECE_TYPES, METAL_TYPES } from "@/lib/gem-constants";
@@ -103,17 +103,12 @@ export async function JewelryFilterBar({ current }: JewelryFilterBarProps) {
 
         <div>
           <Label htmlFor="sort">{t("sortBy")}</Label>
-          <select
-            id="sort"
-            name="sort"
-            defaultValue={first(current.sort) ?? "newest"}
-            className="w-full rounded-md border border-border-subtle bg-surface px-3.5 py-2.5 text-sm text-charcoal focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/50"
-          >
+          <Select id="sort" name="sort" defaultValue={first(current.sort) ?? "newest"}>
             <option value="newest">{t("newest")}</option>
             <option value="az">{t("alphabetical")}</option>
             <option value="price-low">{t("priceLow")}</option>
             <option value="price-high">{t("priceHigh")}</option>
-          </select>
+          </Select>
         </div>
 
         <div className="flex flex-col justify-end gap-2">

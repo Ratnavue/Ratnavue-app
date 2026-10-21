@@ -8,6 +8,7 @@ import { STANDARD_CUTS } from "@/lib/gem-constants";
 import { GEM_COLOR_PRESETS, type GemColorPreset } from "@/lib/design-studio/gems";
 import { resolveGemColor } from "@/components/gem-visualizer/color";
 import { METAL_KEYS, METALS, type MetalKey } from "@/lib/design-studio/metals";
+import { Select } from "@/components/ui/Field";
 import { cn } from "@/lib/utils";
 
 const SHAPE_BUTTONS: { type: ShapeType; label: string; icon: typeof Circle; title: string }[] = [
@@ -171,18 +172,18 @@ export function StudioToolbar({
                 <label className="block text-[10px] uppercase tracking-wide text-charcoal/50" htmlFor="gem-cut">
                   Cut
                 </label>
-                <select
+                <Select
                   id="gem-cut"
                   value={gemCutSlug}
                   onChange={(e) => onSetGemCut(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-border-subtle bg-white px-2 py-1.5 text-xs"
+                  className="mt-1 w-full rounded-lg border-border-subtle bg-white px-2 py-1.5 text-xs"
                 >
                   {STANDARD_CUTS.map((c) => (
                     <option key={c.slug} value={c.slug}>
                       {c.name}
                     </option>
                   ))}
-                </select>
+                </Select>
 
                 <label className="mt-2 block text-[10px] uppercase tracking-wide text-charcoal/50" htmlFor="gem-carat">
                   Carat

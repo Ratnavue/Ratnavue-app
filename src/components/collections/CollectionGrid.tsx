@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { SubcultureDef } from "@/lib/subculture-collections";
 import type { CollectionCardData } from "@/lib/subculture-items";
 import { CollectionProductCard } from "@/components/collections/CollectionProductCard";
+import { Select } from "@/components/ui/Field";
 import { cn, formatPrice } from "@/lib/utils";
 import { useCurrency } from "@/components/providers/MarketProvider";
 
@@ -22,6 +23,12 @@ const controlClass =
 // <option> fixes that without touching the (correctly dark-on-dark)
 // trigger itself.
 const optionClass = "bg-neutral-900 text-white";
+
+// Same dark theme, for the searchable combobox's own popup/option styling
+// (see SearchableSelect's listClassName/optionClassName) — its defaults
+// are the light storefront theme, which this page's dark pills don't use.
+const darkListClass = "border-white/15 bg-neutral-900";
+const darkOptionClass = "text-white/80 hover:bg-white/10";
 
 function matchesSection(item: CollectionCardData, hints: string[]): boolean {
   const mineral = item.mineralName?.toLowerCase() ?? "";
@@ -72,23 +79,41 @@ export function CollectionGrid({ items, theme }: { items: CollectionCardData[]; 
           padding (see controlClass) make the row itself read as one
           cohesive toolbar instead of four loosely related buttons. */}
       <div className="mt-5 flex flex-wrap items-center gap-2">
-        <select value={gemstone} onChange={(e) => setGemstone(e.target.value)} className={controlClass}>
+        <Select
+          value={gemstone}
+          onChange={(e) => setGemstone(e.target.value)}
+          className={controlClass}
+          listClassName={darkListClass}
+          optionClassName={darkOptionClass}
+        >
           <option className={optionClass} value="">All Gemstones</option>
           {gemstoneOptions.map((g) => (
             <option key={g} className={optionClass} value={g}>{g}</option>
           ))}
-        </select>
-        <select value={type} onChange={(e) => setType(e.target.value as typeof type)} className={controlClass}>
+        </Select>
+        <Select
+          value={type}
+          onChange={(e) => setType(e.target.value as typeof type)}
+          className={controlClass}
+          listClassName={darkListClass}
+          optionClassName={darkOptionClass}
+        >
           <option className={optionClass} value="">All Types</option>
           <option className={optionClass} value="gemstone">Loose Gemstones</option>
           <option className={optionClass} value="jewelry">Jewelry</option>
-        </select>
-        <select value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} className={controlClass}>
+        </Select>
+        <Select
+          value={maxPrice}
+          onChange={(e) => setMaxPrice(e.target.value)}
+          className={controlClass}
+          listClassName={darkListClass}
+          optionClassName={darkOptionClass}
+        >
           <option className={optionClass} value="">Any Price</option>
           {PRICE_CEILINGS[currency].map((ceiling) => (
             <option key={ceiling} className={optionClass} value={ceiling}>Up to {formatPrice(ceiling, currency)}</option>
           ))}
-        </select>
+        </Select>
         <label className={cn(controlClass, "flex cursor-pointer items-center gap-2")}>
           <input type="checkbox" checked={inStockOnly} onChange={(e) => setInStockOnly(e.target.checked)} className="accent-current" />
           In Stock Only
