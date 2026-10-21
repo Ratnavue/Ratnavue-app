@@ -139,9 +139,10 @@ export default auth(async (req) => {
   // authenticated /account/orders for anything sensitive. See
   // getPublicOrderStatus in actions/checkout.ts.
   // /checkout/wire (where a bank-transfer customer is told where to send
-  // the money) shows the amount and bank details, so unlike the PayHere
-  // return pages it requires the order's own session.
-  if (pathname === "/checkout" || pathname === "/checkout/wire") {
+  // the money) and /checkout/cod (deposit/delivery details for a cash-on-
+  // delivery order) show the amount and bank details, so unlike the
+  // PayHere return pages they require the order's own session.
+  if (pathname === "/checkout" || pathname === "/checkout/wire" || pathname === "/checkout/cod") {
     if (!req.auth) return loginRedirect();
   }
 
