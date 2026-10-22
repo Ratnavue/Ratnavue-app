@@ -78,12 +78,34 @@ function ensureBucket(): Promise<void> {
       try {
         await client.send(new CreateBucketCommand({ Bucket: MEDIA_BUCKET }));
       } catch (err) {
-        const name = (err as { name?: string; Code?: string })?.name ?? "";
-        if (!/BucketAlreadyExists|BucketAlreadyOwnedByYou/i.test(name)) {
-          throw new Error(`Could not create storage bucket: ${err instanceof Error ? err.message : String(err)}`);
+        // Supabase Storage's S3-compatible gateway doesn't reliably return a
+        // clean, parseable "BucketAlreadyExists"/"BucketAlreadyOwnedByYou"
+        // XML error for a bucket that's already there — sometimes it's a
+        // response body the AWS SDK's XML deserializer can't parse at all
+        // ("XML parse error: unexpected content"), which previously looked
+        // identical to a genuine creation failure since its `name` never
+        // matched the regex this used to check. Rather than trust the
+        // error's shape, ask ground truth instead: if the bucket exists now
+        // — whether this call made it, or it was already there and the
+        // error above was just a malformed response — that's success.
+        try {
+          await client.send(new HeadBucketCommand({ Bucket: MEDIA_BUCKET }));
+          return;
+        } catch {
+          // Genuinely still not there even after trying to create it —
+          // surface the original creation error, it's the more useful one.
         }
+        throw new Error(`Could not create storage bucket: ${err instanceof Error ? err.message : String(err)}`);
       }
-    })();
+    })().catch((err) => {
+      // Don't memoize a rejection — a transient failure would otherwise
+      // poison every upload for the rest of this server instance's warm
+      // lifetime, since bucketReady is only ever set once. Reset it so the
+      // next call gets a fresh attempt instead of re-awaiting this same
+      // permanently-rejected promise.
+      bucketReady = null;
+      throw err;
+    });
   }
   return bucketReady;
 }
