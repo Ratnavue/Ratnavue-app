@@ -37,6 +37,11 @@ function formBoolean(defaultValue: boolean) {
 function revalidateHome(market: Market) {
   revalidatePath(market === "lk" ? "/lk" : "/");
   revalidatePath("/admin/content/home");
+  // The home page reads through getCachedHomeContent (site-config-cache.ts),
+  // not the raw getHomeContent this file itself uses for its read-current-
+  // then-merge writes above — without this, a save wouldn't show up on the
+  // live home page for up to the cache's own 60s window.
+  revalidateTag(SITE_CONFIG_TAG, { expire: 0 });
 }
 
 const homeTextSchema = z.object({

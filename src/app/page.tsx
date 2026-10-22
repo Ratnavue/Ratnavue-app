@@ -2,7 +2,7 @@ import Link from "@/components/ui/MarketLink";
 import Image from "next/image";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getHomeContent } from "@/lib/page-content";
+import { getCachedHomeContent } from "@/lib/site-config-cache";
 import { getActivePromotionMaps } from "@/lib/promotion-items";
 import { getWishlistedIds } from "@/lib/wishlist";
 import { auth } from "@/lib/auth";
@@ -75,7 +75,7 @@ export default async function HomePage() {
   const [rawFeaturedGems, rawFeaturedJewelry, content, { gemstonePrices, jewelryPrices }, trustBarMessages, wishlistedIds] = await Promise.all([
     getFeaturedGemsForMarket(market),
     getFeaturedJewelryForMarket(market),
-    getHomeContent(market),
+    getCachedHomeContent(market),
     getActivePromotionMaps(market),
     getTrustBarMessages(),
     getWishlistedIds(session?.user?.id),

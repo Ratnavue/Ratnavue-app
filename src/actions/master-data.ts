@@ -1,16 +1,27 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/rbac";
 import { slugify } from "@/lib/utils";
 import { saveLabLogo, deleteUploadedFile } from "@/lib/media";
+import { MASTER_DATA_TAG } from "@/lib/catalog";
 import { mineralSchema, clarityGradeSchema, simpleMasterDataSchema, certLabSchema } from "@/lib/validation/catalog";
 import type { ActionResult } from "./auth";
 
 function obj(formData: FormData) {
   return Object.fromEntries(formData.entries());
+}
+
+// Every mutation below calls this right after its own revalidatePath — the
+// cached getMasterData() (lib/catalog.ts) backs public pages (/gems,
+// /configurator) and admin forms alike, so an admin editing master data
+// needs their own change available immediately, not after the cache's 60s
+// window (e.g. adding a mineral they want to pick right away on a new
+// gemstone form).
+function revalidateMasterData() {
+  revalidateTag(MASTER_DATA_TAG, { expire: 0 });
 }
 
 // Prisma throws P2002 on a unique-constraint violation (e.g. a name/slug
@@ -38,6 +49,7 @@ export async function createMineral(formData: FormData): Promise<ActionResult> {
     throw err;
   }
   revalidatePath("/admin/master-data/minerals");
+  revalidateMasterData();
   return { ok: true };
 }
 
@@ -54,6 +66,7 @@ export async function updateMineral(id: string, formData: FormData): Promise<Act
     throw err;
   }
   revalidatePath("/admin/master-data/minerals");
+  revalidateMasterData();
   return { ok: true };
 }
 
@@ -61,6 +74,7 @@ export async function deleteMineral(id: string): Promise<ActionResult> {
   await requireAdmin();
   await prisma.mineral.delete({ where: { id } });
   revalidatePath("/admin/master-data/minerals");
+  revalidateMasterData();
   return { ok: true };
 }
 
@@ -77,6 +91,7 @@ export async function createClarityGrade(formData: FormData): Promise<ActionResu
     throw err;
   }
   revalidatePath("/admin/master-data/clarity");
+  revalidateMasterData();
   return { ok: true };
 }
 
@@ -92,6 +107,7 @@ export async function updateClarityGrade(id: string, formData: FormData): Promis
     throw err;
   }
   revalidatePath("/admin/master-data/clarity");
+  revalidateMasterData();
   return { ok: true };
 }
 
@@ -99,6 +115,7 @@ export async function deleteClarityGrade(id: string): Promise<ActionResult> {
   await requireAdmin();
   await prisma.clarityGrade.delete({ where: { id } });
   revalidatePath("/admin/master-data/clarity");
+  revalidateMasterData();
   return { ok: true };
 }
 
@@ -120,6 +137,7 @@ async function createSimple(model: SimpleModel, formData: FormData, extra: Recor
     throw err;
   }
   revalidatePath(`/admin/master-data/${model === "cut" ? "cuts" : model + "s"}`);
+  revalidateMasterData();
   return { ok: true };
 }
 
@@ -136,6 +154,7 @@ export async function toggleTreatmentActive(id: string, active: boolean): Promis
   await requireAdmin();
   await prisma.treatment.update({ where: { id }, data: { active } });
   revalidatePath("/admin/master-data/treatments");
+  revalidateMasterData();
   return { ok: true };
 }
 
@@ -143,6 +162,7 @@ export async function toggleOriginActive(id: string, active: boolean): Promise<A
   await requireAdmin();
   await prisma.origin.update({ where: { id }, data: { active } });
   revalidatePath("/admin/master-data/origins");
+  revalidateMasterData();
   return { ok: true };
 }
 
@@ -150,6 +170,7 @@ export async function toggleCutActive(id: string, active: boolean): Promise<Acti
   await requireAdmin();
   await prisma.cut.update({ where: { id }, data: { active } });
   revalidatePath("/admin/master-data/cuts");
+  revalidateMasterData();
   return { ok: true };
 }
 
@@ -157,6 +178,7 @@ export async function toggleMineralActive(id: string, active: boolean): Promise<
   await requireAdmin();
   await prisma.mineral.update({ where: { id }, data: { active } });
   revalidatePath("/admin/master-data/minerals");
+  revalidateMasterData();
   return { ok: true };
 }
 
@@ -200,6 +222,7 @@ export async function createCertLab(formData: FormData): Promise<ActionResult> {
     throw err;
   }
   revalidatePath("/admin/master-data/certification-labs");
+  revalidateMasterData();
   return { ok: true };
 }
 
@@ -220,6 +243,7 @@ export async function updateCertLab(id: string, formData: FormData): Promise<Act
   }
   revalidatePath("/admin/master-data/certification-labs");
   revalidatePath("/admin/gems");
+  revalidateMasterData();
   return { ok: true };
 }
 
@@ -241,6 +265,7 @@ export async function uploadCertLabLogo(id: string, formData: FormData): Promise
     revalidatePath("/admin/master-data/certification-labs");
     revalidatePath("/admin/gems");
     revalidatePath("/gems", "layout");
+    revalidateMasterData();
     return { ok: true };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "Upload failed." };
@@ -260,6 +285,7 @@ export async function removeCertLabLogo(id: string): Promise<ActionResult> {
   revalidatePath("/admin/master-data/certification-labs");
   revalidatePath("/admin/gems");
   revalidatePath("/gems", "layout");
+  revalidateMasterData();
   return { ok: true };
 }
 
@@ -267,6 +293,7 @@ export async function deleteCertLab(id: string): Promise<ActionResult> {
   await requireAdmin();
   await prisma.certificationLab.delete({ where: { id } });
   revalidatePath("/admin/master-data/certification-labs");
+  revalidateMasterData();
   return { ok: true };
 }
 
@@ -274,5 +301,6 @@ export async function toggleCertLabActive(id: string, active: boolean): Promise<
   await requireAdmin();
   await prisma.certificationLab.update({ where: { id }, data: { active } });
   revalidatePath("/admin/master-data/certification-labs");
+  revalidateMasterData();
   return { ok: true };
 }

@@ -1,9 +1,27 @@
 import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getActivePromotionMaps } from "@/lib/promotion-items";
 import type { Market } from "@/lib/market-shared";
 import { priceColumns, priceForMarket, pricesForMarket } from "@/lib/market-pricing";
 import { audienceValuesFor, isAudienceSlug, JEWELRY_AUDIENCES, PIECE_TYPE_ORDER, type JewelryAudienceSlug } from "@/lib/jewelry-categories";
+
+// Reference/taxonomy data (minerals, cuts, clarity grades, treatments,
+// origins, cert labs) — edited only through src/actions/master-data.ts,
+// which calls revalidateTag(MASTER_DATA_TAG, { expire: 0 }) on every
+// mutation, so an admin's own edit (e.g. adding a mineral they want to
+// pick immediately on a new gemstone form) shows up right away rather
+// than waiting out the window below.
+export const MASTER_DATA_TAG = "master-data";
+// The gem/jewelry category tiles (getGemCategories/getJewelryCategoryData)
+// — counts and cover photos derived from the full catalog. Unlike
+// MASTER_DATA_TAG above, this is deliberately only time-based (not wired
+// into every catalog create/update/publish action — too many mutation
+// points for a count/cover photo that's fine a little stale), same
+// eventually-consistent trade-off the home page's own
+// getFeaturedGemsForMarket/getFeaturedJewelryForMarket already accept for
+// everything except their one explicit featured-flag tag.
+const CATALOG_CATEGORIES_TAG = "catalog-categories";
 
 const GEMS_PAGE_SIZE = 24;
 const JEWELRY_PAGE_SIZE = 24;
@@ -317,41 +335,57 @@ const FIRST_IMAGE = {
  * Three queries however many minerals there are: the counts, the mineral
  * list, and the newest imaged gem per mineral (a DISTINCT, not a query per
  * tile). */
-export async function getGemCategories(market: Market = "intl"): Promise<{ total: number; tiles: CategoryTileData[]; cover: string | null }> {
-  const base: Prisma.GemstoneWhereInput = { isPublished: true, market };
-  const [counts, minerals, covers] = await Promise.all([
-    prisma.gemstone.groupBy({ by: ["mineralId"], where: base, _count: { _all: true } }),
-    prisma.mineral.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
-    prisma.gemstone.findMany({
-      where: { ...base, media: { some: { type: "IMAGE" } } },
-      orderBy: { createdAt: "desc" },
-      distinct: ["mineralId"],
-      select: { mineralId: true, media: FIRST_IMAGE },
-    }),
-  ]);
-  const countById = new Map(counts.map((c) => [c.mineralId, c._count._all]));
-  const coverById = new Map(covers.map((c) => [c.mineralId, c.media[0]?.url ?? null]));
-  const tiles = minerals
-    .filter((m) => (countById.get(m.id) ?? 0) > 0)
-    .map((m) => ({ key: m.slug, label: m.name, href: `/gems?mineral=${m.slug}`, count: countById.get(m.id) ?? 0, image: coverById.get(m.id) ?? null }));
-  return { total: counts.reduce((n, c) => n + c._count._all, 0), tiles, cover: covers[0]?.media[0]?.url ?? null };
-}
+export const getGemCategories = unstable_cache(
+  async (market: Market = "intl"): Promise<{ total: number; tiles: CategoryTileData[]; cover: string | null }> => {
+    const base: Prisma.GemstoneWhereInput = { isPublished: true, market };
+    const [counts, minerals, covers] = await Promise.all([
+      prisma.gemstone.groupBy({ by: ["mineralId"], where: base, _count: { _all: true } }),
+      prisma.mineral.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
+      prisma.gemstone.findMany({
+        where: { ...base, media: { some: { type: "IMAGE" } } },
+        orderBy: { createdAt: "desc" },
+        distinct: ["mineralId"],
+        select: { mineralId: true, media: FIRST_IMAGE },
+      }),
+    ]);
+    const countById = new Map(counts.map((c) => [c.mineralId, c._count._all]));
+    const coverById = new Map(covers.map((c) => [c.mineralId, c.media[0]?.url ?? null]));
+    const tiles = minerals
+      .filter((m) => (countById.get(m.id) ?? 0) > 0)
+      .map((m) => ({ key: m.slug, label: m.name, href: `/gems?mineral=${m.slug}`, count: countById.get(m.id) ?? 0, image: coverById.get(m.id) ?? null }));
+    return { total: counts.reduce((n, c) => n + c._count._all, 0), tiles, cover: covers[0]?.media[0]?.url ?? null };
+  },
+  ["catalog-gem-categories"],
+  { revalidate: 60, tags: [CATALOG_CATEGORIES_TAG] },
+);
 
 /** Counts of published jewelry per audience and per (audience, piece type),
  * with cover images, for the two jewelry landing levels. Two queries in all:
  * one grouped count, and the newest imaged piece for each audience/type
  * combination (a DISTINCT) — every tile's cover is then picked from those. */
+// Only the raw query is cached, not the whole function — the function
+// returns a closure (typesFor below) over that data, and unstable_cache's
+// return value has to be plain, serializable data.
+const getJewelryCategoryRaw = unstable_cache(
+  async (market: Market) => {
+    const base: Prisma.JewelryPieceWhereInput = { isPublished: true, market };
+    const [groups, covers] = await Promise.all([
+      prisma.jewelryPiece.groupBy({ by: ["audience", "pieceType"], where: base, _count: { _all: true } }),
+      prisma.jewelryPiece.findMany({
+        where: { ...base, media: { some: { type: "IMAGE" } } },
+        orderBy: { createdAt: "desc" },
+        distinct: ["audience", "pieceType"],
+        select: { audience: true, pieceType: true, createdAt: true, media: FIRST_IMAGE },
+      }),
+    ]);
+    return { groups, covers };
+  },
+  ["catalog-jewelry-category-raw"],
+  { revalidate: 60, tags: [CATALOG_CATEGORIES_TAG] },
+);
+
 export async function getJewelryCategoryData(market: Market = "intl") {
-  const base: Prisma.JewelryPieceWhereInput = { isPublished: true, market };
-  const [groups, covers] = await Promise.all([
-    prisma.jewelryPiece.groupBy({ by: ["audience", "pieceType"], where: base, _count: { _all: true } }),
-    prisma.jewelryPiece.findMany({
-      where: { ...base, media: { some: { type: "IMAGE" } } },
-      orderBy: { createdAt: "desc" },
-      distinct: ["audience", "pieceType"],
-      select: { audience: true, pieceType: true, createdAt: true, media: FIRST_IMAGE },
-    }),
-  ]);
+  const { groups, covers } = await getJewelryCategoryRaw(market);
 
   const matches = (audience: string, slug: JewelryAudienceSlug | null) => !slug || (audienceValuesFor(slug) as string[]).includes(audience);
   const countFor = (slug: JewelryAudienceSlug | null, pieceType?: string) =>
@@ -407,14 +441,23 @@ export async function getRelatedJewelry(piece: { id: string; pieceType: string }
   return pricesForMarket([...samePieceType, ...fallback], market);
 }
 
-export async function getMasterData() {
-  const [minerals, cuts, clarityGrades, treatments, origins, certificationLabs] = await Promise.all([
-    prisma.mineral.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
-    prisma.cut.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
-    prisma.clarityGrade.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
-    prisma.treatment.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
-    prisma.origin.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
-    prisma.certificationLab.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
-  ]);
-  return { minerals, cuts, clarityGrades, treatments, origins, certificationLabs };
-}
+// Queried on every /gems view, /configurator view, and several admin
+// gem/sourcing forms — six small tables that only change when an admin
+// edits master data, so this was a wasted DB round-trip (and this
+// environment's known multi-second Supabase latency — see home page's own
+// getFeaturedGemsForMarket) on every single one of those loads.
+export const getMasterData = unstable_cache(
+  async () => {
+    const [minerals, cuts, clarityGrades, treatments, origins, certificationLabs] = await Promise.all([
+      prisma.mineral.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
+      prisma.cut.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
+      prisma.clarityGrade.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
+      prisma.treatment.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
+      prisma.origin.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
+      prisma.certificationLab.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
+    ]);
+    return { minerals, cuts, clarityGrades, treatments, origins, certificationLabs };
+  },
+  ["catalog-master-data"],
+  { revalidate: 60, tags: [MASTER_DATA_TAG] },
+);

@@ -1,9 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/rbac";
 import { SEASONAL_THEME_KEYS, type SeasonalThemeKey } from "@/lib/seasonal-themes";
+import { SITE_CONFIG_TAG } from "@/lib/site-config-cache";
 import type { Market } from "@/lib/market-shared";
 import type { ActionResult } from "./auth";
 
@@ -56,6 +57,7 @@ export async function addPromotionItem(input: {
 
   revalidatePath(market === "lk" ? "/lk/promotions" : "/promotions");
   revalidatePath("/admin/promotions");
+  revalidateTag(SITE_CONFIG_TAG, { expire: 0 });
   return { ok: true };
 }
 
@@ -67,6 +69,7 @@ export async function updatePromotionItemPrice(id: string, promoPrice: number): 
   revalidatePath("/promotions");
   revalidatePath("/lk/promotions");
   revalidatePath("/admin/promotions");
+  revalidateTag(SITE_CONFIG_TAG, { expire: 0 });
   return { ok: true };
 }
 
@@ -76,5 +79,6 @@ export async function removePromotionItem(id: string): Promise<ActionResult> {
   revalidatePath("/promotions");
   revalidatePath("/lk/promotions");
   revalidatePath("/admin/promotions");
+  revalidateTag(SITE_CONFIG_TAG, { expire: 0 });
   return { ok: true };
 }

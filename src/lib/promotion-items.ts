@@ -1,8 +1,10 @@
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getPageVisibility, marketVisibilityKey } from "@/lib/page-visibility";
 import type { Market } from "@/lib/market-shared";
 import { getSeasonalContent } from "@/lib/page-content";
 import { SEASONAL_THEMES, type SeasonalThemeKey } from "@/lib/seasonal-themes";
+import { SITE_CONFIG_TAG } from "@/lib/site-config-cache";
 
 // Shared between the public /promotions page and the admin manager so
 // the two can't drift out of sync with what a promoted item's card
@@ -62,15 +64,34 @@ export interface ActivePromotionMaps {
  * (own visibility, active theme and item list — see PromotionItem.market),
  * and promo prices are in that market's currency.
  */
-export async function getActivePromotionMaps(market: Market = "intl"): Promise<ActivePromotionMaps> {
-  const visibility = await getPageVisibility(marketVisibilityKey("seasonal", market));
-  if (visibility !== "LIVE") return { themeLabel: null, gemstonePrices: new Map(), jewelryPrices: new Map() };
+// Only the raw (plain-object, serializable) fetch is cached — a Map isn't
+// a safe thing to return from unstable_cache, so getActivePromotionMaps
+// below rebuilds its two Maps from this on every call instead. Called from
+// the home page, both catalog listings, and every product detail page, so
+// this was a real, repeated cost (3 sequential DB round trips) on every
+// one of those loads before this; tagged into the same SITE_CONFIG_TAG the
+// seasonal visibility/content it reads from already invalidates on an
+// admin edit (see actions/page-content.ts's revalidateHome/
+// setActiveSeasonalTheme and actions/page-visibility.ts), plus
+// actions/promotion-items.ts's own CRUD on the item list itself.
+const getActivePromotionRaw = unstable_cache(
+  async (market: Market): Promise<{ themeLabel: string | null; items: { gemstoneId: string | null; jewelryId: string | null; promoPrice: number }[] }> => {
+    const visibility = await getPageVisibility(marketVisibilityKey("seasonal", market));
+    if (visibility !== "LIVE") return { themeLabel: null, items: [] };
 
-  const content = await getSeasonalContent(market);
-  const items = await prisma.promotionItem.findMany({
-    where: { theme: content.activeTheme, market },
-    select: { gemstoneId: true, jewelryId: true, promoPrice: true },
-  });
+    const content = await getSeasonalContent(market);
+    const items = await prisma.promotionItem.findMany({
+      where: { theme: content.activeTheme, market },
+      select: { gemstoneId: true, jewelryId: true, promoPrice: true },
+    });
+    return { themeLabel: SEASONAL_THEMES[content.activeTheme]?.label ?? null, items };
+  },
+  ["active-promotion-raw"],
+  { revalidate: 60, tags: [SITE_CONFIG_TAG] },
+);
+
+export async function getActivePromotionMaps(market: Market = "intl"): Promise<ActivePromotionMaps> {
+  const { themeLabel, items } = await getActivePromotionRaw(market);
 
   const gemstonePrices = new Map<string, number>();
   const jewelryPrices = new Map<string, number>();
@@ -78,7 +99,7 @@ export async function getActivePromotionMaps(market: Market = "intl"): Promise<A
     if (item.gemstoneId) gemstonePrices.set(item.gemstoneId, item.promoPrice);
     if (item.jewelryId) jewelryPrices.set(item.jewelryId, item.promoPrice);
   }
-  return { themeLabel: SEASONAL_THEMES[content.activeTheme]?.label ?? null, gemstonePrices, jewelryPrices };
+  return { themeLabel, gemstonePrices, jewelryPrices };
 }
 
 /** Called from a single product's own detail page — see
