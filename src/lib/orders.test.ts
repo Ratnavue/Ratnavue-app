@@ -31,7 +31,7 @@ function mockCommonDependencies() {
   prismaMock.loyaltySettings.findUnique.mockResolvedValue({
     id: "singleton", pointsPerCurrencyUnit: 1, pointsRedemptionValue: 0.01, minRedeemPoints: 500,
     maxRedeemPercentOfOrder: 50, referralMinOrderValue: 50, referralReferrerBonusPoints: 500,
-    referralRefereeBonusPoints: 250, updatedAt: new Date(),
+    referralRefereeBonusPoints: 250, pointsEnabled: true, referralsEnabled: true, updatedAt: new Date(),
   } as never);
   prismaMock.commerceSettings.findUnique.mockResolvedValue({
     id: "singleton", vatPercent: 18, applyVatToInternational: false, gatewayCommissionPercent: 3.5,

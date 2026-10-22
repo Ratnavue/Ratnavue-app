@@ -63,7 +63,7 @@ describe("buildCheckoutBreakdown", () => {
     prismaMock.loyaltySettings.findUnique.mockResolvedValue({
       id: "singleton", pointsPerCurrencyUnit: 1, pointsRedemptionValue: 0.01, minRedeemPoints: 500,
       maxRedeemPercentOfOrder: 50, referralMinOrderValue: 50, referralReferrerBonusPoints: 500,
-      referralRefereeBonusPoints: 250, updatedAt: new Date(),
+      referralRefereeBonusPoints: 250, pointsEnabled: true, referralsEnabled: true, updatedAt: new Date(),
     } as never);
     vi.mocked(getActivePromotionMaps).mockResolvedValue({ themeLabel: null, gemstonePrices: new Map(), jewelryPrices: new Map() });
     vi.mocked(resolveShippingRate).mockResolvedValue({ zoneLabel: "Rest of World", rateLKR: 3000 });

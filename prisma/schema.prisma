@@ -1225,6 +1225,15 @@ model LoyaltySettings {
   referralReferrerBonusPoints  Int   @default(500)
   referralRefereeBonusPoints   Int   @default(250)
 
+  // Admin kill switches for the two programs, independent of each other —
+  // off doesn't erase the rates/thresholds above, it just stops new
+  // points/referral activity from happening (see lib/rewards.ts's own
+  // guards on every earning/redemption/referral path) while an admin can
+  // still tune the numbers for whenever it's switched back on. An
+  // existing points balance or pending referral isn't touched either way.
+  pointsEnabled    Boolean @default(true)
+  referralsEnabled Boolean @default(true)
+
   updatedAt DateTime @updatedAt
 }
 

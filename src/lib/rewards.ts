@@ -51,6 +51,7 @@ export async function ensureReferralCode(userId: string): Promise<string> {
  * silently drifts when that exchange rate is updated. */
 export async function pointsForAmount(amount: number, currency: "USD" | "LKR"): Promise<number> {
   const loyalty = await getLoyaltySettings();
+  if (!loyalty.pointsEnabled) return 0;
   const rate = currency === "LKR" ? loyalty.pointsPerCurrencyUnitLkr : loyalty.pointsPerCurrencyUnit;
   return Math.floor(amount * rate);
 }
@@ -78,6 +79,7 @@ export async function resolvePointsRedemption(input: {
   if (input.requestedPoints <= 0) return { points: 0, discount: 0 };
 
   const loyalty = await getLoyaltySettings();
+  if (!loyalty.pointsEnabled) return { points: 0, discount: 0 };
   const redemptionValue = input.currency === "LKR" ? loyalty.pointsRedemptionValueLkr : loyalty.pointsRedemptionValue;
   const capAmount = input.orderableAmount * (loyalty.maxRedeemPercentOfOrder / 100);
   const capPoints = Math.floor(capAmount / redemptionValue);
@@ -131,7 +133,7 @@ export async function settlePointsForPaidOrder(
   settings: { loyalty: LoyaltySettings; commerce: CommerceSettings },
 ): Promise<void> {
   const earnRate = order.currency === "LKR" ? settings.loyalty.pointsPerCurrencyUnitLkr : settings.loyalty.pointsPerCurrencyUnit;
-  const earned = Math.floor(order.subtotal * earnRate);
+  const earned = settings.loyalty.pointsEnabled ? Math.floor(order.subtotal * earnRate) : 0;
   if (earned > 0) {
     await recordPointsTransaction(tx, { userId: order.userId, amount: earned, reason: "EARNED_PURCHASE", orderId: order.id });
   }
@@ -159,6 +161,8 @@ export async function settlePointsForPaidOrder(
 export async function captureReferral(newUserId: string, rawCode: string): Promise<void> {
   const code = rawCode.trim().toUpperCase();
   if (!code) return;
+  const loyalty = await getLoyaltySettings();
+  if (!loyalty.referralsEnabled) return;
 
   const referrer = await prisma.user.findUnique({ where: { referralCode: code } });
   if (!referrer || referrer.id === newUserId) return;
@@ -195,6 +199,7 @@ export async function settleReferralForPaidOrder(
   order: { id: string; userId: string; currency: string; subtotal: number },
   settings: { loyalty: LoyaltySettings; commerce: CommerceSettings },
 ): Promise<SettledReferral | null> {
+  if (!settings.loyalty.referralsEnabled) return null;
   const referral = await tx.referral.findUnique({ where: { refereeId: order.userId } });
   if (!referral || referral.status !== "PENDING") return null;
 

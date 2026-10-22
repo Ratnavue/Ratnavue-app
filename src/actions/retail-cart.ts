@@ -7,6 +7,7 @@ import { getOrCreateRetailCart } from "@/lib/retail-cart";
 import { getMarket } from "@/lib/market";
 import { normalizeCode, discountCodeError } from "@/lib/discount-codes";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { getLoyaltySettings } from "@/lib/loyalty-settings";
 import type { ActionResult } from "./auth";
 
 export async function addToRetailCart(input: { gemstoneId?: string; jewelryId?: string; jewelryVariantId?: string }): Promise<ActionResult> {
@@ -186,6 +187,9 @@ export async function applyRetailPoints(rawPoints: string): Promise<ActionResult
 
   const points = Math.floor(Number(rawPoints));
   if (!Number.isFinite(points) || points <= 0) return { ok: false, error: "Enter a positive number of points." };
+
+  const loyalty = await getLoyaltySettings();
+  if (!loyalty.pointsEnabled) return { ok: false, error: "The rewards program is currently paused." };
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { pointsBalance: true } });
   if (!user) return { ok: false, error: "Your account could not be found — please sign in again." };

@@ -16,6 +16,8 @@ interface Settings {
   referralMinOrderValue: number;
   referralReferrerBonusPoints: number;
   referralRefereeBonusPoints: number;
+  pointsEnabled: boolean;
+  referralsEnabled: boolean;
 }
 
 export function LoyaltySettingsForm({ settings }: { settings: Settings }) {
@@ -40,6 +42,21 @@ export function LoyaltySettingsForm({ settings }: { settings: Settings }) {
 
   return (
     <form action={handleSubmit} className="max-w-2xl space-y-6 rounded-xl border border-border-subtle bg-surface p-6">
+      <div className="flex items-start justify-between gap-4 rounded-lg border border-border-subtle bg-ivory-soft p-4">
+        <div>
+          <p className="text-sm font-medium text-charcoal">Rewards points program</p>
+          <p className="mt-0.5 text-xs text-charcoal/60">
+            Off stops new points from being earned or redeemed anywhere on the site — the rates below stay saved for
+            whenever it&apos;s switched back on, and an existing balance isn&apos;t touched.
+          </p>
+        </div>
+        <label className="flex shrink-0 items-center gap-2 pt-0.5 text-sm text-charcoal/80">
+          <input type="hidden" name="pointsEnabled" value="false" />
+          <input type="checkbox" name="pointsEnabled" value="true" defaultChecked={settings.pointsEnabled} className="accent-gold" />
+          Enabled
+        </label>
+      </div>
+
       <div>
         <p className="text-xs font-medium uppercase tracking-wide text-charcoal/65">Earning & redemption — International (USD)</p>
         <div className="mt-3 grid gap-5 sm:grid-cols-2">
@@ -86,6 +103,21 @@ export function LoyaltySettingsForm({ settings }: { settings: Settings }) {
             <FieldHint>Caps how much of a single order points can cover.</FieldHint>
           </div>
         </div>
+      </div>
+
+      <div className="flex items-start justify-between gap-4 rounded-lg border border-border-subtle bg-ivory-soft p-4">
+        <div>
+          <p className="text-sm font-medium text-charcoal">Referral program</p>
+          <p className="mt-0.5 text-xs text-charcoal/60">
+            Off stops new referral codes from being captured and new bonuses from being paid out — a referral already
+            in progress when this is turned off won&apos;t pay out either, same as any other new activity.
+          </p>
+        </div>
+        <label className="flex shrink-0 items-center gap-2 pt-0.5 text-sm text-charcoal/80">
+          <input type="hidden" name="referralsEnabled" value="false" />
+          <input type="checkbox" name="referralsEnabled" value="true" defaultChecked={settings.referralsEnabled} className="accent-gold" />
+          Enabled
+        </label>
       </div>
 
       <div>

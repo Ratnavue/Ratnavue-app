@@ -38,6 +38,14 @@ export async function updateLoyaltySettings(formData: FormData): Promise<ActionR
     return { ok: false, error: "Enter valid, non-negative numbers (the redemption cap must be between 0 and 100)." };
   }
 
+  // Same hidden-false + checkbox-true convention every boolean toggle on
+  // these admin forms uses (see commerce-settings.ts's own comment) —
+  // getAll() + includes checks every submitted value for this name
+  // regardless of DOM order, since a bare .get() would always read the
+  // hidden "false" field first.
+  const pointsEnabled = formData.getAll("pointsEnabled").includes("true");
+  const referralsEnabled = formData.getAll("referralsEnabled").includes("true");
+
   await prisma.loyaltySettings.update({
     where: { id: "singleton" },
     data: {
@@ -50,6 +58,8 @@ export async function updateLoyaltySettings(formData: FormData): Promise<ActionR
       referralMinOrderValue,
       referralReferrerBonusPoints,
       referralRefereeBonusPoints,
+      pointsEnabled,
+      referralsEnabled,
     },
   });
 

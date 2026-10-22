@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getMarket } from "@/lib/market";
 import { withMarket } from "@/lib/market-shared";
 import { ensureReferralCode } from "@/lib/rewards";
+import { getLoyaltySettings } from "@/lib/loyalty-settings";
 import { SectionCard, EmptyNote } from "@/components/account/SectionCard";
 import { CopyLinkButton } from "@/components/account/CopyLinkButton";
 import { Badge } from "@/components/ui/Badge";
@@ -39,11 +40,12 @@ export default async function RewardsPage() {
   if (!session?.user) return null; // proxy.ts guards this route
 
   const market = await getMarket();
-  const [user, referralCode, transactions, referrals] = await Promise.all([
+  const [user, referralCode, transactions, referrals, loyalty] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { id: session.user.id }, select: { pointsBalance: true } }),
     ensureReferralCode(session.user.id),
     prisma.pointsTransaction.findMany({ where: { userId: session.user.id }, orderBy: { createdAt: "desc" }, take: 20 }),
     prisma.referral.findMany({ where: { referrerId: session.user.id }, orderBy: { createdAt: "desc" }, include: { referee: { select: { name: true, email: true } } } }),
+    getLoyaltySettings(),
   ]);
 
   const shareHref = withMarket(`/r/${referralCode}`, market);
@@ -59,18 +61,26 @@ export default async function RewardsPage() {
       <div className="rounded-xl border border-gold/40 bg-gold/10 p-6">
         <p className="text-xs uppercase tracking-wide text-charcoal/65">Your balance</p>
         <p className="mt-1 font-serif text-4xl text-charcoal">{user.pointsBalance.toLocaleString()} <span className="text-lg font-sans text-charcoal/60">points</span></p>
-        <p className="mt-2 text-sm text-charcoal/70">Earn points on every purchase, and redeem them for a discount at checkout.</p>
+        <p className="mt-2 text-sm text-charcoal/70">
+          {loyalty.pointsEnabled
+            ? "Earn points on every purchase, and redeem them for a discount at checkout."
+            : "The rewards program is currently paused — your existing balance is safe, but no new points are being earned or redeemed."}
+        </p>
       </div>
 
       <SectionCard title="Refer a friend">
-        <div className="space-y-3 p-5">
-          <p className="text-sm text-charcoal/70">
-            Share your link — when a friend signs up and places their first qualifying order, you both earn bonus points.
-          </p>
-          <CopyLinkButton value={shareUrl} />
-        </div>
+        {loyalty.referralsEnabled ? (
+          <div className="space-y-3 p-5">
+            <p className="text-sm text-charcoal/70">
+              Share your link — when a friend signs up and places their first qualifying order, you both earn bonus points.
+            </p>
+            <CopyLinkButton value={shareUrl} />
+          </div>
+        ) : (
+          <EmptyNote>The referral program is currently paused — check back later.</EmptyNote>
+        )}
         {referrals.length === 0 ? (
-          <EmptyNote>No referrals yet — share your link to get started.</EmptyNote>
+          loyalty.referralsEnabled && <EmptyNote>No referrals yet — share your link to get started.</EmptyNote>
         ) : (
           <div className="divide-y divide-border-subtle px-5 pb-2">
             {referrals.map((r) => (

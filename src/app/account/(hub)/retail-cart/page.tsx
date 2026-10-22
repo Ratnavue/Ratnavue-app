@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getRetailCartWithItems, retailCartItemLabel, retailCartSubtotal, retailCartUnitPrice } from "@/lib/retail-cart";
 import { getCommerceSettings } from "@/lib/commerce-settings";
+import { getLoyaltySettings } from "@/lib/loyalty-settings";
 import { getMarket } from "@/lib/market";
 import { getTranslations } from "next-intl/server";
 import { MARKETS } from "@/lib/market-shared";
@@ -23,11 +24,12 @@ export default async function RetailCartPage() {
 
   const [market, t] = await Promise.all([getMarket(), getTranslations("cart")]);
   const currency = MARKETS[market].currency;
-  const [cart, user, promotions, commerceSettings] = await Promise.all([
+  const [cart, user, promotions, commerceSettings, loyalty] = await Promise.all([
     getRetailCartWithItems(session.user.id, market),
     prisma.user.findUniqueOrThrow({ where: { id: session.user.id }, select: { dateOfBirth: true, lastBirthdayDiscountAt: true, pointsBalance: true } }),
     getActivePromotionMaps(market),
     getCommerceSettings(),
+    getLoyaltySettings(),
   ]);
 
   const subtotal = retailCartSubtotal(cart.items.map((item) => ({ unitPrice: retailCartUnitPrice(item, market), quantity: item.quantity })));
@@ -86,7 +88,7 @@ export default async function RetailCartPage() {
             <RetailDiscountCodeControl appliedCode={cart.discountCode?.code ?? null} />
           </div>
 
-          {(user.pointsBalance > 0 || cart.pointsToRedeem > 0) && (
+          {loyalty.pointsEnabled && (user.pointsBalance > 0 || cart.pointsToRedeem > 0) && (
             <div className="mt-6 rounded-xl border border-border-subtle bg-surface p-5">
               <RetailPointsControl balance={user.pointsBalance} staged={cart.pointsToRedeem} />
             </div>

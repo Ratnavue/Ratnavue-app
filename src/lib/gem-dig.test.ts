@@ -17,6 +17,8 @@ const loyaltyFixture: LoyaltySettings = {
   referralMinOrderValue: 50,
   referralReferrerBonusPoints: 500,
   referralRefereeBonusPoints: 250,
+  pointsEnabled: true,
+  referralsEnabled: true,
   updatedAt: new Date("2026-01-01"),
 };
 

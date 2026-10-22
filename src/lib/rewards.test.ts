@@ -23,6 +23,8 @@ const loyaltyFixture: LoyaltySettings = {
   referralMinOrderValue: 50,
   referralReferrerBonusPoints: 500,
   referralRefereeBonusPoints: 250,
+  pointsEnabled: true,
+  referralsEnabled: true,
   updatedAt: new Date("2026-01-01"),
 };
 
@@ -71,6 +73,11 @@ describe("pointsForAmount", () => {
     mockSettings({}, { usdToLkrRate: 9999 });
     await expect(pointsForAmount(30000, "LKR")).resolves.toBe(300);
   });
+
+  it("earns nothing while the rewards program is disabled", async () => {
+    mockSettings({ pointsEnabled: false });
+    await expect(pointsForAmount(80, "USD")).resolves.toBe(0);
+  });
 });
 
 describe("pointsValue", () => {
@@ -117,6 +124,12 @@ describe("resolvePointsRedemption", () => {
     const result = await resolvePointsRedemption({ requestedPoints: 100000, availableBalance: 100000, orderableAmount: 30000, currency: "LKR" });
     expect(result).toEqual({ points: 15000, discount: 15000 });
   });
+
+  it("redeems nothing while the rewards program is disabled", async () => {
+    mockSettings({ pointsEnabled: false });
+    const result = await resolvePointsRedemption({ requestedPoints: 100000, availableBalance: 10000, orderableAmount: 100, currency: "USD" });
+    expect(result).toEqual({ points: 0, discount: 0 });
+  });
 });
 
 describe("ensureReferralCode", () => {
@@ -151,6 +164,8 @@ describe("ensureReferralCode", () => {
 });
 
 describe("captureReferral", () => {
+  beforeEach(() => mockSettings());
+
   it("does nothing for an empty/whitespace code", async () => {
     await captureReferral("referee-1", "   ");
     expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
@@ -166,6 +181,12 @@ describe("captureReferral", () => {
     prismaMock.user.findUnique.mockResolvedValue({ id: "same-user" } as never);
     await captureReferral("same-user", "OWNCODE");
     expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("does nothing while the referral program is disabled, without even looking up the code", async () => {
+    mockSettings({ referralsEnabled: false });
+    await captureReferral("referee-1", "GOODCODE");
+    expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
   });
 
   it("stamps referredByCode and creates a PENDING Referral for a valid code", async () => {
@@ -253,6 +274,15 @@ describe("settlePointsForPaidOrder", () => {
     expect(warnSpy).toHaveBeenCalledTimes(1);
     warnSpy.mockRestore();
   });
+
+  it("earns nothing while the rewards program is disabled", async () => {
+    await settlePointsForPaidOrder(
+      prismaMock,
+      { id: "o1", userId: "u1", currency: "USD", subtotal: 80, pointsRedeemed: 0 },
+      { loyalty: { ...loyaltyFixture, pointsEnabled: false }, commerce: commerceFixture },
+    );
+    expect(prismaMock.user.update).not.toHaveBeenCalled();
+  });
 });
 
 describe("settleReferralForPaidOrder", () => {
@@ -306,5 +336,11 @@ describe("settleReferralForPaidOrder", () => {
     expect(prismaMock.user.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: "referee-1" }, data: expect.objectContaining({ pointsBalance: { increment: loyaltyFixture.referralRefereeBonusPoints } }) }),
     );
+  });
+
+  it("returns null while the referral program is disabled, without even looking up the referral", async () => {
+    const disabledSettings = { loyalty: { ...loyaltyFixture, referralsEnabled: false }, commerce: commerceFixture };
+    await expect(settleReferralForPaidOrder(prismaMock, order, disabledSettings)).resolves.toBeNull();
+    expect(prismaMock.referral.findUnique).not.toHaveBeenCalled();
   });
 });
