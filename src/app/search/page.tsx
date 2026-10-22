@@ -8,6 +8,7 @@ import { getMarket } from "@/lib/market";
 import { GemResults } from "@/components/catalog/GemResults";
 import { JewelryResults } from "@/components/catalog/JewelryResults";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { Pagination } from "@/components/ui/Pagination";
 
 export const metadata: Metadata = { title: "Search" };
 
@@ -30,10 +31,18 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
     );
   }
 
+  const gemPage = typeof sp.gemPage === "string" ? Number(sp.gemPage) : undefined;
+  const jewelryPage = typeof sp.jewelryPage === "string" ? Number(sp.jewelryPage) : undefined;
+
   const session = await auth();
-  const [{ items: gems, total: gemTotal }, { items: pieces, total: jewelryTotal }, promotions, wishlistedIds] = await Promise.all([
-    getGemstones({ q, sort: "newest", market }),
-    getJewelry({ q, sort: "newest", market }),
+  const [
+    { items: gems, total: gemTotal, page: gemCurrentPage, totalPages: gemTotalPages },
+    { items: pieces, total: jewelryTotal, page: jewelryCurrentPage, totalPages: jewelryTotalPages },
+    promotions,
+    wishlistedIds,
+  ] = await Promise.all([
+    getGemstones({ q, sort: "newest", market, page: gemPage }),
+    getJewelry({ q, sort: "newest", market, page: jewelryPage }),
     getActivePromotionMaps(market),
     getWishlistedIds(session?.user?.id),
   ]);
@@ -69,6 +78,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
                 wishlistedIds={wishlistedIds}
                 isAuthenticated={!!session?.user}
               />
+              <Pagination currentPage={gemCurrentPage} totalPages={gemTotalPages} searchParams={sp} paramName="gemPage" />
             </section>
           )}
           {pieces.length > 0 && (
@@ -79,6 +89,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
                 wishlistedIds={wishlistedIds}
                 isAuthenticated={!!session?.user}
               />
+              <Pagination currentPage={jewelryCurrentPage} totalPages={jewelryTotalPages} searchParams={sp} paramName="jewelryPage" />
             </section>
           )}
         </div>

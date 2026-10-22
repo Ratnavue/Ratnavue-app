@@ -15,8 +15,16 @@ interface TranslationManagerProps {
   overridesByKey: Record<string, Record<string, string>>;
 }
 
+// Every key is already in the browser (keys is the complete flattened
+// English catalog, passed from the server) and search/filtering is
+// instant client-side — so pagination here is local page state over the
+// already-filtered array, not a server round trip/URL param the way the
+// shared Pagination component expects.
+const PAGE_SIZE = 50;
+
 export function TranslationManager({ keys, locales, localeFileValues, overridesByKey }: TranslationManagerProps) {
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   // Tracks overrides saved/cleared during this session so the "using: ..."
   // hint and future re-renders reflect a save immediately, without needing
@@ -28,6 +36,11 @@ export function TranslationManager({ keys, locales, localeFileValues, overridesB
     if (!q) return keys;
     return keys.filter((k) => k.key.toLowerCase().includes(q) || k.english.toLowerCase().includes(q));
   }, [keys, query]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  // Clamped inline (not via an effect) so a search that narrows past the
+  // page you were on doesn't need a render cycle to catch up.
+  const currentPage = Math.min(page, totalPages);
+  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   function translatedCount(key: string): number {
     const overrides = liveOverrides[key] ?? {};
@@ -49,7 +62,10 @@ export function TranslationManager({ keys, locales, localeFileValues, overridesB
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/40" />
         <Input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(1);
+          }}
           placeholder="Search by key or English text (e.g. nav.shopGems, Shop Gems)"
           className="pl-9"
         />
@@ -59,7 +75,7 @@ export function TranslationManager({ keys, locales, localeFileValues, overridesB
       </p>
 
       <div className="mt-4 divide-y divide-border-subtle rounded-xl border border-border-subtle bg-surface">
-        {filtered.slice(0, 200).map((item) => {
+        {pageItems.map((item) => {
           const isOpen = expandedKey === item.key;
           const count = translatedCount(item.key);
           return (
@@ -99,10 +115,31 @@ export function TranslationManager({ keys, locales, localeFileValues, overridesB
           );
         })}
         {filtered.length === 0 && <p className="px-4 py-6 text-center text-sm text-charcoal/55">No keys match that search.</p>}
-        {filtered.length > 200 && (
-          <p className="px-4 py-3 text-center text-xs text-charcoal/50">Showing the first 200 matches — narrow your search to see more.</p>
-        )}
       </div>
+
+      {totalPages > 1 && (
+        <nav aria-label="Pagination" className="mt-4 flex items-center justify-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            aria-label="Previous page"
+            className="inline-flex h-9 min-w-9 items-center justify-center rounded-full border border-border-subtle px-3 text-sm text-charcoal/70 transition-colors hover:border-charcoal hover:text-charcoal disabled:pointer-events-none disabled:opacity-35"
+          >
+            ←
+          </button>
+          <span className="px-3 text-sm text-charcoal/70">Page {currentPage} of {totalPages}</span>
+          <button
+            type="button"
+            onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages}
+            aria-label="Next page"
+            className="inline-flex h-9 min-w-9 items-center justify-center rounded-full border border-border-subtle px-3 text-sm text-charcoal/70 transition-colors hover:border-charcoal hover:text-charcoal disabled:pointer-events-none disabled:opacity-35"
+          >
+            →
+          </button>
+        </nav>
+      )}
     </div>
   );
 }

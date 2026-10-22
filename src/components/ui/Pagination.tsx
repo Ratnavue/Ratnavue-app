@@ -14,21 +14,27 @@ export function Pagination({
   currentPage,
   totalPages,
   searchParams,
+  paramName = "page",
 }: {
   currentPage: number;
   totalPages: number;
   searchParams: Record<string, string | string[] | undefined>;
+  /** Defaults to "page" — override when a page renders more than one
+   * paginated list at once (e.g. /search's separate gem/jewelry results)
+   * so each list's page number survives independently in the URL instead
+   * of both controls fighting over the same `?page=`. */
+  paramName?: string;
 }) {
   if (totalPages <= 1) return null;
 
   function hrefForPage(page: number) {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(searchParams)) {
-      if (key === "page" || value === undefined) continue;
+      if (key === paramName || value === undefined) continue;
       if (Array.isArray(value)) value.forEach((v) => params.append(key, v));
       else params.set(key, value);
     }
-    if (page > 1) params.set("page", String(page));
+    if (page > 1) params.set(paramName, String(page));
     const qs = params.toString();
     return qs ? `?${qs}` : "?";
   }

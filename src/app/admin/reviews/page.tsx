@@ -6,6 +6,7 @@ import type { ReviewStatus } from "@prisma/client";
 import { ReviewModerationRow } from "@/components/admin/ReviewModerationRow";
 import { Badge } from "@/components/ui/Badge";
 import { BackLink } from "@/components/admin/BackLink";
+import { Pagination } from "@/components/ui/Pagination";
 
 const TABS: { value: ReviewStatus | "ALL"; label: string }[] = [
   { value: "PENDING", label: "Pending" },
@@ -20,27 +21,38 @@ const STATUS_STYLES: Record<ReviewStatus, string> = {
   REJECTED: "bg-red-50 text-red-700 border-red-200",
 };
 
+const PAGE_SIZE = 20;
+
 export default async function AdminReviewsPage({ searchParams }: PageProps<"/admin/reviews">) {
   const sp = await searchParams;
   const tab = (typeof sp.status === "string" ? sp.status : "PENDING") as ReviewStatus | "ALL";
   const status = TABS.some((t) => t.value === tab) ? tab : "PENDING";
+  const page = Math.max(1, Number(sp.page) || 1);
 
   // A STAFF member scoped to one store only sees reviews of that store's items.
   const session = await auth();
   const market = session?.user ? marketFilterFor(session.user) : undefined;
 
-  const reviews = await prisma.review.findMany({
-    where: {
-      ...(status === "ALL" ? {} : { status }),
-      ...(market ? { OR: [{ gemstone: { market } }, { jewelry: { market } }] } : {}),
-    },
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: { select: { name: true, email: true } },
-      gemstone: { select: { name: true, slug: true } },
-      jewelry: { select: { name: true, slug: true } },
-    },
-  });
+  const where = {
+    ...(status === "ALL" ? {} : { status }),
+    ...(market ? { OR: [{ gemstone: { market } }, { jewelry: { market } }] } : {}),
+  };
+
+  const [reviews, total] = await Promise.all([
+    prisma.review.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: {
+        user: { select: { name: true, email: true } },
+        gemstone: { select: { name: true, slug: true } },
+        jewelry: { select: { name: true, slug: true } },
+      },
+    }),
+    prisma.review.count({ where }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div>
@@ -99,6 +111,8 @@ export default async function AdminReviewsPage({ searchParams }: PageProps<"/adm
           })
         )}
       </div>
+
+      <Pagination currentPage={page} totalPages={totalPages} searchParams={sp} />
     </div>
   );
 }

@@ -4,13 +4,25 @@ import { BundleBuilder } from "@/components/admin/BundleBuilder";
 import { ToggleActiveButton } from "@/components/admin/ToggleActiveButton";
 import { DeleteBundleButton } from "@/components/admin/DeleteBundleButton";
 import { BackLink } from "@/components/admin/BackLink";
+import { Pagination } from "@/components/ui/Pagination";
 import { formatPrice } from "@/lib/utils";
 
-export default async function AdminBundlesPage() {
-  const bundles = await prisma.bundle.findMany({
-    orderBy: [{ market: "asc" }, { sortOrder: "asc" }],
-    include: { items: { include: { gemstone: { select: { name: true } }, jewelry: { select: { name: true } } } } },
-  });
+const PAGE_SIZE = 20;
+
+export default async function AdminBundlesPage({ searchParams }: PageProps<"/admin/bundles">) {
+  const sp = await searchParams;
+  const page = Math.max(1, Number(sp.page) || 1);
+
+  const [bundles, total] = await Promise.all([
+    prisma.bundle.findMany({
+      orderBy: [{ market: "asc" }, { sortOrder: "asc" }],
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: { items: { include: { gemstone: { select: { name: true } }, jewelry: { select: { name: true } } } } },
+    }),
+    prisma.bundle.count(),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div>
@@ -55,6 +67,8 @@ export default async function AdminBundlesPage() {
           ))
         )}
       </div>
+
+      <Pagination currentPage={page} totalPages={totalPages} searchParams={sp} />
     </div>
   );
 }
