@@ -7,6 +7,7 @@ import { IntroLoader } from "./IntroLoader";
 import { NavigationOverlay } from "./NavigationOverlay";
 import { FloatingChatButton } from "./FloatingChatButton";
 import { BackToTop } from "./BackToTop";
+import { SiteStatusBanner } from "./SiteStatusBanner";
 import type { AppLocale } from "@/i18n/request";
 import type { FooterMessages, TrustBarMessages } from "@/lib/i18n-messages";
 import type { CustomLocale } from "@/lib/locales";
@@ -35,6 +36,7 @@ export function SiteChrome({
   locale,
   customLocales,
   lkPaymentMethodsLive,
+  siteBannerMessage,
   children,
 }: {
   user: SiteChromeUser | null;
@@ -77,6 +79,10 @@ export function SiteChrome({
    * defaults) — threaded to Footer so its "Payment Options" blurb can't
    * drift from what /checkout itself actually offers. */
   lkPaymentMethodsLive: { card: boolean; cod: boolean };
+  /** This market's site status banner message, already resolved from
+   * whether an admin has it enabled (null = don't render one) — see
+   * SiteBannerSettings. */
+  siteBannerMessage: string | null;
   children: React.ReactNode;
 }) {
   const pathname = useAppPathname();
@@ -88,6 +94,7 @@ export function SiteChrome({
     <>
       <IntroLoader />
       <NavigationOverlay />
+      {siteBannerMessage && <SiteStatusBanner message={siteBannerMessage} />}
       <Navbar
         user={user}
         showPromotions={showPromotions}

@@ -7,7 +7,7 @@ import "./globals.css";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { marketVisibilityKey } from "@/lib/page-visibility";
-import { getCachedPageVisibilities, getCachedSeasonalContent } from "@/lib/site-config-cache";
+import { getCachedPageVisibilities, getCachedSeasonalContent, getCachedSiteBanner } from "@/lib/site-config-cache";
 import { getActiveCustomLocales } from "@/lib/locales";
 import { resolvePaymentMethods, paymentMethodsFor } from "@/lib/payment-methods";
 import { getPaymentMethodOverrides } from "@/lib/payment-method-settings";
@@ -82,13 +82,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const market = await getMarket();
   const seasonalKey = marketVisibilityKey("seasonal", market);
   const auctionKey = marketVisibilityKey("auction", market);
-  const [session, visibilities, seasonalContent, locale, customLocales, paymentMethodOverrides] = await Promise.all([
+  const [session, visibilities, seasonalContent, locale, customLocales, paymentMethodOverrides, siteBanner] = await Promise.all([
     auth(),
     getCachedPageVisibilities([seasonalKey, auctionKey, "design-studio"]),
     getCachedSeasonalContent(market),
     getLocale(),
     getActiveCustomLocales(),
     getPaymentMethodOverrides(),
+    getCachedSiteBanner(market),
   ]);
   // The Sri Lanka footer's own "Payment Options" blurb (Footer.tsx) used to
   // hardcode every non-wire method as "Coming soon" — stale the moment an
@@ -145,6 +146,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               locale={locale as AppLocale}
               customLocales={customLocales}
               lkPaymentMethodsLive={lkPaymentMethodsLive}
+              siteBannerMessage={siteBanner.enabled ? siteBanner.message : null}
             >
               <MainWrapper>{children}</MainWrapper>
             </SiteChrome>

@@ -166,6 +166,9 @@ model User {
   // Orders this user (a staff/admin account) reverted from PAID back to
   // unpaid — see Order.paymentReversedBy.
   ordersReverted       Order[]              @relation("OrderPaymentReversedBy")
+  // Feedback submitted through the site status banner while signed in —
+  // see SiteFeedback.userId.
+  siteFeedback         SiteFeedback[]
 
   @@index([businessAccountId])
 }
@@ -2277,6 +2280,48 @@ model CommerceSettings {
   codDepositPercent      Float @default(25)
 
   updatedAt DateTime @updatedAt
+}
+
+// ---------- Site-wide status banner ----------
+//
+// A dismissible banner shown above the Navbar on every storefront page
+// (not a blocking gate like PageVisibility — browsing, search and checkout
+// all stay exactly as they are) — e.g. "International orders are picking
+// up again soon; thanks for your patience" while a market has no live
+// payment method. Independent per market, since intl and lk can be in
+// completely different states. Singleton row, same self-provisioning
+// pattern as CommerceSettings/LoyaltySettings (see getSiteBannerSettings).
+model SiteBannerSettings {
+  id String @id @default("singleton")
+
+  intlEnabled Boolean @default(false)
+  intlMessage String? @db.Text
+
+  lkEnabled Boolean @default(false)
+  lkMessage String? @db.Text
+
+  updatedAt DateTime @updatedAt
+}
+
+// One row per "Share feedback" submission from the banner above — plain
+// freeform text, no categorization/status workflow in this first pass; an
+// admin reads them on /admin/site-status. email is optional (a signed-out
+// visitor can leave it blank) and userId is set when the submitter was
+// signed in, purely for context — SetNull so deleting the account later
+// doesn't erase the feedback itself.
+model SiteFeedback {
+  id String @id @default(cuid())
+
+  market  String
+  message String  @db.Text
+  email   String?
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([market, createdAt])
 }
 
 // ---------- Rate limiting ----------

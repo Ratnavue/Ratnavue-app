@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { getPageVisibilities, type PageVisibilityKey } from "@/lib/page-visibility";
 import { getSeasonalContent } from "@/lib/page-content";
+import { getSiteBannerForMarket } from "@/lib/site-banner";
 import type { Market } from "@/lib/market-shared";
 
 // The root layout needs these two site-wide settings on EVERY page view, and
@@ -20,5 +21,11 @@ export const getCachedPageVisibilities = unstable_cache(
 export const getCachedSeasonalContent = unstable_cache(
   (market: Market) => getSeasonalContent(market),
   ["site-config-seasonal-content"],
+  { revalidate: 60, tags: [SITE_CONFIG_TAG] },
+);
+
+export const getCachedSiteBanner = unstable_cache(
+  (market: Market) => getSiteBannerForMarket(market),
+  ["site-config-site-banner"],
   { revalidate: 60, tags: [SITE_CONFIG_TAG] },
 );

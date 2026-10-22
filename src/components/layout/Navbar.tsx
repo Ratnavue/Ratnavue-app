@@ -181,7 +181,10 @@ export function Navbar({
       }}
       transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
       className={cn(
-        "fixed top-0 z-50 w-full backdrop-blur-sm",
+        // top tracks --site-banner-h (see SiteStatusBanner) rather than a
+        // bare 0 — when the site status banner is showing, the fixed nav
+        // floats directly below it instead of under/behind it.
+        "fixed top-[var(--site-banner-h,0px)] z-50 w-full backdrop-blur-sm",
         transparent && !open && "backdrop-blur-0",
         // Capped at (not forced to) full-viewport height while open — the
         // dropdown sizes to its own content and scrolls internally if it's

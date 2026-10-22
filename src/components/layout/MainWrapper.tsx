@@ -62,7 +62,12 @@ export function MainWrapper({ children }: { children: React.ReactNode }) {
     // a line across the loader's logo mid-navigation. Raising <main> keeps the
     // loader above the footer; the Navbar (z-50) and the chat/overlay layers
     // (z-40) still sit above <main>.
-    <main key={pathname} className={cn("animate-page-in relative z-[1] flex-1", !hasFullBleedHero && !isAdmin && "pt-24")}>
+    // marginTop tracks --site-banner-h (see SiteStatusBanner) — 0 when no
+    // banner is showing, so this is a no-op the rest of the time. Applied
+    // uniformly (hero and non-hero pages alike) since it's clearance for
+    // the banner, not the Navbar — pt-24 below is the separate, Navbar-only
+    // clearance, and a full-bleed hero page still wants none of that.
+    <main key={pathname} style={{ marginTop: "var(--site-banner-h, 0px)" }} className={cn("animate-page-in relative z-[1] flex-1", !hasFullBleedHero && !isAdmin && "pt-24")}>
       {children}
     </main>
   );

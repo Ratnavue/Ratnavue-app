@@ -29,6 +29,7 @@ const NAV = [
   { href: "/admin/wholesale-applications", label: "Wholesale Applications" },
   { href: "/admin/orders", label: "Retail Orders" },
   { href: "/admin/commerce-settings", label: "Commerce Settings" },
+  { href: "/admin/site-status", label: "Site Status" },
   { href: "/admin/shipping-zones", label: "Shipping Zones" },
   { href: "/admin/translations", label: "Translations" },
   { href: "/admin/sales-referrals", label: "Sales Referrals" },
