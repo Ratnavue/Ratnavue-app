@@ -23,7 +23,20 @@ export type ChatTag = { type: "gemstone" | "jewelry"; id: string } | { type: "ca
  * "orders" for an order thread (and then only within their market scope,
  * since an order has a store), "requests" for quote, sourcing and general
  * support threads (which have no store, so no market check applies). */
-async function isChatAdminSide(user: { role: string; staffMarketScope: string | null; staffPermissions: string[] }, requestType: ChatRequestType, requestId: string): Promise<boolean> {
+async function isChatAdminSide(user: { id: string; role: string; staffMarketScope: string | null; staffPermissions: string[] }, requestType: ChatRequestType, requestId: string): Promise<boolean> {
+  // A "general" thread's requestId IS the customer's own userId (see
+  // getChatContext's own comment) — so when it's this session's own id,
+  // they're necessarily the customer in this conversation (their own
+  // "contact support" thread), never "admin side," no matter their
+  // site-wide role. Without this, an admin/staff account viewing their
+  // own /account/messages support thread got treated as the admin side of
+  // a conversation with themselves: markChatRead wrote lastReadByAdminAt
+  // instead of lastReadByCustomerAt, and sendChatMessage tagged their own
+  // messages senderRole ADMIN instead of CUSTOMER — so the customer-facing
+  // unread count for their own thread could never clear, and the "general"
+  // request path (/admin/support/<their own id>) is reserved for admin
+  // staff viewing *someone else's* thread, never their own.
+  if (requestType === "general" && requestId === user.id) return false;
   if (user.role === "ADMIN") return true;
   if (user.role !== "STAFF") return false;
   if (requestType !== "order") return user.staffPermissions.includes("requests");

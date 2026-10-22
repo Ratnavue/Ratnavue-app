@@ -9,6 +9,7 @@ import { markNotificationsReadForRequest } from "@/lib/notifications";
 import { buildConversationRows, designLabel } from "@/lib/account-hub";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { ConversationRow } from "@/components/account/ConversationRow";
+import { RefreshOnSelect } from "@/components/account/RefreshOnSelect";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Messages" };
@@ -80,6 +81,7 @@ export default async function AccountMessagesPage({ searchParams }: PageProps<"/
         <div className={cn("min-w-0", !selected && "hidden lg:block")}>
           {selected && thread ? (
             <div>
+              <RefreshOnSelect selectedKey={`${selected.type}:${selected.id}`} />
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div className="min-w-0">
                   <Link href="/account/messages" className="mb-1 inline-flex items-center gap-1 text-xs text-charcoal/60 hover:text-charcoal lg:hidden">

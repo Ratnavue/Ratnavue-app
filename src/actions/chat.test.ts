@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { prismaMock } from "@/test/prisma-mock";
-import { sendChatMessage } from "@/actions/chat";
+import { sendChatMessage, markChatRead } from "@/actions/chat";
 
 vi.mock("@/lib/auth", () => ({ auth: vi.fn() }));
 vi.mock("@/lib/notifications", () => ({ createNotification: vi.fn() }));
@@ -123,5 +123,80 @@ describe("sendChatMessage — STAFF market scoping", () => {
     expect(createNotification).toHaveBeenCalledWith(
       expect.objectContaining({ userId: "some-customer", type: "CHAT_REPLY", requestType: "order", requestId: "order-1" }),
     );
+  });
+});
+
+// Regression coverage for a real bug: a "general" thread's requestId IS
+// the customer's own userId (see getChatContext), so an ADMIN/STAFF
+// account viewing *their own* /account/messages support thread must
+// still be treated as the customer side of that conversation, never the
+// admin side — otherwise their own read receipts and messages land on
+// the wrong side of the thread and their own unread count can never
+// clear.
+describe("isChatAdminSide — an admin/staff account's own general support thread", () => {
+  it("markChatRead writes lastReadByCustomerAt, not lastReadByAdminAt, for an ADMIN reading their own general thread", async () => {
+    vi.mocked(auth).mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } } as never);
+    vi.mocked(getChatContext).mockResolvedValue({ threadId: "thread-1", customerId: "admin-1" } as never);
+    prismaMock.chatThread.update.mockResolvedValue({} as never);
+
+    const result = await markChatRead("general", "admin-1");
+
+    expect(result).toEqual({ ok: true });
+    expect(prismaMock.chatThread.update).toHaveBeenCalledWith({ where: { id: "thread-1" }, data: { lastReadByCustomerAt: expect.any(Date) } });
+  });
+
+  it("markChatRead still writes lastReadByAdminAt when an ADMIN reads someone else's general thread (/admin/support/<other user>)", async () => {
+    vi.mocked(auth).mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } } as never);
+    vi.mocked(getChatContext).mockResolvedValue({ threadId: "thread-2", customerId: "some-customer" } as never);
+    prismaMock.chatThread.update.mockResolvedValue({} as never);
+
+    const result = await markChatRead("general", "some-customer");
+
+    expect(result).toEqual({ ok: true });
+    expect(prismaMock.chatThread.update).toHaveBeenCalledWith({ where: { id: "thread-2" }, data: { lastReadByAdminAt: expect.any(Date) } });
+  });
+
+  it("sendChatMessage tags an ADMIN's own message in their own general thread senderRole CUSTOMER, not ADMIN", async () => {
+    vi.mocked(auth).mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } } as never);
+    vi.mocked(getChatContext).mockResolvedValue({ threadId: "thread-1", customerId: "admin-1" } as never);
+
+    await sendChatMessage({ requestType: "general", requestId: "admin-1", body: "Hi, I have a question about my own order" });
+
+    expect(prismaMock.chatMessage.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ senderId: "admin-1", senderRole: "CUSTOMER" }),
+    });
+  });
+
+  it("sendChatMessage still tags an ADMIN replying on someone else's general thread senderRole ADMIN", async () => {
+    vi.mocked(auth).mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } } as never);
+    vi.mocked(getChatContext).mockResolvedValue({ threadId: "thread-2", customerId: "some-customer" } as never);
+
+    await sendChatMessage({ requestType: "general", requestId: "some-customer", body: "How can we help?" });
+
+    expect(prismaMock.chatMessage.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ senderId: "admin-1", senderRole: "ADMIN" }),
+    });
+  });
+
+  it("a STAFF member with the requests area gets the same own-thread-is-customer-side treatment", async () => {
+    vi.mocked(auth).mockResolvedValue({ user: { id: "staff-1", role: "STAFF", staffMarketScope: "both", staffPermissions: ["requests"] } } as never);
+    vi.mocked(getChatContext).mockResolvedValue({ threadId: "thread-3", customerId: "staff-1" } as never);
+    prismaMock.chatThread.update.mockResolvedValue({} as never);
+
+    const result = await markChatRead("general", "staff-1");
+
+    expect(result).toEqual({ ok: true });
+    expect(prismaMock.chatThread.update).toHaveBeenCalledWith({ where: { id: "thread-3" }, data: { lastReadByCustomerAt: expect.any(Date) } });
+  });
+
+  it("does not apply the own-thread exception to a quote/sourcing/order thread (requestId is never a userId there)", async () => {
+    vi.mocked(auth).mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } } as never);
+    vi.mocked(getChatContext).mockResolvedValue({ threadId: "thread-4", customerId: "some-customer" } as never);
+    prismaMock.chatThread.update.mockResolvedValue({} as never);
+
+    const result = await markChatRead("quote", "admin-1"); // a coincidental id match, wrong requestType
+
+    expect(result).toEqual({ ok: true });
+    expect(prismaMock.chatThread.update).toHaveBeenCalledWith({ where: { id: "thread-4" }, data: { lastReadByAdminAt: expect.any(Date) } });
   });
 });
