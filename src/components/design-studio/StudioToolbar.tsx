@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Circle, Minus, Link2, GripVertical, Type, Copy, ClipboardPaste, RotateCw, Trash2, Plus, X, Save, Gem as GemIcon, Info, Undo2, Redo2, BringToFront, SendToBack, Crosshair } from "lucide-react";
+import { Circle, Minus, Link2, GripVertical, Type, Copy, ClipboardPaste, RotateCw, Trash2, Plus, X, Save, Gem as GemIcon, Info, Undo2, Redo2, BringToFront, SendToBack, Crosshair, Box } from "lucide-react";
 import type { Shape, ShapeType } from "@/lib/design-studio/types";
 import { TEMPLATE_CATEGORY_LABELS, templatesByCategory, type TemplateCategory } from "@/lib/design-studio/templates";
 import { STANDARD_CUTS } from "@/lib/gem-constants";
@@ -76,6 +76,7 @@ interface StudioToolbarProps {
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  onOpenPreview3D: () => void;
 }
 
 export function StudioToolbar({
@@ -113,6 +114,7 @@ export function StudioToolbar({
   onRedo,
   canUndo,
   canRedo,
+  onOpenPreview3D,
 }: StudioToolbarProps) {
   const [repeatCount, setRepeatCount] = useState(8);
   const [templateOpen, setTemplateOpen] = useState(false);
@@ -394,6 +396,13 @@ export function StudioToolbar({
             Remove pane
           </ToolButton>
         </div>
+
+        <div className="h-10 w-px bg-border-subtle max-sm:hidden" />
+
+        <ToolButton title="See a stylized 3D impression of this view's shapes — not a manufacturing-accurate model" onClick={onOpenPreview3D}>
+          <Box size={16} />
+          3D Preview
+        </ToolButton>
 
         <div className="ml-auto flex items-center gap-2">
           <button

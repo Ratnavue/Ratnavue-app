@@ -6,6 +6,7 @@ import { CircleCheck } from "lucide-react";
 import { StudioCanvas } from "./StudioCanvas";
 import { StudioToolbar } from "./StudioToolbar";
 import { LayersPanel } from "./LayersPanel";
+import { Preview3D } from "./Preview3D";
 import { emptyStudioState, newPane, newShape, MAX_PANES, type Shape, type ShapeType, type StudioState } from "@/lib/design-studio/types";
 import { bringToFront, cloneShapes, moveBackward, moveForward, paneCenter, radialRepeat, sendToBack, symmetryPivot, wedgeMidpoint } from "@/lib/design-studio/shape-ops";
 import { exportPanesToPngBlob } from "@/lib/design-studio/export";
@@ -76,6 +77,7 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
   // The toolbar's "Set center" tool — true while waiting for the next
   // canvas click to place pane.symmetryCenter (see PaneSVG's own prop).
   const [settingCenter, setSettingCenter] = useState(false);
+  const [preview3DOpen, setPreview3DOpen] = useState(false);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const mounted = useRef(false);
@@ -594,8 +596,10 @@ export function DesignStudio({ mode, initialDesign, isAuthenticated = true }: De
         onRedo={handleRedo}
         canUndo={canUndo}
         canRedo={canRedo}
+        onOpenPreview3D={() => setPreview3DOpen(true)}
       />
       <FieldError>{saveError ?? undefined}</FieldError>
+      <Preview3D open={preview3DOpen} onClose={() => setPreview3DOpen(false)} shapes={activePane?.shapes ?? []} />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_14rem]">
         <div ref={canvasRef}>
