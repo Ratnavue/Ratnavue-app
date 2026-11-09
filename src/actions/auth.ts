@@ -13,7 +13,11 @@ import { captureReferral, REF_COOKIE } from "@/lib/rewards";
 import { captureBusinessInvite, BIZ_INVITE_COOKIE } from "@/lib/business";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
-export type ActionResult = { ok: true } | { ok: false; error: string };
+// redirectTo: where the calling form should navigate next. Create actions
+// return it instead of calling redirect(): redirect() works by throwing, and
+// the admin forms call their action inside try/catch, so the throw was caught
+// as a failure — "Something went wrong" shown for a save that had succeeded.
+export type ActionResult = { ok: true; redirectTo?: string } | { ok: false; error: string };
 
 export async function registerCustomer(formData: FormData): Promise<ActionResult> {
   // Bulk fake-account creation is otherwise cheap (bcrypt's ~100ms cost is

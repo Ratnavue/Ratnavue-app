@@ -65,13 +65,15 @@ export function JewelryForm({ shippingWeightTiers, initial, defaultMarket, staff
     setPending(true);
     try {
       const result = initial ? await updateJewelry(initial.id, formData) : await createJewelry(formData);
-      if (result && !result.ok) {
+      if (!result.ok) {
         setError(result.error);
-      } else if (initial) {
-        // A new piece instead redirects (createJewelry calls redirect()
-        // server-side), so a toast there would fire right as the page
-        // navigates away — not worth it. An update stays on the same page
-        // (router.refresh()), where the confirmation is actually visible.
+      } else if (result.redirectTo) {
+        // A new piece: go to its edit page (createJewelry returns where,
+        // rather than redirecting — see ActionResult). No toast — it would
+        // fire right as the page navigates away.
+        router.push(result.redirectTo);
+      } else {
+        // An update stays on the same page, where the confirmation is visible.
         toast("Saved");
         router.refresh();
       }

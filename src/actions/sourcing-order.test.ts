@@ -2,11 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { prismaMock } from "@/test/prisma-mock";
 import { quickCreateGemstoneForSourcing, quickCreateJewelryForSourcing, createSourcingOrderAction } from "@/actions/sourcing-order";
 import { createOrderFromSourcing } from "@/lib/orders";
-import { redirect } from "next/navigation";
 
 vi.mock("@/lib/rbac", () => ({ requireAdmin: vi.fn().mockResolvedValue({ id: "admin-1", role: "ADMIN" }) }));
 vi.mock("@/lib/orders", () => ({ createOrderFromSourcing: vi.fn() }));
-vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 
 function formData(fields: Record<string, string>): FormData {
   const fd = new FormData();
@@ -89,8 +87,8 @@ describe("createSourcingOrderAction", () => {
     const result = await createSourcingOrderAction("sourcing-1", formData({ items: JSON.stringify([{ gemstoneId: "gem-1", unitPrice: 1200 }]) }));
 
     expect(createOrderFromSourcing).toHaveBeenCalledWith("sourcing-1", "admin-1", [{ gemstoneId: "gem-1", unitPrice: 1200 }]);
-    expect(redirect).toHaveBeenCalledWith("/admin/orders/order-1");
-    expect(result).toBeUndefined();
+    // The form navigates; the action returns where to (see ActionResult).
+    expect(result).toEqual({ ok: true, redirectTo: "/admin/orders/order-1" });
   });
 
   it("surfaces the underlying error without redirecting when the sale can't be completed", async () => {
@@ -99,6 +97,6 @@ describe("createSourcingOrderAction", () => {
     const result = await createSourcingOrderAction("sourcing-1", formData({ items: JSON.stringify([{ gemstoneId: "gem-1", unitPrice: 1200 }]) }));
 
     expect(result).toEqual({ ok: false, error: "One of the selected items was just taken elsewhere — refresh and try again." });
-    expect(redirect).not.toHaveBeenCalled();
+    expect(result).not.toHaveProperty("redirectTo");
   });
 });

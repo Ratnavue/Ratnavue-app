@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/rbac";
 import { createOrderFromSourcing } from "@/lib/orders";
@@ -112,5 +111,5 @@ export async function createSourcingOrderAction(sourcingRequestId: string, formD
   revalidatePath("/admin/sourcing");
   revalidatePath(`/admin/sourcing/${sourcingRequestId}`);
   revalidatePath("/admin/orders");
-  redirect(`/admin/orders/${result.orderId}`);
+  return { ok: true, redirectTo: `/admin/orders/${result.orderId}` };
 }

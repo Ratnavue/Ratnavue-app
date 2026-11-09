@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { searchAvailableCatalogItems, type CatalogSearchResult } from "@/actions/manual-sale";
 import { quickCreateGemstoneForSourcing, quickCreateJewelryForSourcing, createSourcingOrderAction } from "@/actions/sourcing-order";
 import { Input, Label, Select, Textarea, FieldError } from "@/components/ui/Field";
@@ -36,6 +37,7 @@ export function SourcingOrderBuilder({
   treatments: NamedOption[];
   origins: NamedOption[];
 }) {
+  const router = useRouter();
   const [itemQuery, setItemQuery] = useState("");
   const [results, setResults] = useState<CatalogSearchResult[]>([]);
   const [resultsFor, setResultsFor] = useState("");
@@ -115,8 +117,8 @@ export function SourcingOrderBuilder({
     setPending(true);
     try {
       const result = await createSourcingOrderAction(sourcingRequestId, formData);
-      if (result && !result.ok) setError(result.error);
-      // A success redirects server-side — this line only runs on failure.
+      if (!result.ok) setError(result.error);
+      else if (result.redirectTo) router.push(result.redirectTo);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

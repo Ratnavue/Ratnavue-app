@@ -3,12 +3,10 @@ import { prismaMock } from "@/test/prisma-mock";
 import { createManualSaleOrderAction, searchAvailableCatalogItems, findCustomerByEmail } from "@/actions/manual-sale";
 import { createManualSaleOrder } from "@/lib/orders";
 import { saveCertificateFile } from "@/lib/media";
-import { redirect } from "next/navigation";
 
 vi.mock("@/lib/rbac", () => ({ requireAdmin: vi.fn().mockResolvedValue({ id: "admin-1", role: "ADMIN" }) }));
 vi.mock("@/lib/orders", () => ({ createManualSaleOrder: vi.fn() }));
 vi.mock("@/lib/media", () => ({ saveCertificateFile: vi.fn() }));
-vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 
 function formData(fields: Record<string, string | File>): FormData {
   const fd = new FormData();
@@ -62,8 +60,8 @@ describe("createManualSaleOrderAction", () => {
         paymentMethod: "CASH",
       }),
     );
-    expect(redirect).toHaveBeenCalledWith("/admin/orders/order-1");
-    expect(result).toBeUndefined();
+    // The form navigates; the action returns where to (see ActionResult).
+    expect(result).toEqual({ ok: true, redirectTo: "/admin/orders/order-1" });
   });
 
   it("uploads the receipt and passes its URL through for a bank-transfer sale", async () => {
@@ -84,7 +82,7 @@ describe("createManualSaleOrderAction", () => {
     const result = await createManualSaleOrderAction(formData(validCashFields));
 
     expect(result).toEqual({ ok: false, error: "One of the selected items was just taken elsewhere — refresh and try again." });
-    expect(redirect).not.toHaveBeenCalled();
+    expect(result).not.toHaveProperty("redirectTo");
   });
 });
 

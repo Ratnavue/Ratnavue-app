@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireStaffArea, requireMarketAccess } from "@/lib/rbac";
 import { slugify } from "@/lib/utils";
@@ -121,7 +120,7 @@ export async function createGemstone(formData: FormData): Promise<ActionResult> 
   await attachDraftMedia({ gemstoneId: gem.id }, parseDraftMedia(formData.get("mediaKeys")), data.name);
 
   revalidatePath("/admin/gems");
-  redirect(`/admin/gems/${gem.id}`);
+  return { ok: true, redirectTo: `/admin/gems/${gem.id}` };
 }
 
 export async function updateGemstone(id: string, formData: FormData): Promise<ActionResult> {
@@ -332,7 +331,7 @@ export async function createJewelry(formData: FormData): Promise<ActionResult> {
   await attachDraftMedia({ jewelryId: piece.id }, parseDraftMedia(formData.get("mediaKeys")), data.name);
 
   revalidatePath("/admin/jewelry");
-  redirect(`/admin/jewelry/${piece.id}`);
+  return { ok: true, redirectTo: `/admin/jewelry/${piece.id}` };
 }
 
 export async function updateJewelry(id: string, formData: FormData): Promise<ActionResult> {

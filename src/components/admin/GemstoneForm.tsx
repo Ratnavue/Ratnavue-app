@@ -124,11 +124,13 @@ export function GemstoneForm({ minerals, cuts, clarityGrades, treatments, origin
     setPending(true);
     try {
       const result = initial ? await updateGemstone(initial.id, formData) : await createGemstone(formData);
-      if (result && !result.ok) {
+      if (!result.ok) {
         setError(result.error);
-      } else if (initial) {
-        // See JewelryForm's matching comment — a new gem instead redirects
-        // server-side, where a toast wouldn't be visible.
+      } else if (result.redirectTo) {
+        // A new gem: go to its edit page (createGemstone returns where,
+        // rather than redirecting — see ActionResult).
+        router.push(result.redirectTo);
+      } else {
         toast("Saved");
         router.refresh();
       }
