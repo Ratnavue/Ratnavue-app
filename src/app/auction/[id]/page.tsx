@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
+import { PAGE_SEO, fill } from "@/lib/seo-copy";
 import { notFound } from "next/navigation";
 import Link from "@/components/ui/MarketLink";
 import { Gavel } from "lucide-react";
@@ -31,7 +33,12 @@ export async function generateMetadata({ params }: PageProps<"/auction/[id]">): 
   const { id } = await params;
   const auction = await loadAuction(id);
   if (!auction) return {};
-  return { title: auctionItemLabel(auction) };
+  const item = auctionItemLabel(auction);
+  return pageMetadata({
+    title: fill(PAGE_SEO.auctionItem.title, { item }),
+    description: fill(PAGE_SEO.auctionItem.description, { item }),
+    image: auction.gemstone?.media?.[0]?.url ?? auction.jewelry?.media?.[0]?.url,
+  });
 }
 
 export default async function AuctionDetailPage({ params }: PageProps<"/auction/[id]">) {

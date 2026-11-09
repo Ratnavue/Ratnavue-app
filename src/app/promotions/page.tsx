@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { MAX_PAGE_DESCRIPTION_LENGTH, metaDescription, pageMetadata } from "@/lib/seo";
+import { PAGE_SEO } from "@/lib/seo-copy";
 import { notFound } from "next/navigation";
 import Link from "@/components/ui/MarketLink";
 import { getPageVisibility, marketVisibilityKey } from "@/lib/page-visibility";
@@ -17,7 +19,8 @@ export async function generateMetadata(): Promise<Metadata> {
   if (visibility === "HIDDEN") return {};
   const content = await getSeasonalContent(market);
   const copy = content.themes[content.activeTheme];
-  return { title: visibility === "COMING_SOON" ? "Coming Soon" : copy.heading };
+  if (visibility === "COMING_SOON") return pageMetadata(PAGE_SEO.promotionsComingSoon);
+  return pageMetadata({ title: copy.heading, description: metaDescription(copy.body, MAX_PAGE_DESCRIPTION_LENGTH) });
 }
 
 export default async function PromotionsPage() {

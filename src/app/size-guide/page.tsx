@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { PAGE_SEO } from "@/lib/seo-copy";
 import { pageMetadata } from "@/lib/seo";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
 export async function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
-    title: "Size Guide",
-    description: "Find your ring size and the right necklace and bracelet lengths before you order fine jewelry from Ratnavue — measuring tips and size charts.",
+    title: PAGE_SEO.sizeGuide.title,
+    description: PAGE_SEO.sizeGuide.description,
   });
 }
 

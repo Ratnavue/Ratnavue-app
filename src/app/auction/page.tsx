@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
+import { PAGE_SEO } from "@/lib/seo-copy";
 import { notFound } from "next/navigation";
 import Link from "@/components/ui/MarketLink";
 import { Gavel } from "lucide-react";
@@ -13,7 +15,7 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 export async function generateMetadata(): Promise<Metadata> {
   const visibility = await getPageVisibility(marketVisibilityKey("auction", await getMarket()));
   if (visibility === "HIDDEN") return {};
-  return { title: visibility === "COMING_SOON" ? "Coming Soon" : "Auctions" };
+  return pageMetadata(visibility === "COMING_SOON" ? PAGE_SEO.auctionsComingSoon : PAGE_SEO.auctions);
 }
 
 export default async function AuctionListPage() {

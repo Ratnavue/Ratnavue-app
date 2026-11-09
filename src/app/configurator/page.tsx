@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PAGE_SEO } from "@/lib/seo-copy";
 import { pageMetadata } from "@/lib/seo";
 import { getMasterData } from "@/lib/catalog";
 import { auth } from "@/lib/auth";
@@ -7,8 +8,8 @@ import { getTranslations } from "next-intl/server";
 
 export async function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
-    title: "Design Your Gem",
-    description: "Configure a Ceylon gemstone by mineral, cut, carat weight, colour, tone and clarity, then request a private quote from our gemologists.",
+    title: PAGE_SEO.configurator.title,
+    description: PAGE_SEO.configurator.description,
   });
 }
 

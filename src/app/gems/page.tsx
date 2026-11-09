@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { PAGE_SEO } from "@/lib/seo-copy";
 import { pageMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import { getGemstones, getGemCategories, getMasterData, type GemColorFamily } from "@/lib/catalog";
@@ -20,10 +21,9 @@ import type { StylizedGemShape } from "@/components/gem-visualizer/StylizedGem";
 export async function generateMetadata({ searchParams }: PageProps<"/gems">): Promise<Metadata> {
   const sp = await searchParams;
   const isLanding = !LISTING_PARAMS.some((key) => sp[key] !== undefined);
-  return pageMetadata({
-    title: isLanding ? "Ceylon Gemstones" : "Shop All Ceylon Gemstones",
-    description: "Shop natural Ceylon sapphires, rubies, spinels and more — every stone listed with its cut, colour, clarity and treatment, and independently graded.",
-  });
+  // The filtered list's canonical is /gems (filter variants consolidate),
+  // but its own title/description still differ from the landing grid's.
+  return pageMetadata(isLanding ? PAGE_SEO.gems : PAGE_SEO.gemsAll);
 }
 
 type SearchParams = Record<string, string | string[] | undefined>;

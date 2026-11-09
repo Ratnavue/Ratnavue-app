@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { PAGE_SEO } from "@/lib/seo-copy";
 import { pageMetadata } from "@/lib/seo";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
 export async function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
-    title: "Contact Us",
-    description: "Get in touch with Ratnavue about a gemstone, a custom piece, an order or a sourcing request — our team in Sri Lanka will get back to you.",
+    title: PAGE_SEO.contact.title,
+    description: PAGE_SEO.contact.description,
   });
 }
 

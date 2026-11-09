@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
+import { PAGE_SEO, fill } from "@/lib/seo-copy";
 import { notFound } from "next/navigation";
 import { getMarket, redirectInMarket } from "@/lib/market";
 import Link from "@/components/ui/MarketLink";
@@ -17,7 +19,15 @@ export async function generateMetadata(): Promise<Metadata> {
   const visibility = await getPageVisibility(marketVisibilityKey("seasonal", market));
   if (visibility !== "LIVE") return {};
   const content = await getSeasonalContent(market);
-  return { title: `${SEASONAL_THEMES[content.activeTheme]?.label ?? "Promotional"} Collection` };
+  // An empty collection redirects to /promotions (see the page below) — and
+  // because the page streams, that redirect happens client-side after a 200.
+  // Keep it out of the index so the empty URL never ranks on its own.
+  if ((await getPromotionItems(content.activeTheme, market)).length === 0) return { robots: { index: false, follow: true } };
+  const label = SEASONAL_THEMES[content.activeTheme]?.label ?? "Promotional";
+  return pageMetadata({
+    title: fill(PAGE_SEO.promotionsCollection.title, { label }),
+    description: fill(PAGE_SEO.promotionsCollection.description, { label }),
+  });
 }
 
 export default async function PromotionsCollectionPage() {

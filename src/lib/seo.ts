@@ -30,6 +30,21 @@ export function siteNameFor(market: Market): string {
 }
 
 const MAX_TITLE_LENGTH = 60;
+const MAX_DESCRIPTION_LENGTH = 160;
+
+// Appended to a page's description on the Sri Lanka store, so its copy of a
+// page doesn't duplicate the international one. Copy that already says Sri
+// Lanka gets the shorter note; copy that already mentions rupees needs none.
+export const LK_NOTE = " Prices in rupees, for Sri Lanka.";
+export const LK_NOTE_SHORT = " Prices in rupees.";
+/** Longest page description that still fits the full Sri Lanka note untrimmed. */
+export const MAX_PAGE_DESCRIPTION_LENGTH = MAX_DESCRIPTION_LENGTH - LK_NOTE.length;
+
+export function lkDescription(description: string): string {
+  if (/rupee/i.test(description)) return metaDescription(description, MAX_DESCRIPTION_LENGTH);
+  const note = description.includes("Sri Lanka") ? LK_NOTE_SHORT : LK_NOTE;
+  return metaDescription(description, MAX_DESCRIPTION_LENGTH - note.length) + note;
+}
 
 export const DEFAULT_DESCRIPTION =
   "Ratnavue is a Ceylon gemstone and jewelry house offering ethically sourced sapphires, rubies, and fine jewelry, with bespoke gem sourcing and quotation.";
@@ -63,7 +78,7 @@ export async function pageMetadata({
   const { url, market } = await currentCanonicalUrl();
   // The Sri Lanka store's copy of a page says so, in both title and
   // description, so it isn't a duplicate of the international one.
-  const fullDescription = market === "lk" && !description.includes("Sri Lanka") ? metaDescription(`${description} Priced in rupees for Sri Lanka.`, 160) : description;
+  const fullDescription = market === "lk" ? lkDescription(description) : description;
   // Search results show ~60 characters: a long name (a product) drops to the
   // shorter suffix, then to no suffix, rather than being cut off mid-word.
   const absoluteTitle =

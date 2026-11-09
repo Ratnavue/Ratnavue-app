@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PAGE_SEO } from "@/lib/seo-copy";
 import { pageMetadata } from "@/lib/seo";
 import { auth } from "@/lib/auth";
 import { SourcingForm } from "@/components/quote/SourcingForm";
@@ -9,8 +10,8 @@ import { getTranslations } from "next-intl/server";
 
 export async function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
-    title: "Gem Sourcing",
-    description: "Can't find the stone you want? Tell us the mineral, size, cut or colour and our team will source it from Sri Lanka's gem markets — no obligation.",
+    title: PAGE_SEO.sourcing.title,
+    description: PAGE_SEO.sourcing.description,
   });
 }
 

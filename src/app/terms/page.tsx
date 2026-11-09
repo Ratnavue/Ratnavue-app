@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
+import { PAGE_SEO } from "@/lib/seo-copy";
 import { pageMetadata } from "@/lib/seo";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import Link from "@/components/ui/MarketLink";
 
 export async function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
-    title: "Terms & Conditions",
-    description: "The terms for buying Ceylon gemstones and fine jewelry from Ratnavue: orders, payment, delivery, returns and certification.",
+    title: PAGE_SEO.terms.title,
+    description: PAGE_SEO.terms.description,
   });
 }
 

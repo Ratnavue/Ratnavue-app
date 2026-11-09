@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PAGE_SEO } from "@/lib/seo-copy";
 import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -10,8 +11,8 @@ import type { StudioState } from "@/lib/design-studio/types";
 
 export async function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
-    title: "Design Studio",
-    description: "Sketch your own jewelry idea — split the canvas, repeat a stone pattern around a band, and submit it as a custom design request.",
+    title: PAGE_SEO.designStudio.title,
+    description: PAGE_SEO.designStudio.description,
   });
 }
 

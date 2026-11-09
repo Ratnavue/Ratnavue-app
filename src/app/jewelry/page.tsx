@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { AUDIENCE_SEO_LABELS, PAGE_SEO, fill } from "@/lib/seo-copy";
 import { pageMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import { getJewelry, getJewelryCategoryData } from "@/lib/catalog";
@@ -16,11 +17,19 @@ import { ProductGridSkeleton } from "@/components/catalog/ProductGridSkeleton";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/layout/Breadcrumbs";
 import { Pagination } from "@/components/ui/Pagination";
 
-export async function generateMetadata(): Promise<Metadata> {
-  return pageMetadata({
-    title: "Fine Jewelry",
-    description: "Rings, pendants, earrings and more set with Ceylon gemstones — fine jewelry for women, men and couples, designed around the stone.",
-  });
+export async function generateMetadata({ searchParams }: PageProps<"/jewelry">): Promise<Metadata> {
+  const sp = await searchParams;
+  const audiences = pickAll(sp, "audience").filter(isAudienceSlug);
+  const isList = LISTING_PARAMS.some((key) => sp[key] !== undefined) || audiences.length > 1;
+  if (isList) return pageMetadata(PAGE_SEO.jewelryAll);
+  if (audiences.length === 1) {
+    const audience = AUDIENCE_SEO_LABELS[audiences[0]];
+    return pageMetadata({
+      title: fill(PAGE_SEO.jewelryAudience.title, { audience }),
+      description: fill(PAGE_SEO.jewelryAudience.description, { audience: audience.toLowerCase() }),
+    });
+  }
+  return pageMetadata(PAGE_SEO.jewelry);
 }
 
 type SearchParams = Record<string, string | string[] | undefined>;

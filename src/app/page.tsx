@@ -24,16 +24,15 @@ import { getTranslations } from "next-intl/server";
 import { LkStrip } from "@/components/layout/LkStrip";
 import type { Metadata } from "next";
 import { DEFAULT_DESCRIPTION, homeJsonLd, jsonLdScript, pageMetadata } from "@/lib/seo";
+import { PAGE_SEO } from "@/lib/seo-copy";
 
 export async function generateMetadata(): Promise<Metadata> {
   const market = await getMarket();
-  return pageMetadata({
-    title: { absolute: market === "lk" ? "Ratnavue Sri Lanka — Ceylon Gemstones & Jewelry" : "Ratnavue — Ceylon Gemstones & Jewelry" },
-    description:
-      market === "lk"
-        ? "Shop Ceylon sapphires, rubies and fine jewelry priced in rupees, delivered across Sri Lanka — or ask our team to source the stone you have in mind."
-        : DEFAULT_DESCRIPTION,
-  });
+  return pageMetadata(
+    market === "lk"
+      ? { title: { absolute: PAGE_SEO.homeLk.title }, description: PAGE_SEO.homeLk.description }
+      : { title: { absolute: "Ratnavue — Ceylon Gemstones & Jewelry" }, description: DEFAULT_DESCRIPTION },
+  );
 }
 
 // The home page's two heaviest queries (each a multi-table join over the
