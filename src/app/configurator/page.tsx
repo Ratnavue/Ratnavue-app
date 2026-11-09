@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { getMasterData } from "@/lib/catalog";
 import { auth } from "@/lib/auth";
 import { GemConfiguratorClient } from "@/components/configurator/GemConfiguratorClient";
 import { getTranslations } from "next-intl/server";
 
-export const metadata: Metadata = {
-  title: "Design Your Gem",
-  description: "Configure a Ceylon gemstone by mineral, cut, carat weight, colour, tone, and clarity, then request a quote.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({
+    title: "Design Your Gem",
+    description: "Configure a Ceylon gemstone by mineral, cut, carat weight, colour, tone and clarity, then request a private quote from our gemologists.",
+  });
+}
 
 export default async function ConfiguratorPage() {
   const [masterData, session, t] = await Promise.all([getMasterData(), auth(), getTranslations("configurator")]);

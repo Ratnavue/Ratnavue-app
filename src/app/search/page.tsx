@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "@/components/ui/MarketLink";
 import { getGemstones, getJewelry } from "@/lib/catalog";
 import { getActivePromotionMaps } from "@/lib/promotion-items";
@@ -10,7 +11,13 @@ import { JewelryResults } from "@/components/catalog/JewelryResults";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Pagination } from "@/components/ui/Pagination";
 
-export const metadata: Metadata = { title: "Search" };
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({
+    title: "Search",
+    description: "Search Ratnavue's Ceylon gemstones and fine jewelry.",
+    noindex: true,
+  });
+}
 
 // A shopper typing into the new header search (see HeaderSearch.tsx) has no
 // way to know up front whether what they're after is a loose stone or a

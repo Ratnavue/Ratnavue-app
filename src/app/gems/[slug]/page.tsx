@@ -33,15 +33,17 @@ import { getMarket } from "@/lib/market";
 import { getTranslations } from "next-intl/server";
 import { MARKETS } from "@/lib/market-shared";
 import { SpecialtyBadges } from "@/components/catalog/SpecialtyBadges";
+import { currentCanonicalUrl, jsonLdScript, metaDescription, pageMetadata, productJsonLd } from "@/lib/seo";
 
 export async function generateMetadata({ params }: PageProps<"/gems/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const gem = await getGemstoneBySlug(slug, await getMarket());
   if (!gem) return {};
-  return {
+  return pageMetadata({
     title: gem.name,
-    description: gem.description ?? `${gem.mineral.name}, ${gem.caratWeight}ct ${gem.cut.name} — Ceylon gemstone by Ratnavue.`,
-  };
+    description: metaDescription(gem.description ?? `${gem.mineral.name}, ${gem.caratWeight}ct ${gem.cut.name} — Ceylon gemstone by Ratnavue.`),
+    image: gem.media.find((m) => m.type === "IMAGE")?.url,
+  });
 }
 
 export default async function GemDetailPage({ params }: PageProps<"/gems/[slug]">) {
@@ -69,9 +71,21 @@ export default async function GemDetailPage({ params }: PageProps<"/gems/[slug]"
   // reusing ProductPrice itself (that component isn't meant for a compact bar).
   const displayPrice = promotion?.promoPrice ?? gem.retailPrice ?? (gem.showPrice ? gem.price : null);
   const stickyPriceLabel = displayPrice != null ? formatPrice(displayPrice, MARKETS[market].currency) : t("requestQuote");
+  const productLd = productJsonLd({
+    name: gem.name,
+    description: gem.description,
+    url: (await currentCanonicalUrl()).url,
+    images: gem.media.filter((m) => m.type === "IMAGE").map((m) => m.url),
+    sku: gem.slug,
+    category: `Gemstones > ${gem.mineral.name}`,
+    price: displayPrice,
+    currency: MARKETS[market].currency,
+    stockStatus: gem.stockStatus,
+  });
 
   return (
     <div className="relative overflow-hidden">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(productLd) }} />
       {/* On a wide desktop viewport, the max-w-6xl content column leaves a
           lot of bare ivory in the side gutters — filled with Sri Lankan
           heritage linework rather than a plain colour wash (see

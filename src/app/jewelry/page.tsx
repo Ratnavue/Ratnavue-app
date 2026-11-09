@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { pageMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import { getJewelry, getJewelryCategoryData } from "@/lib/catalog";
 import { getActivePromotionMaps } from "@/lib/promotion-items";
@@ -15,7 +16,12 @@ import { ProductGridSkeleton } from "@/components/catalog/ProductGridSkeleton";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/layout/Breadcrumbs";
 import { Pagination } from "@/components/ui/Pagination";
 
-export const metadata: Metadata = { title: "Shop Jewelry" };
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({
+    title: "Fine Jewelry",
+    description: "Rings, pendants, earrings and more set with Ceylon gemstones — fine jewelry for women, men and couples, designed around the stone.",
+  });
+}
 
 type SearchParams = Record<string, string | string[] | undefined>;
 

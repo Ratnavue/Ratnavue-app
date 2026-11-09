@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -7,10 +8,12 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { DesignStudio, type InitialDesign } from "@/components/design-studio/DesignStudio";
 import type { StudioState } from "@/lib/design-studio/types";
 
-export const metadata: Metadata = {
-  title: "Design Studio",
-  description: "Sketch your own jewelry idea — split the canvas, repeat a stone pattern around a band, and submit it as a custom design request.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({
+    title: "Design Studio",
+    description: "Sketch your own jewelry idea — split the canvas, repeat a stone pattern around a band, and submit it as a custom design request.",
+  });
+}
 
 export default async function CustomerDesignStudioPage({ searchParams }: PageProps<"/design-studio">) {
   const visibility = await getPageVisibility("design-studio");

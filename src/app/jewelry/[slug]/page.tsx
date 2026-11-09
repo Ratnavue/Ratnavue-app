@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "@/components/ui/MarketLink";
 import { Sparkles } from "lucide-react";
 import { getJewelryBySlug, getRelatedJewelry } from "@/lib/catalog";
+import { currentCanonicalUrl, jsonLdScript, metaDescription, pageMetadata, productJsonLd } from "@/lib/seo";
 import { auth } from "@/lib/auth";
 import { getActivePromotion, getActivePromotionMaps } from "@/lib/promotion-items";
 import { StorefrontStockBadge as StockBadge } from "@/components/catalog/StorefrontStockBadge";
@@ -45,7 +46,11 @@ export async function generateMetadata({ params }: PageProps<"/jewelry/[slug]">)
   const { slug } = await params;
   const piece = await getJewelryBySlug(slug, await getMarket());
   if (!piece) return {};
-  return { title: piece.name, description: piece.description ?? undefined };
+  return pageMetadata({
+    title: piece.name,
+    description: metaDescription(piece.description ?? `${piece.name} — fine jewelry by Ratnavue, made around Ceylon gemstones.`),
+    image: piece.media.find((m) => m.type === "IMAGE")?.url,
+  });
 }
 
 export default async function JewelryDetailPage({ params }: PageProps<"/jewelry/[slug]">) {
@@ -71,9 +76,21 @@ export default async function JewelryDetailPage({ params }: PageProps<"/jewelry/
   // StickyBuyBar's own comment for why this is a plain label.
   const displayPrice = promotion?.promoPrice ?? piece.retailPrice ?? (piece.showPrice ? piece.price : null);
   const stickyPriceLabel = displayPrice != null ? formatPrice(displayPrice, MARKETS[market].currency) : t("requestQuote");
+  const productLd = productJsonLd({
+    name: piece.name,
+    description: piece.description,
+    url: (await currentCanonicalUrl()).url,
+    images: piece.media.filter((m) => m.type === "IMAGE").map((m) => m.url),
+    sku: piece.slug,
+    category: "Jewelry",
+    price: displayPrice,
+    currency: MARKETS[market].currency,
+    stockStatus: piece.stockStatus,
+  });
 
   return (
     <div className="relative overflow-hidden">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(productLd) }} />
       <HeritageSideArt side="left" className="absolute left-0 top-0 h-full w-48" />
       <HeritageSideArt side="right" className="absolute right-0 top-0 h-full w-48" />
       <div className="relative mx-auto max-w-6xl px-5 pb-12 pt-10 sm:px-8">

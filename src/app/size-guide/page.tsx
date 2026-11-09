@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
-export const metadata: Metadata = { title: "Size Guide" };
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({
+    title: "Size Guide",
+    description: "Find your ring size and the right necklace and bracelet lengths before you order fine jewelry from Ratnavue — measuring tips and size charts.",
+  });
+}
 
 const RING_SIZES: { us: string; uk: string; eu: string; circumferenceMm: number }[] = [
   { us: "4", uk: "H", eu: "47", circumferenceMm: 46.8 },

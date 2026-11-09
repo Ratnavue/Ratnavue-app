@@ -77,9 +77,11 @@ export function PageLoader() {
         <p className="animate-loader-text-glow mb-4 mt-3 text-[10px] uppercase tracking-[0.35em] text-gold-deep">
           Ceylon Gemstones
         </p>
-        <h1 className="animate-loader-text-glow font-serif text-3xl tracking-[0.12em] text-charcoal sm:text-4xl">
+        {/* A <p>, not an <h1>: this fallback is streamed into every page's
+            HTML, so an <h1> here gave every page two top-level headings. */}
+        <p className="animate-loader-text-glow font-serif text-3xl tracking-[0.12em] text-charcoal sm:text-4xl">
           RATNAVUE
-        </h1>
+        </p>
         <div className="animate-loader-line-glow mt-6 h-px w-32 bg-gold sm:w-40" />
       </div>
     </div>

@@ -22,6 +22,19 @@ import { TrustBar } from "@/components/layout/TrustBar";
 import { getTrustBarMessages } from "@/lib/i18n-messages";
 import { getTranslations } from "next-intl/server";
 import { LkStrip } from "@/components/layout/LkStrip";
+import type { Metadata } from "next";
+import { DEFAULT_DESCRIPTION, homeJsonLd, jsonLdScript, pageMetadata } from "@/lib/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const market = await getMarket();
+  return pageMetadata({
+    title: { absolute: market === "lk" ? "Ratnavue Sri Lanka — Ceylon Gemstones & Jewelry" : "Ratnavue — Ceylon Gemstones & Jewelry" },
+    description:
+      market === "lk"
+        ? "Shop Ceylon sapphires, rubies and fine jewelry priced in rupees, delivered across Sri Lanka — or ask our team to source the stone you have in mind."
+        : DEFAULT_DESCRIPTION,
+  });
+}
 
 // The home page's two heaviest queries (each a multi-table join over the
 // full catalog) — cached per market for 60s, with an on-demand
@@ -83,6 +96,7 @@ export default async function HomePage() {
 
   return (
     <div className="pb-20 sm:pb-28">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(homeJsonLd(market)) }} />
       {/* ---------- Hero ---------- */}
       {/* Two columns (stacked on phones): the copy, and the admin-managed
           hero photos (Home Page content) in a rounded card on a soft

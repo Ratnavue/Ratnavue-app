@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { pageMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import { getGemstones, getGemCategories, getMasterData, type GemColorFamily } from "@/lib/catalog";
 import { getActivePromotionMaps } from "@/lib/promotion-items";
@@ -16,7 +17,14 @@ import { Pagination } from "@/components/ui/Pagination";
 import { gemColorFor } from "@/lib/gem-palette";
 import type { StylizedGemShape } from "@/components/gem-visualizer/StylizedGem";
 
-export const metadata: Metadata = { title: "Shop Gemstones" };
+export async function generateMetadata({ searchParams }: PageProps<"/gems">): Promise<Metadata> {
+  const sp = await searchParams;
+  const isLanding = !LISTING_PARAMS.some((key) => sp[key] !== undefined);
+  return pageMetadata({
+    title: isLanding ? "Ceylon Gemstones" : "Shop All Ceylon Gemstones",
+    description: "Shop natural Ceylon sapphires, rubies, spinels and more — every stone listed with its cut, colour, clarity and treatment, and independently graded.",
+  });
+}
 
 type SearchParams = Record<string, string | string[] | undefined>;
 

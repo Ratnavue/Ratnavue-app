@@ -35,6 +35,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/configurator`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE_URL}/sourcing`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE_URL}/about`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${BASE_URL}/contact`, changeFrequency: "yearly", priority: 0.4 },
+    { url: `${BASE_URL}/size-guide`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${BASE_URL}/terms`, changeFrequency: "yearly", priority: 0.2 },
   ];
 
   const gemRoutes: MetadataRoute.Sitemap = gems.filter((g) => g.market === "intl").map((g) => ({
@@ -61,6 +64,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}${LK}/configurator`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE_URL}${LK}/sourcing`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE_URL}${LK}/about`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${BASE_URL}${LK}/contact`, changeFrequency: "yearly", priority: 0.4 },
+    { url: `${BASE_URL}${LK}/size-guide`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${BASE_URL}${LK}/terms`, changeFrequency: "yearly", priority: 0.2 },
     ...gems.filter((g) => g.market === "lk").map((g) => ({ url: `${BASE_URL}${LK}/gems/${g.slug}`, lastModified: g.updatedAt, changeFrequency: "weekly" as const, priority: 0.6 })),
     ...jewelry.filter((j) => j.market === "lk").map((j) => ({ url: `${BASE_URL}${LK}/jewelry/${j.slug}`, lastModified: j.updatedAt, changeFrequency: "weekly" as const, priority: 0.6 })),
   ];

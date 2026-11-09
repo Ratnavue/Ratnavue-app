@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import Link from "@/components/ui/MarketLink";
 
-export const metadata: Metadata = { title: "Terms & Conditions" };
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({
+    title: "Terms & Conditions",
+    description: "The terms for buying Ceylon gemstones and fine jewelry from Ratnavue: orders, payment, delivery, returns and certification.",
+  });
+}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

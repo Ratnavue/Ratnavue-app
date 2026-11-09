@@ -18,6 +18,7 @@ import { getFooterMessages } from "@/lib/i18n-messages";
 import { getMarket } from "@/lib/market";
 import { hasAdminPortalAccess } from "@/lib/admin-access";
 import { APP_PATH_HEADER, withMarket } from "@/lib/market-shared";
+import { DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE, SITE_URL, siteNameFor } from "@/lib/seo";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { MarketProvider } from "@/components/providers/MarketProvider";
 import { ConfirmProvider } from "@/components/providers/ConfirmProvider";
@@ -47,33 +48,51 @@ const notoSerifSinhala = Noto_Serif_Sinhala({ variable: "--font-noto-serif-sinha
 const notoSansTamil = Noto_Sans_Tamil({ variable: "--font-noto-sans-tamil", subsets: ["tamil"], display: "swap", preload: false });
 const notoSerifTamil = Noto_Serif_Tamil({ variable: "--font-noto-serif-tamil", subsets: ["tamil"], display: "swap", preload: false });
 
-const BASE_URL = process.env.AUTH_URL ?? "http://localhost:3000";
-// Signed-in / transactional areas — never worth a canonical or hreflang.
+// Signed-in / transactional areas — never indexed, never worth a canonical or hreflang.
 const PRIVATE_PREFIXES = ["/account", "/checkout", "/admin", "/api"];
+// Listings that exist on ONE storefront only (a gem/jewelry piece/auction
+// belongs to either /… or /lk/…, never both) — so they get a canonical but no
+// hreflang alternates, which would otherwise point at a 404 in the other store.
+const SINGLE_STORE_ROUTE = /^\/(gems|jewelry|auction)\/[^/]+$/;
 
 export async function generateMetadata(): Promise<Metadata> {
   const [headerStore, market] = await Promise.all([headers(), getMarket()]);
   const path = headerStore.get(APP_PATH_HEADER) ?? "/";
   const isPrivate = PRIVATE_PREFIXES.some((prefix) => path === prefix || path.startsWith(prefix + "/"));
+  const canonical = SITE_URL + withMarket(path, market);
 
   return {
+    metadataBase: new URL(SITE_URL),
     title: {
       default: "Ratnavue — Ceylon Gemstones & Jewelry",
-      template: "%s · Ratnavue",
+      template: `%s · ${siteNameFor(market)}`,
     },
-    description:
-      "Ratnavue is a Ceylon gemstone and jewelry house offering ethically sourced sapphires, rubies, and fine jewelry, with bespoke gem sourcing and quotation.",
+    description: DEFAULT_DESCRIPTION,
+    // Defaults for link previews; pages replace them with their own via
+    // pageMetadata() (lib/seo.ts). The share image is app/opengraph-image.tsx.
+    openGraph: {
+      title: "Ratnavue — Ceylon Gemstones & Jewelry",
+      description: DEFAULT_DESCRIPTION,
+      url: canonical,
+      siteName: siteNameFor(market),
+      type: "website",
+      images: [DEFAULT_OG_IMAGE],
+      locale: market === "lk" ? "en_LK" : "en_US",
+    },
+    twitter: { card: "summary_large_image", images: [DEFAULT_OG_IMAGE.url] },
     // The same page exists on both storefronts (dollars at /…, rupees at
     // /lk/…). Each is canonical to itself, and they're declared as
     // alternates of each other so search engines show Sri Lankan searchers
     // the rupee store and everyone else the international one, instead of
     // treating one as a duplicate of the other.
     ...(isPrivate
-      ? {}
+      ? { robots: { index: false, follow: false } }
       : {
           alternates: {
-            canonical: BASE_URL + withMarket(path, market),
-            languages: { "en-LK": BASE_URL + withMarket(path, "lk"), "x-default": BASE_URL + path },
+            canonical,
+            ...(SINGLE_STORE_ROUTE.test(path)
+              ? {}
+              : { languages: { "en-LK": SITE_URL + withMarket(path, "lk"), "x-default": SITE_URL + path } }),
           },
         }),
   };

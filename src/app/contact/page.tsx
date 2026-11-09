@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
-export const metadata: Metadata = { title: "Contact Us" };
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({
+    title: "Contact Us",
+    description: "Get in touch with Ratnavue about a gemstone, a custom piece, an order or a sourcing request — our team in Sri Lanka will get back to you.",
+  });
+}
 
 function Row({ title, body, email }: { title: string; body: string; email: string }) {
   return (

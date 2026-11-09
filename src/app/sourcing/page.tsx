@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { auth } from "@/lib/auth";
 import { SourcingForm } from "@/components/quote/SourcingForm";
 import { LinkButton } from "@/components/ui/Button";
@@ -6,10 +7,12 @@ import { StylizedGem } from "@/components/gem-visualizer/StylizedGem";
 import { gemColorFor } from "@/lib/gem-palette";
 import { getTranslations } from "next-intl/server";
 
-export const metadata: Metadata = {
-  title: "Gem Sourcing",
-  description: "Can't find what you're looking for? Submit a sourcing request and our gemologists will find it for you.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({
+    title: "Gem Sourcing",
+    description: "Can't find the stone you want? Tell us the mineral, size, cut or colour and our team will source it from Sri Lanka's gem markets — no obligation.",
+  });
+}
 
 const STEPS = [1, 2, 3] as const;
 

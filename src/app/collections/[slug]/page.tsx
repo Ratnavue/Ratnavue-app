@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_NAME, metaDescription } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getMarket } from "@/lib/market";
@@ -42,20 +43,24 @@ export async function generateMetadata({ params }: PageProps<"/collections/[slug
 
   const content = all[key];
   const url = `${BASE_URL}/collections/${content.urlSlug}`;
+  // Admin-written copy can run past what search results show; trimmed on whole words.
+  const description = metaDescription(content.seoDescription);
   return {
     title: content.seoTitle,
-    description: content.seoDescription,
+    description,
     alternates: { canonical: url },
     openGraph: {
       title: content.seoTitle,
-      description: content.seoDescription,
+      description,
       url,
+      siteName: SITE_NAME,
+      type: "website",
       images: content.ogImage ? [{ url: content.ogImage }] : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title: content.seoTitle,
-      description: content.seoDescription,
+      description,
       images: content.ogImage ? [content.ogImage] : undefined,
     },
   };
