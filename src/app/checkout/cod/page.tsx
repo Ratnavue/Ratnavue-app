@@ -43,7 +43,7 @@ export default async function CodInstructionsPage({ searchParams }: PageProps<"/
 
   if (order.status === "CANCELLED") {
     return (
-      <div className="mx-auto max-w-xl px-5 py-24 text-center sm:px-8">
+      <div className="mx-auto max-w-xl px-5 pb-24 pt-10 text-center sm:px-8">
         <h1 className="font-serif text-3xl text-charcoal">{order.orderNumber}</h1>
         <p className="mt-4 text-charcoal/70">{t("cancelled")}</p>
         <LinkButton href="/gems" variant="primary" className="mt-8">{t("continueShopping")}</LinkButton>

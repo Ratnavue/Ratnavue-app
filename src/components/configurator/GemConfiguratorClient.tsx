@@ -115,9 +115,9 @@ export function GemConfiguratorClient({ minerals, cuts, clarityGrades, isAuthent
         {/* The procedural renderer (cut geometry, tone, clarity inclusions)
             on a stage washed with the stone's own colour. */}
         <div
-          className="flex aspect-[1/0.84] items-center justify-center overflow-hidden rounded-3xl p-10 sm:p-14"
+          className="flex aspect-[1/0.84] items-center justify-center overflow-hidden rounded-3xl border border-border-subtle p-10 sm:p-14"
           style={{
-            background: `radial-gradient(70% 70% at 50% 42%, color-mix(in srgb, ${stageColor} 30%, var(--color-ivory-soft)) 0%, color-mix(in srgb, ${stageColor} 12%, var(--color-ivory-soft)) 60%, var(--color-ivory-soft) 100%)`,
+            background: `radial-gradient(70% 70% at 50% 42%, color-mix(in srgb, ${stageColor} 30%, var(--stage-base)) 0%, color-mix(in srgb, ${stageColor} 12%, var(--stage-base)) 60%, var(--stage-base) 100%)`,
           }}
         >
           {cut && (

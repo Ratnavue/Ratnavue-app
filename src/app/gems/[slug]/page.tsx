@@ -78,7 +78,7 @@ export default async function GemDetailPage({ params }: PageProps<"/gems/[slug]"
           HeritageSideArt's own comment for the motif). */}
       <HeritageSideArt side="left" className="absolute left-0 top-0 h-full w-48" />
       <HeritageSideArt side="right" className="absolute right-0 top-0 h-full w-48" />
-      <div className="relative mx-auto max-w-6xl px-5 py-12 sm:px-8">
+      <div className="relative mx-auto max-w-6xl px-5 pb-12 pt-10 sm:px-8">
       <Breadcrumbs
         items={[
           { label: t("home"), href: "/" },
@@ -97,7 +97,7 @@ export default async function GemDetailPage({ params }: PageProps<"/gems/[slug]"
             <p className="text-xs uppercase tracking-widest text-gold-deep">{gem.mineral.name}</p>
             <StockBadge status={gem.stockStatus} />
             {gem.origin.isCeylon && (
-              <span className="rounded-full bg-night/85 px-2.5 py-0.5 text-[11px] font-medium tracking-wide text-cream">
+              <span className="rounded-full border border-border-subtle bg-raised px-2.5 py-0.5 text-[11px] font-medium tracking-wide text-charcoal">
                 {t("ceylonOrigin")}
               </span>
             )}

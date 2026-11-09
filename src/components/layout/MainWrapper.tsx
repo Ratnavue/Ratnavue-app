@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 // Routes whose own first section is a full-bleed hero starting at the very
 // top of the page (same idea as the homepage hero) — these must NOT get the
-// pt-24 nav-clearance padding below, or a strip of bare background shows up
+// NAV_CLEARANCE padding below, or a strip of bare background shows up
 // between the fixed Navbar and the top of their hero image.
 // Home, Our Story and Sourcing used to open on full-bleed photos too; their
 // redesigned heroes are contained layouts and take the normal padding.
@@ -14,6 +14,12 @@ const FULL_BLEED_HERO_ROUTES = ["/promotions", "/promotions/collection"];
 // it can't be listed above — every page under it opens with the same
 // full-bleed min-h-dvh hero (see AlternativeCollectionPage).
 const FULL_BLEED_HERO_PREFIXES = ["/collections/"];
+
+// Exactly the fixed Navbar's height (py-4 around its 40px controls, plus the
+// 1px bottom border = 73px), so content starts right under it; each page adds
+// its own consistent top spacing (pt-10) from there. This used to be pt-24
+// (96px), which with pages' own py-12..py-24 left a large empty band.
+const NAV_CLEARANCE = "pt-[73px]";
 
 /**
  * The Navbar is fixed (not sticky) so it can float transparently over the
@@ -67,9 +73,9 @@ export function MainWrapper({ children }: { children: React.ReactNode }) {
     // marginTop tracks --site-banner-h (see SiteStatusBanner) — 0 when no
     // banner is showing, so this is a no-op the rest of the time. Applied
     // uniformly (hero and non-hero pages alike) since it's clearance for
-    // the banner, not the Navbar — pt-24 below is the separate, Navbar-only
+    // the banner, not the Navbar — NAV_CLEARANCE is the separate, Navbar-only
     // clearance, and a full-bleed hero page still wants none of that.
-    <main key={pathname} style={{ marginTop: "var(--site-banner-h, 0px)" }} className={cn("animate-page-in relative z-[1] flex-1", !hasFullBleedHero && !isAdmin && "pt-24")}>
+    <main key={pathname} style={{ marginTop: "var(--site-banner-h, 0px)" }} className={cn("animate-page-in relative z-[1] flex-1", !hasFullBleedHero && !isAdmin && NAV_CLEARANCE)}>
       {children}
     </main>
   );

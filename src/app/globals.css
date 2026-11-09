@@ -19,18 +19,19 @@
                                    as TEXT, so it brightens in dark (flip)
 
    Contrast (WCAG AA) checked on both: dark — ink on page 14.9:1, ink at 65%
-   6.4:1, gold accent text 9.6:1, night text on gold buttons 9.3:1; light —
-   ink on page 16.2:1, ink at 65% 5.6:1, gold-deep text 5.2:1.
+   6.4:1, gold accent text 9.6:1, night text on gold buttons 9.0:1; light —
+   ink on page 15.8:1, gold-deep text 5.7:1 on the page and 4.9:1 on the
+   champagne band, night text on gold buttons 8.0:1.
    ------------------------------------------------------------------------- */
 :root,
 [data-theme="light"] {
   --color-ivory: #f8f5ef;
-  --color-ivory-soft: #efe9de;
+  --color-ivory-soft: #f2ece2;
   --color-charcoal: #141b2d;
   --color-charcoal-soft: #2a3350;
-  --color-gold: #c99a4c;
-  --color-gold-soft: #e6c990;
-  --color-gold-deep: #85621f;
+  --color-gold: #d9aa5a;
+  --color-gold-soft: #edd29d;
+  --color-gold-deep: #7c5b1c;
   --color-midnight: #0d1424;
   --color-sapphire: #1f3768;
   --color-sapphire-soft: #34548d;
@@ -46,11 +47,17 @@
   --foreground: var(--color-charcoal);
   --surface: #fffdf9;
   --border-subtle: #e3dbcc;
-  /* The stylised gem stage (preview cards, category tiles). */
-  --stage-from: #e9eef8;
-  --stage-to: #f8f5ef;
-  /* How strongly the sapphire feature bands (.band-sapphire) are tinted. */
-  --band-strength: 16%;
+  /* What a gem's colour glow fades into on a gem stage (category tile
+     fallback, configurator preview): clean white by day — the soft beige
+     made every tint read grey. */
+  --stage-base: var(--surface);
+  /* The feature bands (.band-sapphire): warm champagne by day, matching the
+     gold buttons on them, instead of a greyed-out sapphire wash. */
+  --band-from: #f0e2c6;
+  --band-mid: #f4ead8;
+  --band-to: #f8f3ea;
+  /* The soft glow behind the home hero's image card. */
+  --hero-glow: color-mix(in srgb, var(--color-gold) 22%, transparent);
   color-scheme: light;
 
   /* Status tints (alerts, success/warning notes: bg-red-50 + text-red-700
@@ -103,9 +110,11 @@
   --foreground: var(--color-charcoal);
   --surface: #131b2f;
   --border-subtle: #232d45;
-  --stage-from: #1f2e5a;
-  --stage-to: #121a2e;
-  --band-strength: 100%;
+  --stage-base: var(--color-ivory-soft);
+  --band-from: var(--color-sapphire);
+  --band-mid: color-mix(in srgb, var(--color-sapphire) 55%, var(--color-ivory-soft));
+  --band-to: var(--color-ivory-soft);
+  --hero-glow: color-mix(in srgb, var(--color-sapphire-soft) 45%, transparent);
   color-scheme: dark;
 
   /* The same status tints, re-pointed for the dark page: the pale -50/-100/
@@ -163,16 +172,11 @@
   --font-sans: var(--font-inter);
 }
 
-/* The sapphire feature band (CTA panels, "Not seeing the one?"): deep
-   sapphire fading into the soft surface in the dark theme, a pale wash of the
-   same in the light theme — ink text stays readable on both. */
+/* The feature band (CTA panels, "Not seeing the one?"): deep sapphire
+   fading into the soft surface at night, warm champagne by day — ink text
+   and gold buttons read well on both. Colours are the --band-* tokens. */
 .band-sapphire {
-  background: linear-gradient(
-    120deg,
-    color-mix(in srgb, var(--color-sapphire) var(--band-strength), var(--color-ivory-soft)) 0%,
-    color-mix(in srgb, var(--color-sapphire) calc(var(--band-strength) * 0.55), var(--color-ivory-soft)) 60%,
-    var(--color-ivory-soft) 100%
-  );
+  background: linear-gradient(120deg, var(--band-from) 0%, var(--band-mid) 60%, var(--band-to) 100%);
 }
 
 body {

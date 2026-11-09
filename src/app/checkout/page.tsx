@@ -50,7 +50,7 @@ export default async function CheckoutPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-16 sm:px-8">
+    <div className="mx-auto max-w-2xl px-5 pb-16 pt-10 sm:px-8">
       <p className="text-xs uppercase tracking-widest text-gold-deep">{tPage("kicker")}</p>
       <h1 className="mt-2 font-serif text-4xl text-charcoal">{tPage("title")}</h1>
 

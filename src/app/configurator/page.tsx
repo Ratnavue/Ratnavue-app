@@ -13,7 +13,7 @@ export default async function ConfiguratorPage() {
   const [masterData, session, t] = await Promise.all([getMasterData(), auth(), getTranslations("configurator")]);
 
   return (
-    <div className="mx-auto max-w-[120rem] px-5 pb-20 pt-10 sm:px-8 sm:pt-14 lg:px-12 xl:px-16">
+    <div className="mx-auto max-w-[120rem] px-5 pb-20 pt-10 sm:px-8 lg:px-12 xl:px-16">
       <div className="mb-10 max-w-5xl sm:mb-14">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{t("kicker")}</p>
         <h1 className="mt-4 font-serif text-5xl leading-[1.05] text-charcoal sm:text-6xl lg:text-7xl">{t("title")}</h1>

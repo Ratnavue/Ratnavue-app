@@ -65,7 +65,7 @@ export default async function AuctionDetailPage({ params }: PageProps<"/auction/
   const catalogHref = auction.gemstone ? `/gems/${auction.gemstone.slug}` : auction.jewelry ? `/jewelry/${auction.jewelry.slug}` : null;
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
+    <div className="mx-auto max-w-6xl px-5 pb-12 pt-10 sm:px-8">
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Auctions", href: "/auction" }, { label }]} />
       <div className="grid gap-12 lg:grid-cols-2">
         <Reveal y={16}>

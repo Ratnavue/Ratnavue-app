@@ -91,9 +91,9 @@ export default async function HomePage() {
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
-          style={{ background: "radial-gradient(55% 70% at 78% 30%, color-mix(in srgb, var(--color-sapphire-soft) 45%, transparent), transparent 70%)" }}
+          style={{ background: "radial-gradient(55% 70% at 78% 30%, var(--hero-glow), transparent 70%)" }}
         />
-        <div className="relative mx-auto grid max-w-[120rem] items-center gap-10 px-5 pb-16 pt-10 sm:px-8 sm:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:px-12 lg:pb-24 xl:px-16">
+        <div className="relative mx-auto grid max-w-[120rem] items-center gap-10 px-5 pb-16 pt-10 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:px-12 lg:pb-24 xl:px-16">
           <div className="max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{content.heroKicker}</p>
             <h1 className="mt-5 font-serif text-5xl leading-[1.04] text-charcoal sm:text-6xl xl:text-7xl">

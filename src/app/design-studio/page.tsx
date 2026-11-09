@@ -39,7 +39,7 @@ export default async function CustomerDesignStudioPage({ searchParams }: PagePro
       : null;
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
+    <div className="mx-auto max-w-6xl px-5 pb-12 pt-10 sm:px-8">
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Design Studio" }]} />
       <div className="mb-10 max-w-2xl">
         <p className="text-xs uppercase tracking-widest text-gold-deep">Design Studio</p>

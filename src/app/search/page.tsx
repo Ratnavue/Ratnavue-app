@@ -23,7 +23,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
 
   if (!q) {
     return (
-      <div className="mx-auto max-w-3xl px-5 py-24 text-center sm:px-8">
+      <div className="mx-auto max-w-3xl px-5 pb-24 pt-10 text-center sm:px-8">
         <p className="text-xs uppercase tracking-widest text-gold-deep">Search</p>
         <h1 className="mt-2 font-serif text-3xl text-charcoal">What are you looking for?</h1>
         <p className="mt-3 text-charcoal/60">Try a mineral, a piece type, or a style — &ldquo;sapphire,&rdquo; &ldquo;ring,&rdquo; &ldquo;pear cut.&rdquo;</p>

@@ -33,7 +33,7 @@ export function QuoteRequestPanel({ isAuthenticated, gemstoneId, jewelryId, conf
 
   if (!isAuthenticated) {
     return (
-      <div className={bare ? "" : "rounded-xl border border-border-subtle bg-ivory-soft p-5"}>
+      <div className={bare ? "" : "rounded-xl border border-border-subtle bg-surface p-5"}>
         <p className={bare ? "text-charcoal/80" : "text-sm text-charcoal/75"}>{tq("signInPrompt", { product: productLabel })}</p>
         <Link href={`/account/login?callbackUrl=${encodeURIComponent(pathname)}`} className={bare ? "mt-4 block" : undefined}>
           <Button variant="primary" size={bare ? "lg" : "md"} className={bare ? "w-full" : "mt-3"}>{tq("signInCta")}</Button>

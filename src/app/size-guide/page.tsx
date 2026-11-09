@@ -34,7 +34,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
 
 export default function SizeGuidePage() {
   return (
-    <div className="mx-auto max-w-3xl px-5 py-16 sm:px-8">
+    <div className="mx-auto max-w-3xl px-5 pb-16 pt-10 sm:px-8">
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Size Guide" }]} />
       <p className="text-xs uppercase tracking-widest text-gold-deep">Reference</p>
       <h1 className="mt-2 font-serif text-4xl text-charcoal">Size Guide</h1>

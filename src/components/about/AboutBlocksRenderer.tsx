@@ -48,7 +48,7 @@ const SPAN_CLASSES: Record<ColumnSpan, string> = {
 // (multi-column) rendering, which still uses it.
 function HeroSection({ block, animate }: { block: Extract<AboutBlock, { type: "hero" }>; animate: boolean }) {
   return (
-    <section className="mx-auto max-w-[120rem] px-5 pb-8 pt-12 text-center sm:px-8 sm:pt-20 lg:px-12 xl:px-16">
+    <section className="mx-auto max-w-[120rem] px-5 pb-8 pt-10 text-center sm:px-8 lg:px-12 xl:px-16">
       <Wrap animate={animate}>
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{block.kicker}</p>
         <h1 className="mx-auto mt-5 max-w-5xl font-serif text-5xl leading-[1.05] text-charcoal sm:text-6xl lg:text-7xl">

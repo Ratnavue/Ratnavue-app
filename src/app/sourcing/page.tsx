@@ -18,7 +18,7 @@ export default async function SourcingPage() {
   const signedIn = !!session?.user;
 
   return (
-    <div className="mx-auto grid max-w-[120rem] gap-12 px-5 pb-20 pt-12 sm:px-8 sm:pt-20 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:px-12 xl:px-16">
+    <div className="mx-auto grid max-w-[120rem] gap-12 px-5 pb-20 pt-10 sm:px-8 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:px-12 xl:px-16">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{t("kicker")}</p>
         <h1 className="mt-5 max-w-3xl font-serif text-5xl leading-[1.05] text-charcoal sm:text-6xl lg:text-7xl">

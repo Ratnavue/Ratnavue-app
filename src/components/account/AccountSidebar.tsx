@@ -161,7 +161,7 @@ export function AccountSidebar({
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-2 whitespace-nowrap rounded-full border px-3.5 py-2 text-sm transition-colors",
-                  active ? "border-charcoal bg-night text-cream" : "border-border-subtle bg-surface text-charcoal/75",
+                  active ? "border-gold bg-gold font-medium text-night" : "border-border-subtle bg-surface text-charcoal/75",
                 )}
               >
                 <Icon size={15} />

@@ -9,7 +9,7 @@ import { withMarket } from "@/lib/market-shared";
 const VARIANTS = {
   // Gold is the one primary action colour across both themes (the mockup's
   // "Sign in", "View all gemstones", "Request a quote"), always with dark
-  // night text — 9.3:1 on the dark theme's gold, 7.9:1 on the light one's.
+  // night text — 9.0:1 on the dark theme's gold, 8.0:1 on the light one's.
   primary: "bg-gold font-semibold text-night hover:bg-gold-soft",
   gold: "bg-gold font-semibold text-night hover:bg-gold-soft",
   outline: "border border-charcoal/30 text-charcoal hover:border-charcoal bg-transparent",

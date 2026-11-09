@@ -65,8 +65,8 @@ export function StylizedGem({
 
 /**
  * A rounded stage behind a StylizedGem: the page's soft surface, washed with a
- * radial glow of the gem's own colour (via color-mix, so it adapts to the
- * dark and light themes without separate values).
+ * radial glow of the gem's own colour, fading into --stage-base (white by
+ * day, the soft navy at night).
  */
 export function GemStage({
   color,
@@ -81,7 +81,7 @@ export function GemStage({
     <div
       className={cn("relative overflow-hidden", className)}
       style={{
-        background: `radial-gradient(85% 75% at 50% 40%, color-mix(in srgb, ${color} 34%, var(--color-ivory-soft)) 0%, color-mix(in srgb, ${color} 10%, var(--color-ivory-soft)) 55%, var(--color-ivory-soft) 100%)`,
+        background: `radial-gradient(85% 75% at 50% 40%, color-mix(in srgb, ${color} 34%, var(--stage-base)) 0%, color-mix(in srgb, ${color} 10%, var(--stage-base)) 55%, var(--stage-base) 100%)`,
       }}
     >
       {children}

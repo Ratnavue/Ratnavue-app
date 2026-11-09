@@ -55,7 +55,7 @@ export default async function AuctionListPage() {
     });
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
+    <div className="mx-auto max-w-6xl px-5 pb-12 pt-10 sm:px-8">
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Auctions" }]} />
       <Reveal y={16}>
         <p className="text-xs uppercase tracking-[0.35em] text-charcoal/65">Live Auctions</p>

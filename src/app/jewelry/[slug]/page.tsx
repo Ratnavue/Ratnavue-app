@@ -76,7 +76,7 @@ export default async function JewelryDetailPage({ params }: PageProps<"/jewelry/
     <div className="relative overflow-hidden">
       <HeritageSideArt side="left" className="absolute left-0 top-0 h-full w-48" />
       <HeritageSideArt side="right" className="absolute right-0 top-0 h-full w-48" />
-      <div className="relative mx-auto max-w-6xl px-5 py-12 sm:px-8">
+      <div className="relative mx-auto max-w-6xl px-5 pb-12 pt-10 sm:px-8">
       <Breadcrumbs
         items={[
           { label: t("home"), href: "/" },
