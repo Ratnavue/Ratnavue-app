@@ -170,6 +170,7 @@ export default async function HomePage() {
                     clarityName={gem.clarityGrade.name}
                     treatmentName={gem.treatment.name}
                     isCeylon={gem.origin.isCeylon}
+                    specialties={gem.specialties}
                     stockStatus={gem.stockStatus}
                     primaryImageUrl={gem.media.find((m) => m.isPrimary)?.url ?? gem.media[0]?.url}
                     price={gem.price}

@@ -23,7 +23,7 @@ import { MarketProvider } from "@/components/providers/MarketProvider";
 import { ConfirmProvider } from "@/components/providers/ConfirmProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import type { AppLocale } from "@/i18n/request";
-import { THEME_COOKIE, parseTheme, themeForPath } from "@/lib/theme";
+import { DEVICE_CLOCK_THEME_SCRIPT, THEME_COOKIE, locationFromHeaders, parseTheme, resolveTheme } from "@/lib/theme";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -81,9 +81,15 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const [market, headerStore, cookieStore] = await Promise.all([getMarket(), headers(), cookies()]);
-  // Both storefronts share one palette; the visitor picks dark (default) or
-  // light with ThemeToggle. Rendered here so the first paint is already right.
-  const theme = themeForPath(headerStore.get(APP_PATH_HEADER) ?? "/", parseTheme(cookieStore.get(THEME_COOKIE)?.value));
+  // Both storefronts share one palette. The visitor's own ThemeToggle choice
+  // wins; until they make one, it's light by day and dark by night at their
+  // IP location (lib/theme.ts). Rendered here so the first paint is right.
+  const { theme, source: themeSource } = resolveTheme({
+    path: headerStore.get(APP_PATH_HEADER) ?? "/",
+    saved: parseTheme(cookieStore.get(THEME_COOKIE)?.value),
+    location: locationFromHeaders(headerStore),
+    at: new Date(),
+  });
   const seasonalKey = marketVisibilityKey("seasonal", market);
   const auctionKey = marketVisibilityKey("auction", market);
   const [session, visibilities, seasonalContent, locale, customLocales, paymentMethodOverrides, siteBanner] = await Promise.all([
@@ -129,7 +135,16 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     : 0;
 
   return (
-    <html lang={locale} data-market={market} data-theme={theme} className={`${cormorant.variable} ${inter.variable} ${notoSansSinhala.variable} ${notoSerifSinhala.variable} ${notoSansTamil.variable} ${notoSerifTamil.variable} h-full antialiased`}>
+    // suppressHydrationWarning: with no known location, the inline script below
+    // may switch data-theme before React hydrates (it's meant to).
+    <html lang={locale} data-market={market} data-theme={theme} suppressHydrationWarning className={`${cormorant.variable} ${inter.variable} ${notoSansSinhala.variable} ${notoSerifSinhala.variable} ${notoSansTamil.variable} ${notoSerifTamil.variable} h-full antialiased`}>
+      {themeSource === "unknown" && (
+        <head>
+          {/* No IP location to go on (local dev, an unknown IP): let the
+              device's own clock pick day/night before first paint. */}
+          <script dangerouslySetInnerHTML={{ __html: DEVICE_CLOCK_THEME_SCRIPT }} />
+        </head>
+      )}
       <body className="min-h-full flex flex-col bg-ivory text-charcoal">
         <MarketProvider market={market}>
         <NextIntlClientProvider>

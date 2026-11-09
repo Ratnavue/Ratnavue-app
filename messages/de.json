@@ -195,7 +195,9 @@
       "onPromotion": "Im Angebot",
       "filter": "Filtern",
       "clear": "Filter Zurücksetzen",
-      "audience": "Gestaltet für"
+      "audience": "Gestaltet für",
+      "showFilters": "Filter anzeigen",
+      "hideFilters": "Filter ausblenden"
     },
     "stock": {
       "AVAILABLE": "Verfügbar",
@@ -233,8 +235,18 @@
           "men": "Siegelringe, Armbänder, Manschettenknöpfe und Anhänger für ihn.",
           "couple": "Passende Paare und Sets, zum Teilen gemacht.",
           "unisex": "Zeitlose Stücke, die zu jedem passen."
-        }
+        },
+        "viewAllCount": "{count, plural, one {# Stück ansehen} other {Alle # Stücke ansehen}}",
+        "notSeeingTitle": "Nicht das Richtige dabei?",
+        "notSeeingBody": "Sagen Sie uns, was Ihnen vorschwebt — unser Team sucht oder fertigt es für Sie.",
+        "notSeeingCta": "Suchanfrage senden"
       }
+    },
+    "specialty": {
+      "COLOR_CHANGE": "Farbwechsel",
+      "STAR": "Stern",
+      "CATS_EYE": "Katzenauge",
+      "BI_COLOR": "Zweifarbig"
     }
   },
   "product": {

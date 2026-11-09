@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { StoreField, type ListingMarket } from "@/components/admin/StoreField";
 import { LkPricingFields } from "@/components/admin/LkPricingFields";
 import { DraftMediaPicker } from "@/components/admin/DraftMediaPicker";
+import { GEM_SPECIALTIES, GEM_SPECIALTY_ADMIN } from "@/lib/gem-constants";
 
 interface Option {
   id: string;
@@ -60,6 +61,7 @@ interface GemstoneFormProps {
     stockStatus: string;
     isPublished: boolean;
     isFeatured: boolean;
+    specialties?: readonly string[];
     market: string;
     lkrRetailPrice: number | null;
     lkrPrice: number | null;
@@ -259,6 +261,23 @@ export function GemstoneForm({ minerals, cuts, clarityGrades, treatments, origin
           </div>
           <input type="range" min={0} max={100} name="colorLightness" value={darkness} onChange={(e) => setDarkness(Number(e.target.value))} className="w-full" />
         </section>
+
+        {/* Shown as gold tags on the gem's card and product page. */}
+        <fieldset>
+          <legend className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-charcoal/70">Speciality</legend>
+          <p className="mb-3 text-xs text-charcoal/60">Tick any that apply — they appear as tags on the gem&apos;s card and page.</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {GEM_SPECIALTIES.map((key) => (
+              <label key={key} className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border-subtle p-3 text-sm hover:border-gold/50 has-[:checked]:border-gold has-[:checked]:bg-gold/10">
+                <input type="checkbox" name="specialties" value={key} defaultChecked={initial?.specialties?.includes(key)} className="mt-0.5 accent-gold" />
+                <span>
+                  <span className="block font-medium text-charcoal">{GEM_SPECIALTY_ADMIN[key].label}</span>
+                  <span className="block text-xs text-charcoal/60">{GEM_SPECIALTY_ADMIN[key].hint}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
         <section className="grid gap-5 sm:grid-cols-2">
           <div>

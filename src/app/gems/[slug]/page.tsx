@@ -32,6 +32,7 @@ import { formatPrice } from "@/lib/utils";
 import { getMarket } from "@/lib/market";
 import { getTranslations } from "next-intl/server";
 import { MARKETS } from "@/lib/market-shared";
+import { SpecialtyBadges } from "@/components/catalog/SpecialtyBadges";
 
 export async function generateMetadata({ params }: PageProps<"/gems/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -101,6 +102,7 @@ export default async function GemDetailPage({ params }: PageProps<"/gems/[slug]"
               </span>
             )}
             {gem.certLab && <CertifiedBadge lab={gem.certLab} />}
+            <SpecialtyBadges specialties={gem.specialties} size="md" />
           </div>
           <div className="mt-2 flex items-start justify-between gap-3">
             <h1 className="font-serif text-4xl text-charcoal">{gem.name}</h1>
@@ -236,6 +238,7 @@ export default async function GemDetailPage({ params }: PageProps<"/gems/[slug]"
                     clarityName={related.clarityGrade.name}
                     treatmentName={related.treatment.name}
                     isCeylon={related.origin.isCeylon}
+                    specialties={related.specialties}
                     stockStatus={related.stockStatus}
                     primaryImageUrl={related.media.find((m) => m.isPrimary)?.url ?? related.media[0]?.url}
                     price={related.price}

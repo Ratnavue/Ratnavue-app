@@ -65,7 +65,8 @@ export async function JewelryFilterBar({ current }: JewelryFilterBarProps) {
 
   // See GemFilterBar — what the mobile "Filters" button's badge counts.
   const activeCount = Object.entries(current).reduce((n, [key, value]) => {
-    if (key === "q" || key === "sort" || key === "page" || !value) return n;
+    // q has its own visible box; sort, page and view (the "show everything" mode) aren't filters.
+    if (key === "q" || key === "sort" || key === "page" || key === "view" || !value) return n;
     return n + (Array.isArray(value) ? value.length : 1);
   }, 0);
 

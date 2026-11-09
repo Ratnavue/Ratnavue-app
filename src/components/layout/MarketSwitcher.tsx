@@ -5,7 +5,7 @@ import { ChevronDown, MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useAppPathname, useMarket } from "@/components/providers/MarketProvider";
 import { withMarket, type Market } from "@/lib/market-shared";
-import { STORE_PREF_COOKIE, STORE_PREF_MAX_AGE_SECONDS } from "@/lib/geo-landing";
+import { STORE_CHOICE_COOKIE, STORE_CHOICE_MAX_AGE_SECONDS } from "@/lib/geo-landing";
 import { cn } from "@/lib/utils";
 
 // The two storefronts, in the order shown. Labels come from messages
@@ -20,11 +20,11 @@ function useSwitchHref() {
   return (target: Market) => withMarket(pathname, target);
 }
 
-// Records the visitor's own pick so the first-visit geo landing in proxy.ts
+// Records the visitor's own pick so the location-based landing in proxy.ts
 // (lib/geo-landing.ts) never overrides it — a Sri Lankan visitor who chooses
 // the international store stays there on every later visit.
 function goTo(target: Market, href: string) {
-  document.cookie = `${STORE_PREF_COOKIE}=${target}; path=/; max-age=${STORE_PREF_MAX_AGE_SECONDS}; samesite=lax`;
+  document.cookie = `${STORE_CHOICE_COOKIE}=${target}; path=/; max-age=${STORE_CHOICE_MAX_AGE_SECONDS}; samesite=lax`;
   window.location.assign(href + window.location.search);
 }
 
@@ -33,7 +33,7 @@ function goTo(target: Market, href: string) {
  * Deliberately a full page load rather than a soft navigation: the two
  * storefronts differ in pricing, cart, content and theme, all decided in the
  * root layout, so a clean load is the simplest way to guarantee nothing from
- * the other market lingers. A first landing is picked by location (see
+ * the other market lingers. Direct visits land by location (see
  * lib/geo-landing.ts); choosing here overrides that for good.
  */
 export function MarketSwitcher({ transparent = false }: { transparent?: boolean }) {

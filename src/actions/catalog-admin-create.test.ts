@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { redirect } from "next/navigation";
 import { prismaMock } from "@/test/prisma-mock";
-import { createGemstone, createJewelry } from "@/actions/catalog-admin";
+import { createGemstone, createJewelry, updateGemstone } from "@/actions/catalog-admin";
 
 // Regression: creating a gem/jewelry piece used to end in redirect(), which
 // works by throwing. The admin forms call these actions inside try/catch, so
@@ -55,6 +55,50 @@ describe("createGemstone", () => {
     expect(result.ok).toBe(false);
     expect(result).not.toHaveProperty("redirectTo");
     expect(prismaMock.gemstone.create).not.toHaveBeenCalled();
+  });
+});
+
+describe("gem speciality tags", () => {
+  function withSpecialties(fields: Record<string, string>, specialties: string[]): FormData {
+    const fd = formData(fields);
+    // Checkboxes: FormData repeats the key once per ticked box.
+    for (const s of specialties) fd.append("specialties", s);
+    return fd;
+  }
+
+  it("saves every ticked speciality on create", async () => {
+    prismaMock.gemstone.findUnique.mockResolvedValue(null);
+    prismaMock.gemstone.create.mockResolvedValue({ id: "gem-new" } as never);
+
+    await createGemstone(withSpecialties(gemFields, ["COLOR_CHANGE", "STAR"]));
+
+    expect(prismaMock.gemstone.create.mock.calls[0][0].data.specialties).toEqual(["COLOR_CHANGE", "STAR"]);
+  });
+
+  it("saves an empty list when none are ticked", async () => {
+    prismaMock.gemstone.findUnique.mockResolvedValue(null);
+    prismaMock.gemstone.create.mockResolvedValue({ id: "gem-new" } as never);
+
+    await createGemstone(formData(gemFields));
+
+    expect(prismaMock.gemstone.create.mock.calls[0][0].data.specialties).toEqual([]);
+  });
+
+  it("rejects an unknown speciality instead of silently dropping it", async () => {
+    const result = await createGemstone(withSpecialties(gemFields, ["COLOR_CHANGE", "GLOWS_IN_THE_DARK"]));
+
+    expect(result.ok).toBe(false);
+    expect(prismaMock.gemstone.create).not.toHaveBeenCalled();
+  });
+
+  it("clears the tags on edit when the admin unticks them all", async () => {
+    prismaMock.gemstone.findUnique.mockResolvedValue({ market: "intl", price: null, showPrice: false, retailPrice: null, costPrice: null, lkrRetailPrice: null, lkrPrice: null, isFeatured: false } as never);
+    prismaMock.gemstone.update.mockResolvedValue({} as never);
+
+    const result = await updateGemstone("gem-1", formData(gemFields));
+
+    expect(result).toEqual({ ok: true });
+    expect(prismaMock.gemstone.update.mock.calls[0][0].data.specialties).toEqual([]);
   });
 });
 

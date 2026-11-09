@@ -18,6 +18,7 @@ export interface GemResultItem {
   clarityGrade: { slug: string; name: string };
   treatment: { name: string };
   origin: { isCeylon: boolean };
+  specialties?: readonly string[];
   stockStatus: string;
   media: { isPrimary: boolean; url: string }[];
   price: number | null;
@@ -73,6 +74,7 @@ export function GemResults({
               clarityName={gem.clarityGrade.name}
               treatmentName={gem.treatment.name}
               isCeylon={gem.origin.isCeylon}
+              specialties={gem.specialties}
               stockStatus={gem.stockStatus}
               primaryImageUrl={gem.media.find((m) => m.isPrimary)?.url ?? gem.media[0]?.url}
               price={gem.price}

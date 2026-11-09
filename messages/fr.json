@@ -195,7 +195,9 @@
       "onPromotion": "En promotion",
       "filter": "Filtrer",
       "clear": "Effacer les Filtres",
-      "audience": "Conçu pour"
+      "audience": "Conçu pour",
+      "showFilters": "Afficher les filtres",
+      "hideFilters": "Masquer les filtres"
     },
     "stock": {
       "AVAILABLE": "Disponible",
@@ -233,8 +235,18 @@
           "men": "Chevalières, bracelets, boutons de manchette et pendentifs pour lui.",
           "couple": "Paires et ensembles assortis, faits pour être partagés.",
           "unisex": "Des pièces intemporelles qui conviennent à tous."
-        }
+        },
+        "viewAllCount": "{count, plural, one {Voir # pièce} other {Voir les # pièces}}",
+        "notSeeingTitle": "Vous ne trouvez pas la bonne ?",
+        "notSeeingBody": "Dites-nous ce que vous avez en tête : notre équipe la trouvera ou la fabriquera pour vous.",
+        "notSeeingCta": "Envoyer une demande de recherche"
       }
+    },
+    "specialty": {
+      "COLOR_CHANGE": "Changement de couleur",
+      "STAR": "Étoilée",
+      "CATS_EYE": "Œil-de-chat",
+      "BI_COLOR": "Bicolore"
     }
   },
   "product": {

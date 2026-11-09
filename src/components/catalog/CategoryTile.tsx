@@ -1,21 +1,22 @@
 import Image from "next/image";
-import { ArrowUpRight, Gem } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import Link from "@/components/ui/MarketLink";
+import { LinkButton } from "@/components/ui/Button";
 import { GemStage, StylizedGem, type StylizedGemShape } from "@/components/gem-visualizer/StylizedGem";
 import { cn } from "@/lib/utils";
 
+// Fallback art for a category with no photo yet (a fresh catalog, a new type).
+const FALLBACK_GEM_COLOR = "#5b7cc9";
+
 /**
- * One card in a "browse by category" grid: a stage on top, then the category
- * name, how many pieces are in it, and a round arrow. Server-rendered, plain
- * link.
+ * One card in a "browse by category" grid (gems and jewelry alike): the
+ * category's real cover photo on top, then its name, how many pieces are in
+ * it, and a round arrow. Server-rendered, plain link.
  *
- * Two kinds of stage:
- *  - `gemColor` set (the gemstone categories): the stylised gem art on a
- *    stage tinted with the stone's colour. If the category also has a real
- *    cover photo, it fades in over the art on hover, so the actual stones
- *    are still a hover away.
- *  - no `gemColor` (jewelry): the cover photo itself, or a gem icon when
- *    there's none yet.
+ * The photo is the newest imaged listing in the category (see
+ * getGemCategories / getJewelryCategoryData). Only when a category has no
+ * photo at all does the stage fall back to the stylised gem art, tinted with
+ * the stone's own colour when one is given.
  */
 export function CategoryTile({
   href,
@@ -25,47 +26,35 @@ export function CategoryTile({
   image,
   gemColor,
   gemShape = "oval",
-  emphasis = false,
 }: {
   href: string;
   label: string;
   countLabel?: string;
   description?: string;
   image: string | null;
+  /** Colour for the fallback gem art (the mineral's own colour on /gems). */
   gemColor?: string;
   gemShape?: StylizedGemShape;
-  /** The "view everything" tile — set apart with a gold frame. */
-  emphasis?: boolean;
 }) {
+  const fallbackColor = gemColor ?? FALLBACK_GEM_COLOR;
   return (
     <Link
       href={href}
-      className={cn(
-        "group flex flex-col overflow-hidden rounded-2xl border bg-surface transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-night/20",
-        emphasis ? "border-gold/60" : "border-border-subtle hover:border-gold/40",
-      )}
+      className="group flex flex-col overflow-hidden rounded-2xl border border-border-subtle bg-surface transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-xl hover:shadow-night/20"
     >
-      <div className="relative aspect-[5/4.4] overflow-hidden">
-        {gemColor ? (
-          <GemStage color={gemColor} className="absolute inset-0 flex items-center justify-center">
-            <StylizedGem color={gemColor} shape={gemShape} className="w-[54%] translate-y-[4%] transition-transform duration-500 group-hover:scale-105" />
-          </GemStage>
-        ) : !image ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-ivory-soft text-gold/50">
-            <Gem size={56} strokeWidth={1} />
-          </div>
-        ) : null}
-        {image && (
+      <div className="relative aspect-[5/4.4] overflow-hidden bg-ivory-soft">
+        {image ? (
           <Image
             src={image}
-            alt=""
+            alt={label}
             fill
-            sizes="(min-width: 1024px) 24vw, (min-width: 640px) 33vw, 50vw"
-            className={cn(
-              "object-cover transition-[opacity,transform] duration-700 ease-out",
-              gemColor ? "opacity-0 group-hover:opacity-100" : "group-hover:scale-105",
-            )}
+            sizes="(min-width: 1280px) 24vw, (min-width: 1024px) 32vw, 50vw"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           />
+        ) : (
+          <GemStage color={fallbackColor} className="absolute inset-0 flex items-center justify-center">
+            <StylizedGem color={fallbackColor} shape={gemShape} className="w-[54%] translate-y-[4%] transition-transform duration-500 group-hover:scale-105" />
+          </GemStage>
         )}
       </div>
       <div className="flex flex-1 items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
@@ -84,4 +73,52 @@ export function CategoryTile({
 
 export function CategoryGrid({ children }: { children: React.ReactNode }) {
   return <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">{children}</div>;
+}
+
+/** The landing pages' header: kicker, title and intro, with the gold
+ * "view everything" button on the right (shared by /gems and /jewelry). */
+export function CategoryLandingHeader({
+  kicker,
+  title,
+  intro,
+  viewAllHref,
+  viewAllLabel,
+}: {
+  kicker: string;
+  title: string;
+  intro: string;
+  viewAllHref?: string;
+  viewAllLabel?: string;
+}) {
+  return (
+    <div className="mb-10 flex flex-col gap-6 sm:mb-12 lg:flex-row lg:items-end lg:justify-between">
+      <div className="max-w-2xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{kicker}</p>
+        <h1 className="mt-3 font-serif text-5xl text-charcoal sm:text-6xl">{title}</h1>
+        <p className="mt-4 text-lg leading-relaxed text-charcoal/75">{intro}</p>
+      </div>
+      {viewAllHref && viewAllLabel && (
+        <LinkButton href={viewAllHref} size="lg" className="shrink-0 self-start lg:self-auto">
+          {viewAllLabel}
+          <ArrowRight size={18} />
+        </LinkButton>
+      )}
+    </div>
+  );
+}
+
+/** The sapphire band under a landing grid — the way out when the catalog
+ * doesn't have it. */
+export function CategoryLandingBanner({ title, body, href, cta }: { title: string; body: string; href: string; cta: string }) {
+  return (
+    <div className={cn("band-sapphire mt-14 flex flex-col gap-6 rounded-3xl px-6 py-10 sm:px-12 sm:py-12 md:flex-row md:items-center md:justify-between")}>
+      <div>
+        <h2 className="font-serif text-3xl text-charcoal sm:text-4xl">{title}</h2>
+        <p className="mt-3 text-charcoal/85">{body}</p>
+      </div>
+      <LinkButton href={href} size="lg" className="shrink-0 self-start md:self-auto">
+        {cta}
+      </LinkButton>
+    </div>
+  );
 }

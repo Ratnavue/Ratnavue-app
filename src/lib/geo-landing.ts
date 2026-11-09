@@ -1,18 +1,24 @@
-// First-visit storefront landing by visitor location: a visitor whose IP
-// resolves to Sri Lanka lands on the Sri Lanka store (/lk/…), everyone else
-// on the international store. Pure and edge-safe (no Prisma, no Node APIs) —
+// Storefront landing by visitor location: a visitor whose IP resolves to Sri
+// Lanka lands on the Sri Lanka store (/lk/…), everyone else on the
+// international store. Pure and edge-safe (no Prisma, no Node APIs) —
 // proxy.ts calls it on every page request.
 //
-// It decides ONCE per browser. The decision (or the visitor's own pick in
-// MarketSwitcher) is remembered in STORE_PREF_COOKIE, and while that cookie
-// exists geo is never consulted again — otherwise a Sri Lankan visitor who
-// deliberately switches to the international store would be bounced
-// straight back on their next page load.
+// It applies to DIRECT entries only — a typed or pasted URL, a bookmark, or a
+// link from another site (Google, social, email). Navigating inside the site
+// never redirects, so browsing is never yanked between stores mid-visit.
+//
+// A visitor who explicitly picks a store in MarketSwitcher gets that choice
+// stored in STORE_CHOICE_COOKIE, and from then on every direct entry lands on
+// the store they chose instead of the one their IP suggests — a Sri Lankan
+// visitor who picks International stays on International.
 
 import { LK_PREFIX, isLkPath, stripMarket, type Market } from "@/lib/market-shared";
 
-export const STORE_PREF_COOKIE = "ratnavue-store";
-export const STORE_PREF_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
+/** Set ONLY by the visitor's own pick in MarketSwitcher — never by geo.
+ * (Renamed from the earlier "ratnavue-store", which geo itself used to set on
+ * first visit; those automatic values are deliberately ignored.) */
+export const STORE_CHOICE_COOKIE = "ratnavue-store-choice";
+export const STORE_CHOICE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
 // Only the section/landing pages that exist identically in both stores. A
 // product page (/gems/[slug], /jewelry/[slug], /auction/[id]) belongs to one
@@ -49,30 +55,54 @@ export function marketForCountry(country: string): Market {
   return country === "LK" ? "lk" : "intl";
 }
 
+export function parseStoreChoice(value: string | undefined | null): Market | null {
+  return value === "lk" || value === "intl" ? value : null;
+}
+
+/**
+ * Whether this page load came from outside the site. `Sec-Fetch-Site` is
+ * "none" for a typed/pasted URL or bookmark and "cross-site"/"same-site" for a
+ * link from elsewhere; "same-origin" is a click inside the site. Browsers too
+ * old to send it fall back to the Referer: none, or one from another host.
+ */
+export function isDirectEntry(headers: Headers, origin: string): boolean {
+  const site = headers.get("sec-fetch-site");
+  if (site) return site !== "same-origin";
+  const referer = headers.get("referer");
+  if (!referer) return true;
+  try {
+    return new URL(referer).origin !== origin;
+  } catch {
+    return true;
+  }
+}
+
 export type GeoLandingDecision =
-  /** Nothing to do (already chosen, no geo info, or not a landing page). */
   | { action: "none" }
-  /** Already on the right store — just remember it. */
-  | { action: "remember"; market: Market }
-  /** Send the visitor to the same page on their store, and remember it. */
+  /** Send the visitor to the same page on their store. */
   | { action: "redirect"; market: Market; pathname: string };
 
 export function decideGeoLanding({
   rawPathname,
   country,
-  hasStorePref,
+  storeChoice,
+  directEntry,
 }: {
   rawPathname: string;
   country: string | null;
-  hasStorePref: boolean;
+  /** The visitor's own pick from MarketSwitcher, if they ever made one. */
+  storeChoice: Market | null;
+  directEntry: boolean;
 }): GeoLandingDecision {
-  if (hasStorePref || !country) return { action: "none" };
+  if (!directEntry) return { action: "none" };
   const path = stripMarket(rawPathname);
   if (!LANDING_PATHS.has(path)) return { action: "none" };
 
-  const target = marketForCountry(country);
+  const target = storeChoice ?? (country ? marketForCountry(country) : null);
+  if (!target) return { action: "none" };
+
   const current: Market = isLkPath(rawPathname) ? "lk" : "intl";
-  if (target === current) return { action: "remember", market: target };
+  if (target === current) return { action: "none" };
   return {
     action: "redirect",
     market: target,

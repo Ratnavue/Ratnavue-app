@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PIECE_TYPES } from "@/lib/gem-constants";
+import { GEM_SPECIALTIES, PIECE_TYPES } from "@/lib/gem-constants";
 
 // Coerces the "true"/"false" STRING an HTML checkbox form submits (via
 // the hidden-false + checkbox-true pattern every boolean toggle on these
@@ -89,6 +89,14 @@ export const gemstoneSchema = z.object({
   isFeatured: formBoolean(false),
   shippingWeightTierId: z.string().optional().or(z.literal("")),
   quoteShipping: formBoolean(false),
+  // The form's ticked "specialties" checkboxes, joined with commas by the
+  // action (FormData repeats the key once per box). Unknown values are an
+  // error rather than silently dropped.
+  specialties: z
+    .string()
+    .optional()
+    .transform((v) => [...new Set((v ?? "").split(",").map((s) => s.trim()).filter(Boolean))])
+    .pipe(z.array(z.enum(GEM_SPECIALTIES))),
 }).superRefine(requireLkPrice).superRefine(requireExclusiveShippingOverride);
 
 export type GemstoneInput = z.infer<typeof gemstoneSchema>;

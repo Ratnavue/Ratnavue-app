@@ -195,7 +195,9 @@
       "onPromotion": "Em promoção",
       "filter": "Filtrar",
       "clear": "Limpar Filtros",
-      "audience": "Projetado para"
+      "audience": "Projetado para",
+      "showFilters": "Mostrar filtros",
+      "hideFilters": "Ocultar filtros"
     },
     "stock": {
       "AVAILABLE": "Disponível",
@@ -233,8 +235,18 @@
           "men": "Anéis de sinete, pulseiras, abotoaduras e pingentes para ele.",
           "couple": "Pares e conjuntos combinando, feitos para compartilhar.",
           "unisex": "Peças atemporais que ficam bem em qualquer pessoa."
-        }
+        },
+        "viewAllCount": "{count, plural, one {Ver # peça} other {Ver as # peças}}",
+        "notSeeingTitle": "Não encontrou a ideal?",
+        "notSeeingBody": "Conte o que você tem em mente e nossa equipe vai buscá-la ou fazê-la para você.",
+        "notSeeingCta": "Enviar um pedido de pesquisa"
       }
+    },
+    "specialty": {
+      "COLOR_CHANGE": "Mudança de cor",
+      "STAR": "Estrela",
+      "CATS_EYE": "Olho de gato",
+      "BI_COLOR": "Bicolor"
     }
   },
   "product": {

@@ -10,7 +10,7 @@ import { AUDIENCE_LABELS, isAudienceSlug, pieceTypeLabel, type JewelryAudienceSl
 import { getTranslations } from "next-intl/server";
 import { JewelryFilterBar } from "@/components/catalog/JewelryFilterBar";
 import { JewelryResults } from "@/components/catalog/JewelryResults";
-import { CategoryTile, CategoryGrid } from "@/components/catalog/CategoryTile";
+import { CategoryTile, CategoryGrid, CategoryLandingHeader, CategoryLandingBanner } from "@/components/catalog/CategoryTile";
 import { ProductGridSkeleton } from "@/components/catalog/ProductGridSkeleton";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/layout/Breadcrumbs";
 import { Pagination } from "@/components/ui/Pagination";
@@ -56,11 +56,13 @@ async function JewelryAudienceLanding({ market }: { market: Market }) {
   return (
     <div className="mx-auto max-w-[120rem] px-5 py-10 sm:px-8 lg:px-12 xl:px-16">
       <Breadcrumbs items={[{ label: tb("home"), href: "/" }, { label: tb("jewelry") }]} />
-      <div className="mb-10">
-        <p className="text-xs uppercase tracking-widest text-gold-deep">{tl("jewelry.kicker")}</p>
-        <h1 className="mt-2 font-serif text-4xl text-charcoal">{tl("jewelry.title")}</h1>
-        <p className="mt-3 max-w-2xl text-charcoal/70">{tl("jewelry.intro")}</p>
-      </div>
+      <CategoryLandingHeader
+        kicker={tl("jewelry.kicker")}
+        title={tl("jewelry.title")}
+        intro={tl("jewelry.intro")}
+        viewAllHref={data.total > 0 ? "/jewelry?view=all" : undefined}
+        viewAllLabel={tl("jewelry.viewAllCount", { count: data.total })}
+      />
 
       {data.total === 0 ? (
         <p className="py-20 text-center text-charcoal/65">{t("empty")}</p>
@@ -76,16 +78,10 @@ async function JewelryAudienceLanding({ market }: { market: Market }) {
               image={a.image}
             />
           ))}
-          <CategoryTile
-            href="/jewelry?view=all"
-            label={tl("jewelry.viewAll")}
-            countLabel={tl("pieces", { count: data.total })}
-            description={tl("jewelry.allDescription")}
-            image={data.cover}
-            emphasis
-          />
         </CategoryGrid>
       )}
+
+      <JewelryBanner tl={tl} />
     </div>
   );
 }
@@ -104,11 +100,13 @@ async function JewelryTypeLanding({ audience, market }: { audience: JewelryAudie
   return (
     <div className="mx-auto max-w-[120rem] px-5 py-10 sm:px-8 lg:px-12 xl:px-16">
       <Breadcrumbs items={[{ label: tb("home"), href: "/" }, { label: tb("jewelry"), href: "/jewelry" }, { label }]} />
-      <div className="mb-10">
-        <p className="text-xs uppercase tracking-widest text-gold-deep">{tl("jewelry.typeKicker")}</p>
-        <h1 className="mt-2 font-serif text-4xl text-charcoal">{label}</h1>
-        <p className="mt-3 max-w-2xl text-charcoal/70">{tl("jewelry.typeIntro")}</p>
-      </div>
+      <CategoryLandingHeader
+        kicker={tl("jewelry.typeKicker")}
+        title={label}
+        intro={tl("jewelry.typeIntro")}
+        viewAllHref={total > 0 ? `/jewelry?audience=${audience}&view=all` : undefined}
+        viewAllLabel={tl("jewelry.viewAllFor", { audience: label.toLowerCase() })}
+      />
 
       {total === 0 ? (
         <p className="py-20 text-center text-charcoal/65">{t("empty")}</p>
@@ -123,16 +121,23 @@ async function JewelryTypeLanding({ audience, market }: { audience: JewelryAudie
               image={type.image}
             />
           ))}
-          <CategoryTile
-            href={`/jewelry?audience=${audience}&view=all`}
-            label={tl("jewelry.viewAllFor", { audience: label.toLowerCase() })}
-            countLabel={tl("pieces", { count: total })}
-            image={types[0]?.image ?? data.cover}
-            emphasis
-          />
         </CategoryGrid>
       )}
+
+      <JewelryBanner tl={tl} />
     </div>
+  );
+}
+
+/** Jewelry's way out when nothing fits: a bespoke sourcing request. */
+function JewelryBanner({ tl }: { tl: Awaited<ReturnType<typeof getTranslations<"catalog.landing">>> }) {
+  return (
+    <CategoryLandingBanner
+      title={tl("jewelry.notSeeingTitle")}
+      body={tl("jewelry.notSeeingBody")}
+      href="/sourcing"
+      cta={tl("jewelry.notSeeingCta")}
+    />
   );
 }
 

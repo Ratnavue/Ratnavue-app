@@ -317,6 +317,16 @@ model CertificationLab {
 
 // ---------- Catalog ----------
 
+// A gem's notable optical phenomena — shown as tags on its card and page.
+// Several can apply to one stone (a colour-change star sapphire). Values are
+// stable keys; labels live in messages/*.json (catalog.specialty.*).
+enum GemSpecialty {
+  COLOR_CHANGE
+  STAR
+  CATS_EYE
+  BI_COLOR
+}
+
 enum StockStatus {
   AVAILABLE
   RESERVED
@@ -422,6 +432,10 @@ model Gemstone {
   shippingWeightTierId String?
   shippingWeightTier   ShippingWeightTier? @relation(fields: [shippingWeightTierId], references: [id], onDelete: SetNull)
   quoteShipping         Boolean             @default(false)
+
+  // Speciality tags (colour change, star, cat's eye, bi-colour) — empty for
+  // most stones.
+  specialties GemSpecialty[] @default([])
 
   media MediaAsset[]
 

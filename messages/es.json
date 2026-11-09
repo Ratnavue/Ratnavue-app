@@ -195,7 +195,9 @@
       "onPromotion": "En promoción",
       "filter": "Filtrar",
       "clear": "Borrar Filtros",
-      "audience": "Diseñado para"
+      "audience": "Diseñado para",
+      "showFilters": "Mostrar filtros",
+      "hideFilters": "Ocultar filtros"
     },
     "stock": {
       "AVAILABLE": "Disponible",
@@ -233,8 +235,18 @@
           "men": "Anillos de sello, pulseras, gemelos y colgantes para él.",
           "couple": "Pares y conjuntos a juego, pensados para compartir.",
           "unisex": "Piezas atemporales que le quedan bien a cualquiera."
-        }
+        },
+        "viewAllCount": "{count, plural, one {Ver # pieza} other {Ver las # piezas}}",
+        "notSeeingTitle": "¿No encuentra la indicada?",
+        "notSeeingBody": "Cuéntenos lo que tiene en mente y nuestro equipo la buscará o la hará para usted.",
+        "notSeeingCta": "Enviar una solicitud de búsqueda"
       }
+    },
+    "specialty": {
+      "COLOR_CHANGE": "Cambio de color",
+      "STAR": "Estrella",
+      "CATS_EYE": "Ojo de gato",
+      "BI_COLOR": "Bicolor"
     }
   },
   "product": {

@@ -4,7 +4,7 @@ import authConfig from "@/lib/auth.config";
 import { staffAreaForPath } from "@/lib/staff-permissions";
 import { APP_PATH_HEADER, LK_PREFIX, MARKET_HEADER, isLkPath, stripMarket } from "@/lib/market-shared";
 import { SALES_REF_COOKIE, SALES_REF_COOKIE_MAX_AGE_SECONDS } from "@/lib/sales-referrals-shared";
-import { STORE_PREF_COOKIE, STORE_PREF_MAX_AGE_SECONDS, countryFromHeaders, decideGeoLanding } from "@/lib/geo-landing";
+import { STORE_CHOICE_COOKIE, countryFromHeaders, decideGeoLanding, isDirectEntry, parseStoreChoice } from "@/lib/geo-landing";
 
 // Deliberately NOT `import { auth } from "@/lib/auth"` — that config pulls in
 // PrismaAdapter, Prisma Client, and the Credentials/Google providers
@@ -83,8 +83,10 @@ export default auth(async (req) => {
     return NextResponse.redirect(new URL(pathname + req.nextUrl.search, req.nextUrl.origin));
   }
 
-  // First-visit landing by location (lib/geo-landing.ts): Sri Lanka -> /lk,
-  // everywhere else -> the international store. Only a real browser's
+  // Landing by location (lib/geo-landing.ts): a direct entry (typed/pasted
+  // URL, bookmark, outside link) goes to Sri Lanka -> /lk, everywhere else ->
+  // the international store, unless the visitor picked a store themselves in
+  // MarketSwitcher, which always wins. Only a real browser's
   // top-level page load, never: a crawler (both stores must stay indexable
   // under their own URLs — the hreflang alternates in RootLayout already
   // steer searchers), a client-side RSC fetch/prefetch or server action (a
@@ -105,14 +107,12 @@ export default auth(async (req) => {
             countryFromHeaders(req.headers) ??
             // Local testing only — there's no geo header outside Vercel/Cloudflare.
             (process.env.NODE_ENV !== "production" ? (process.env.DEV_GEO_COUNTRY ?? null) : null),
-          hasStorePref: req.cookies.has(STORE_PREF_COOKIE),
+          storeChoice: parseStoreChoice(req.cookies.get(STORE_CHOICE_COOKIE)?.value),
+          directEntry: isDirectEntry(req.headers, req.nextUrl.origin),
         })
       : ({ action: "none" } as const);
   if (geo.action === "redirect") {
-    const target = new URL(geo.pathname + req.nextUrl.search, req.nextUrl.origin);
-    const redirect = NextResponse.redirect(target);
-    redirect.cookies.set(STORE_PREF_COOKIE, geo.market, { path: "/", sameSite: "lax", maxAge: STORE_PREF_MAX_AGE_SECONDS });
-    return redirect;
+    return NextResponse.redirect(new URL(geo.pathname + req.nextUrl.search, req.nextUrl.origin));
   }
 
   if (pathname.startsWith("/collections")) {
@@ -207,10 +207,6 @@ export default auth(async (req) => {
   // clock to a fresh token. The query param itself is left in the URL,
   // same "doesn't need cleaning up" treatment a UTM param gets — the
   // cookie, not the param, is what actually persists across the site.
-  if (geo.action === "remember") {
-    response.cookies.set(STORE_PREF_COOKIE, geo.market, { path: "/", sameSite: "lax", maxAge: STORE_PREF_MAX_AGE_SECONDS });
-  }
-
   const refToken = req.nextUrl.searchParams.get("ref");
   if (refToken) {
     response.cookies.set(SALES_REF_COOKIE, refToken, {

@@ -221,6 +221,20 @@ export const CERTIFICATION_LABS = [
   { name: "IGI", slug: "igi", verifyUrlTemplate: null as string | null },
 ];
 
+// Mirrors the GemSpecialty enum in prisma/schema.prisma (labels: messages
+// catalog.specialty.*). Order is the display order.
+export const GEM_SPECIALTIES = ["COLOR_CHANGE", "STAR", "CATS_EYE", "BI_COLOR"] as const;
+export type GemSpecialtyKey = (typeof GEM_SPECIALTIES)[number];
+
+// The admin form's labels and hints (the back office is English-only; the
+// storefront's translated labels are in messages catalog.specialty.*).
+export const GEM_SPECIALTY_ADMIN: Record<GemSpecialtyKey, { label: string; hint: string }> = {
+  COLOR_CHANGE: { label: "Colour change", hint: "Shows a different colour in daylight and incandescent light (alexandrite effect)." },
+  STAR: { label: "Star", hint: "Asterism — a star of light across a cabochon." },
+  CATS_EYE: { label: "Cat's eye", hint: "Chatoyancy — a single bright band across a cabochon." },
+  BI_COLOR: { label: "Bi-colour", hint: "Two distinct colour zones in one stone." },
+};
+
 export const PIECE_TYPES = ["RING", "PENDANT", "EARRINGS", "NECKLACE", "BRACELET", "ANKLET", "JEWELRY_SET", "BROOCH", "CUFFLINKS", "OTHER"] as const;
 
 export const METAL_TYPES = [

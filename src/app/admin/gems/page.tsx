@@ -13,6 +13,7 @@ import { StoreFilterTabs, parseStoreFilter } from "@/components/admin/StoreFilte
 import { AdminSearchBox } from "@/components/admin/AdminSearchBox";
 import { CatalogBulkSelectionProvider, CatalogRowCheckbox, CatalogBulkToolbar } from "@/components/admin/CatalogBulkSelection";
 import { formatPrice } from "@/lib/utils";
+import { SpecialtyBadges } from "@/components/catalog/SpecialtyBadges";
 import { CARD_TABLE, CARD_THEAD, CARD_TBODY, CARD_TR, CARD_TD, CARD_FIRST, CARD_SECOND } from "@/components/admin/responsive-table";
 
 const PAGE_SIZE = 20;
@@ -117,6 +118,7 @@ export default async function AdminGemsPage({ searchParams }: PageProps<"/admin/
                   </td>
                   <td className={CARD_FIRST}>
                     <Link href={`/admin/gems/${gem.id}`} className="text-charcoal hover:text-gold">{gem.name}</Link>
+                    <SpecialtyBadges specialties={gem.specialties} className="mt-1" />
                   </td>
                   <td data-label="Store" className={CARD_TD}>
                     <Badge className={gem.market === "lk" ? "border-gold/40 bg-gold/15 text-charcoal" : "border-border-subtle bg-charcoal/5 text-charcoal/70"}>

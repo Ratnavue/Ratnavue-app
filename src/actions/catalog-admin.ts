@@ -14,6 +14,13 @@ function formToObject(formData: FormData) {
   return Object.fromEntries(formData.entries());
 }
 
+// A gemstone form: as formToObject, plus the speciality checkboxes —
+// FormData repeats "specialties" once per ticked box, which fromEntries would
+// collapse to the last one, so they're joined for gemstoneSchema to split.
+function gemFormToObject(formData: FormData): Record<string, FormDataEntryValue> {
+  return { ...formToObject(formData), specialties: formData.getAll("specialties").map(String).join(",") };
+}
+
 async function uniqueSlug(base: string, check: (slug: string) => Promise<boolean>) {
   const root = slugify(base) || "item";
   let slug = root;
@@ -60,7 +67,7 @@ export async function createGemstone(formData: FormData): Promise<ActionResult> 
   const user = await requireStaffArea("catalog");
   const staff = isStaffUser(user);
 
-  const input = formToObject(formData);
+  const input = gemFormToObject(formData);
   if (staff) {
     delete input.costPrice;
     input.isFeatured = "false";
@@ -112,6 +119,7 @@ export async function createGemstone(formData: FormData): Promise<ActionResult> 
       isFeatured: data.isFeatured,
       shippingWeightTierId: data.shippingWeightTierId || undefined,
       quoteShipping: data.quoteShipping,
+      specialties: data.specialties,
     },
   });
 
@@ -132,7 +140,7 @@ export async function updateGemstone(id: string, formData: FormData): Promise<Ac
   });
   if (!existing) return { ok: false, error: "Gemstone not found." };
   await requireMarketAccess(user, existing.market);
-  const input = formToObject(formData);
+  const input = gemFormToObject(formData);
   if (isStaffUser(user)) {
     for (const key of LOCKED_KEYS) delete input[key];
     Object.assign(input, lockedFormFields(existing));
@@ -191,6 +199,7 @@ export async function updateGemstone(id: string, formData: FormData): Promise<Ac
       // Same "empty selection actually clears it" reasoning as certLabId above.
       shippingWeightTierId: data.shippingWeightTierId || null,
       quoteShipping: data.quoteShipping,
+      specialties: data.specialties,
     },
   });
 

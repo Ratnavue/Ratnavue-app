@@ -9,12 +9,10 @@ import type { Market } from "@/lib/market-shared";
 import { getTranslations } from "next-intl/server";
 import { GemFilterBar } from "@/components/catalog/GemFilterBar";
 import { GemResults } from "@/components/catalog/GemResults";
-import { CategoryTile, CategoryGrid } from "@/components/catalog/CategoryTile";
+import { CategoryTile, CategoryGrid, CategoryLandingHeader, CategoryLandingBanner } from "@/components/catalog/CategoryTile";
 import { ProductGridSkeleton } from "@/components/catalog/ProductGridSkeleton";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Pagination } from "@/components/ui/Pagination";
-import { LinkButton } from "@/components/ui/Button";
-import { ArrowRight } from "lucide-react";
 import { gemColorFor } from "@/lib/gem-palette";
 import type { StylizedGemShape } from "@/components/gem-visualizer/StylizedGem";
 
@@ -56,19 +54,13 @@ async function GemsLanding({ market }: { market: Market }) {
   return (
     <div className="mx-auto max-w-[120rem] px-5 py-10 sm:px-8 lg:px-12 xl:px-16">
       <Breadcrumbs items={[{ label: tb("home"), href: "/" }, { label: tb("gems") }]} />
-      <div className="mb-10 flex flex-col gap-6 sm:mb-12 lg:flex-row lg:items-end lg:justify-between">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{tl("gems.kicker")}</p>
-          <h1 className="mt-3 font-serif text-5xl text-charcoal sm:text-6xl">{tl("gems.title")}</h1>
-          <p className="mt-4 text-lg leading-relaxed text-charcoal/75">{tl("gems.intro")}</p>
-        </div>
-        {categories.total > 0 && (
-          <LinkButton href="/gems?view=all" variant="primary" size="lg" className="self-start font-semibold lg:self-auto">
-            {tl("gems.viewAllCount", { count: categories.total })}
-            <ArrowRight size={18} />
-          </LinkButton>
-        )}
-      </div>
+      <CategoryLandingHeader
+        kicker={tl("gems.kicker")}
+        title={tl("gems.title")}
+        intro={tl("gems.intro")}
+        viewAllHref={categories.total > 0 ? "/gems?view=all" : undefined}
+        viewAllLabel={tl("gems.viewAllCount", { count: categories.total })}
+      />
 
       {categories.tiles.length === 0 ? (
         <p className="py-20 text-center text-charcoal/65">{t("empty")}</p>
@@ -89,21 +81,18 @@ async function GemsLanding({ market }: { market: Market }) {
       )}
 
       {/* The way out when the catalog doesn't have it: shape one instead. */}
-      <div className="mt-14 flex flex-col gap-6 band-sapphire rounded-3xl px-6 py-10 sm:px-12 sm:py-12 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="font-serif text-3xl text-charcoal sm:text-4xl">{tl("gems.notSeeingTitle")}</h2>
-          <p className="mt-3 text-charcoal/85">{tl("gems.notSeeingBody")}</p>
-        </div>
-        <LinkButton href="/configurator" variant="primary" size="lg" className="shrink-0 self-start font-semibold md:self-auto">
-          {tl("gems.notSeeingCta")}
-        </LinkButton>
-      </div>
+      <CategoryLandingBanner
+        title={tl("gems.notSeeingTitle")}
+        body={tl("gems.notSeeingBody")}
+        href="/configurator"
+        cta={tl("gems.notSeeingCta")}
+      />
     </div>
   );
 }
 
-// A little variety across the grid, the way a tray of real stones reads:
-// sapphires as ovals, the brilliants round, spinel as a cushion.
+// The fallback art's silhouette for a category with no photo yet — a little
+// variety across the grid, the way a tray of real stones reads.
 const GEM_TILE_SHAPES: Record<string, StylizedGemShape> = {
   "white-sapphire": "round",
   "pink-sapphire": "round",

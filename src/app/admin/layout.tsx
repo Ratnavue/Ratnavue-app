@@ -47,7 +47,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     // instead of filling the screen.
     // data-theme="light": the back office stays on the light palette even
     // after a client-side hop from a storefront page in the dark theme (see
-    // lib/theme.ts's themeForPath, which covers full page loads).
+    // lib/theme.ts's resolveTheme, which covers full page loads).
     <div data-theme="light" className="flex min-h-[calc(100vh-1px)] flex-col bg-ivory-soft print:block print:bg-white lg:flex-row">
       <AdminSidebar role={session.user.role} staffPermissions={session.user.staffPermissions} />
       {/* relative: lets AdminPageLoader (the Suspense fallback — see

@@ -5,6 +5,7 @@ import { GemVisualizer } from "@/components/gem-visualizer/GemVisualizer";
 import { StorefrontStockBadge as StockBadge } from "@/components/catalog/StorefrontStockBadge";
 import { CardPrice, PromotionBadge } from "@/components/catalog/CardPrice";
 import { WishlistButton } from "@/components/catalog/WishlistButton";
+import { SpecialtyBadges } from "@/components/catalog/SpecialtyBadges";
 import { cn } from "@/lib/utils";
 
 interface GemCardProps {
@@ -26,6 +27,8 @@ interface GemCardProps {
   clarityName: string;
   treatmentName: string;
   isCeylon: boolean;
+  /** Speciality tags (GemSpecialty) — colour change, star, etc. Usually empty. */
+  specialties?: readonly string[];
   stockStatus: string;
   /** Real product photo, when one has been uploaded. Falls back to the illustrative SVG preview. */
   primaryImageUrl?: string;
@@ -131,6 +134,7 @@ function GemCardList(props: GemCardProps) {
               Ceylon
             </span>
           )}
+          <SpecialtyBadges specialties={props.specialties} />
           <StockBadge status={props.stockStatus} />
         </div>
         <div className="mt-2.5 hidden sm:flex"><SpecTags props={props} /></div>
@@ -190,6 +194,7 @@ function GemCardGrid(props: GemCardProps) {
               Ceylon
             </span>
           )}
+          <SpecialtyBadges specialties={props.specialties} className="flex-col items-start" />
         </div>
         {/* Bottom-left, not bottom-right: the stock badge above moves to
             bottom-right on mobile (see its own comment), which would

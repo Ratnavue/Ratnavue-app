@@ -195,7 +195,9 @@
       "onPromotion": "On promotion",
       "filter": "Filter",
       "clear": "Clear Filters",
-      "audience": "Designed for"
+      "audience": "Designed for",
+      "showFilters": "Show filters",
+      "hideFilters": "Hide filters"
     },
     "stock": {
       "AVAILABLE": "Available",
@@ -233,8 +235,18 @@
           "men": "Signet rings, bracelets, cufflinks and pendants for him.",
           "couple": "Matching pairs and sets, made to be shared.",
           "unisex": "Timeless pieces that suit anyone."
-        }
+        },
+        "viewAllCount": "{count, plural, one {View # piece} other {View all # pieces}}",
+        "notSeeingTitle": "Not seeing the one?",
+        "notSeeingBody": "Tell us what you have in mind and our team will source or make it for you.",
+        "notSeeingCta": "Submit a Sourcing Request"
       }
+    },
+    "specialty": {
+      "COLOR_CHANGE": "Colour change",
+      "STAR": "Star",
+      "CATS_EYE": "Cat's eye",
+      "BI_COLOR": "Bi-colour"
     }
   },
   "product": {
