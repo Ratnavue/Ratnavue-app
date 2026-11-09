@@ -48,7 +48,7 @@ export function PageVisibilityControl({ pageKey, currentState }: { pageKey: Page
             title={opt.description}
             className={cn(
               "rounded-full border px-4 py-2 text-sm transition-colors disabled:opacity-50",
-              state === opt.value ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70 hover:border-charcoal/40",
+              state === opt.value ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70 hover:border-charcoal/40",
             )}
           >
             {opt.label}

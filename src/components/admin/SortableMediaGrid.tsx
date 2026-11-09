@@ -80,18 +80,18 @@ export function SortableMediaGrid({
             )}
 
             <div className="pointer-events-none absolute left-1.5 top-1.5 flex items-center gap-1">
-              <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide", first ? "bg-gold text-charcoal" : "bg-charcoal/70 text-ivory")}>
+              <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide", first ? "bg-gold text-night" : "bg-night/70 text-cream")}>
                 {first ? "First image" : index + 1}
               </span>
               {item.type === "VIDEO" && (
-                <span className="flex items-center gap-1 rounded-full bg-charcoal/70 px-1.5 py-0.5 text-[10px] text-ivory">
+                <span className="flex items-center gap-1 rounded-full bg-night/70 px-1.5 py-0.5 text-[10px] text-cream">
                   <Video size={10} /> Video
                 </span>
               )}
             </div>
-            {!disabled && <GripVertical size={16} className="pointer-events-none absolute right-1.5 top-1.5 text-ivory drop-shadow" aria-hidden />}
+            {!disabled && <GripVertical size={16} className="pointer-events-none absolute right-1.5 top-1.5 text-cream drop-shadow" aria-hidden />}
 
-            <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-charcoal/65 p-1 text-ivory">
+            <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-night/65 p-1 text-cream">
               <div className="flex items-center">
                 <button type="button" aria-label="Move earlier" disabled={disabled || index === 0} onClick={() => move(index, index - 1)} className="rounded p-1.5 hover:bg-ivory/20 disabled:opacity-30">
                   <ChevronLeft size={16} />

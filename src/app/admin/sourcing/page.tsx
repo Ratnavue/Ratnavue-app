@@ -47,7 +47,7 @@ export default async function AdminSourcingPage({ searchParams }: PageProps<"/ad
       <div className="mt-4 flex flex-wrap gap-2">
         <Link
           href={`/admin/sourcing${q ? `?q=${encodeURIComponent(q)}` : ""}`}
-          className={cn("rounded-full border px-3 py-1 text-xs", !status ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70")}
+          className={cn("rounded-full border px-3 py-1 text-xs", !status ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70")}
         >
           All
         </Link>
@@ -55,7 +55,7 @@ export default async function AdminSourcingPage({ searchParams }: PageProps<"/ad
           <Link
             key={s}
             href={`/admin/sourcing?status=${s}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-            className={cn("rounded-full border px-3 py-1 text-xs", status === s ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70")}
+            className={cn("rounded-full border px-3 py-1 text-xs", status === s ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70")}
           >
             {s.replaceAll("_", " ")}
           </Link>
@@ -82,7 +82,7 @@ export default async function AdminSourcingPage({ searchParams }: PageProps<"/ad
                   <Link href={`/admin/sourcing/${r.id}`} className="flex items-center gap-2 text-charcoal hover:text-gold">
                     {r.mineralDescription}
                     {unread > 0 && (
-                      <span className="flex items-center gap-1 rounded-full bg-gold px-1.5 py-0.5 text-[10px] font-medium text-charcoal">
+                      <span className="flex items-center gap-1 rounded-full bg-gold px-1.5 py-0.5 text-[10px] font-medium text-night">
                         <MessageCircle size={10} /> {unread}
                       </span>
                     )}

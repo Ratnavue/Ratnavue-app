@@ -97,7 +97,7 @@ export function HeaderSearch({ transparent }: { transparent: boolean }) {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Search"
-        className={cn("transition-colors duration-300", transparent ? "text-ivory/85 hover:text-ivory" : "text-charcoal/80 hover:text-charcoal")}
+        className={cn("transition-colors duration-300", transparent ? "text-cream/85 hover:text-cream" : "text-charcoal/80 hover:text-charcoal")}
       >
         <Search size={19} />
       </button>

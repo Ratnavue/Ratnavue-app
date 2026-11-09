@@ -147,11 +147,11 @@ export function NotificationBell({ transparent, size = 19 }: { transparent: bool
         type="button"
         aria-label="Notifications"
         onClick={() => setOpen((v) => !v)}
-        className={cn("relative transition-colors duration-300", transparent ? "text-ivory/85 hover:text-ivory" : "text-charcoal/80 hover:text-charcoal")}
+        className={cn("relative transition-colors duration-300", transparent ? "text-cream/85 hover:text-cream" : "text-charcoal/80 hover:text-charcoal")}
       >
         <Bell size={size} />
         {unreadCount > 0 && (
-          <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-medium text-charcoal">
+          <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-medium text-night">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}

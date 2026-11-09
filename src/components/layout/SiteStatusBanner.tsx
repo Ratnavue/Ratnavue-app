@@ -91,7 +91,7 @@ export function SiteStatusBanner({ message }: { message: string }) {
   }
 
   return (
-    <div ref={containerRef} className="fixed inset-x-0 top-0 z-[51] bg-charcoal px-4 py-2.5 text-ivory">
+    <div ref={containerRef} className="fixed inset-x-0 top-0 z-[51] bg-night px-4 py-2.5 text-cream">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-4 gap-y-1 pr-8 text-center text-sm">
         <p>{message}</p>
         {!feedbackOpen && (
@@ -115,7 +115,7 @@ export function SiteStatusBanner({ message }: { message: string }) {
             maxLength={2000}
             rows={2}
             placeholder="What would make this better for you?"
-            className="w-full rounded-md border border-ivory/30 bg-charcoal px-3 py-1.5 text-sm text-ivory placeholder:text-ivory/50 focus:border-gold focus:outline-none"
+            className="w-full rounded-md border border-cream/30 bg-night px-3 py-1.5 text-sm text-cream placeholder:text-cream/50 focus:border-gold focus:outline-none"
           />
           <div className="flex flex-wrap items-center gap-2">
             <input
@@ -124,9 +124,9 @@ export function SiteStatusBanner({ message }: { message: string }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Your email (optional)"
-              className="min-w-0 flex-1 rounded-md border border-ivory/30 bg-charcoal px-3 py-1.5 text-sm text-ivory placeholder:text-ivory/50 focus:border-gold focus:outline-none"
+              className="min-w-0 flex-1 rounded-md border border-cream/30 bg-night px-3 py-1.5 text-sm text-cream placeholder:text-cream/50 focus:border-gold focus:outline-none"
             />
-            <button type="submit" disabled={pending} className="shrink-0 rounded-full bg-gold px-4 py-1.5 text-xs font-medium text-charcoal hover:bg-gold/90 disabled:opacity-60">
+            <button type="submit" disabled={pending} className="shrink-0 rounded-full bg-gold px-4 py-1.5 text-xs font-medium text-night hover:bg-gold/90 disabled:opacity-60">
               {pending ? "Sending..." : "Send"}
             </button>
           </div>
@@ -136,7 +136,7 @@ export function SiteStatusBanner({ message }: { message: string }) {
 
       {sent && <p className="mt-2 text-center text-xs text-gold">Thanks for the feedback — we read every one of these.</p>}
 
-      <button type="button" onClick={dismiss} aria-label="Dismiss" className="absolute right-3 top-2.5 text-ivory/70 hover:text-ivory">
+      <button type="button" onClick={dismiss} aria-label="Dismiss" className="absolute right-3 top-2.5 text-cream/70 hover:text-cream">
         <X size={16} />
       </button>
     </div>

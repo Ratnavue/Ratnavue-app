@@ -178,7 +178,7 @@ export function StudioToolbar({
                   id="gem-cut"
                   value={gemCutSlug}
                   onChange={(e) => onSetGemCut(e.target.value)}
-                  className="mt-1 w-full rounded-lg border-border-subtle bg-white px-2 py-1.5 text-xs"
+                  className="mt-1 w-full rounded-lg border-border-subtle bg-surface px-2 py-1.5 text-xs"
                 >
                   {STANDARD_CUTS.map((c) => (
                     <option key={c.slug} value={c.slug}>
@@ -198,7 +198,7 @@ export function StudioToolbar({
                   step={0.25}
                   value={gemCarat}
                   onChange={(e) => onSetGemCarat(Number(e.target.value) || 1)}
-                  className="mt-1 w-full rounded-lg border border-border-subtle bg-white px-2 py-1.5 text-xs"
+                  className="mt-1 w-full rounded-lg border border-border-subtle bg-surface px-2 py-1.5 text-xs"
                 />
 
                 <p className="mb-1.5 mt-2.5 text-[10px] uppercase tracking-wide text-charcoal/50">
@@ -317,7 +317,7 @@ export function StudioToolbar({
               max={72}
               value={repeatCount}
               onChange={(e) => setRepeatCount(Number(e.target.value) || 2)}
-              className="w-16 rounded-lg border border-border-subtle bg-white px-2 py-1.5 text-xs"
+              className="w-16 rounded-lg border border-border-subtle bg-surface px-2 py-1.5 text-xs"
             />
           </div>
           <ToolButton
@@ -345,7 +345,7 @@ export function StudioToolbar({
                 title={opt.value ? `Mirror this pane's shapes live, ${opt.value} ways around its center` : "Turn off live symmetry for this pane"}
                 className={cn(
                   "rounded-md border px-2 py-1.5 text-[11px]",
-                  (symmetry ?? null) === opt.value ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70 hover:border-charcoal/40",
+                  (symmetry ?? null) === opt.value ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70 hover:border-charcoal/40",
                 )}
               >
                 {opt.label}
@@ -365,7 +365,7 @@ export function StudioToolbar({
               title={settingCenter ? "Click anywhere on the canvas to place the center" : "Click, then click a point on the canvas to set a custom symmetry center"}
               className={cn(
                 "flex items-center gap-1 rounded-md border px-2 py-1.5 text-[11px]",
-                settingCenter ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70 hover:border-charcoal/40",
+                settingCenter ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70 hover:border-charcoal/40",
               )}
             >
               <Crosshair size={13} />
@@ -412,7 +412,7 @@ export function StudioToolbar({
             title="Save this design (also happens automatically a couple of seconds after you stop editing)"
             className={cn(
               "flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors disabled:opacity-60",
-              "bg-charcoal-soft text-ivory hover:bg-charcoal",
+              "bg-night-soft text-cream hover:bg-night",
             )}
           >
             <Save size={14} />

@@ -7,7 +7,9 @@ import { cn } from "@/lib/utils";
 // top of the page (same idea as the homepage hero) — these must NOT get the
 // pt-24 nav-clearance padding below, or a strip of bare background shows up
 // between the fixed Navbar and the top of their hero image.
-const FULL_BLEED_HERO_ROUTES = ["/", "/about", "/sourcing", "/promotions", "/promotions/collection"];
+// Home, Our Story and Sourcing used to open on full-bleed photos too; their
+// redesigned heroes are contained layouts and take the normal padding.
+const FULL_BLEED_HERO_ROUTES = ["/promotions", "/promotions/collection"];
 // /collections/[slug] (the hidden subculture landing pages) is dynamic, so
 // it can't be listed above — every page under it opens with the same
 // full-bleed min-h-dvh hero (see AlternativeCollectionPage).

@@ -140,7 +140,7 @@ export default async function AdminMessagesPage({ searchParams }: PageProps<"/ad
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-serif text-3xl text-charcoal">Messages</h1>
         {totalUnread > 0 && (
-          <span className="flex items-center gap-1.5 rounded-full bg-gold px-3 py-1 text-xs font-medium text-charcoal">
+          <span className="flex items-center gap-1.5 rounded-full bg-gold px-3 py-1 text-xs font-medium text-night">
             <MessageCircle size={12} /> {totalUnread} unread
           </span>
         )}
@@ -165,13 +165,13 @@ export default async function AdminMessagesPage({ searchParams }: PageProps<"/ad
         <div className="flex gap-2">
           <Link
             href={q ? `/admin/messages?q=${encodeURIComponent(q)}` : "/admin/messages"}
-            className={cn("rounded-full border px-3 py-1.5 text-xs", sort !== "unread" ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70")}
+            className={cn("rounded-full border px-3 py-1.5 text-xs", sort !== "unread" ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70")}
           >
             Most Recent
           </Link>
           <Link
             href={`/admin/messages?sort=unread${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-            className={cn("rounded-full border px-3 py-1.5 text-xs", sort === "unread" ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70")}
+            className={cn("rounded-full border px-3 py-1.5 text-xs", sort === "unread" ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70")}
           >
             Unread First
           </Link>

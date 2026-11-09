@@ -522,7 +522,7 @@ export function ArTryOnOverlay({ modelUrl, pieceName, onClose }: { modelUrl: str
             {/* eslint-disable-next-line @next/next/no-img-element -- a client-only captured data URL, not an optimizable remote/static asset */}
             <img src={capturedUrl} alt="" className="max-h-[70vh] max-w-full rounded-lg [transform:scaleX(-1)]" />
             <div className="flex gap-3">
-              <a href={capturedUrl} download={`${pieceName}-try-on.png`} className="flex items-center gap-1.5 rounded-full bg-gold px-4 py-2 text-sm font-medium text-charcoal">
+              <a href={capturedUrl} download={`${pieceName}-try-on.png`} className="flex items-center gap-1.5 rounded-full bg-gold px-4 py-2 text-sm font-medium text-night">
                 <Download size={15} /> Save
               </a>
               <button type="button" onClick={() => setCapturedUrl(null)} className="flex items-center gap-1.5 rounded-full border border-white/40 px-4 py-2 text-sm text-white">

@@ -212,7 +212,11 @@
         "intro": "Wählen Sie einen Stein zum Entdecken, oder durchsuchen Sie alle Edelsteine auf einmal mit den vollständigen Filtern.",
         "viewAll": "Alle Edelsteine ansehen",
         "allTitle": "Alle Edelsteine",
-        "allDescription": "Jeder Stein, mit den vollständigen Filtern"
+        "allDescription": "Jeder Stein, mit den vollständigen Filtern",
+        "viewAllCount": "{count, plural, one {# Edelstein ansehen} other {Alle # Edelsteine ansehen}}",
+        "notSeeingTitle": "Nicht das Richtige dabei?",
+        "notSeeingBody": "Wählen Sie einen Stein und gestalten Sie mit „Gestalte deinen Edelstein“ ein Schmuckstück darum herum.",
+        "notSeeingCta": "Gestalte deinen Edelstein"
       },
       "jewelry": {
         "kicker": "Nach Zielgruppe kaufen",
@@ -373,5 +377,66 @@
     "search": "Suche",
     "account": "Mein Konto",
     "results": "Ergebnisse"
+  },
+  "home": {
+    "shopGemstones": "Edelsteine kaufen",
+    "designYourGem": "Gestalte deinen Edelstein",
+    "exploreByStone": "Nach Stein entdecken",
+    "handSelected": "Handverlesen",
+    "featuredGems": "Ausgewählte Edelsteine",
+    "featuredJewelry": "Ausgewählter Schmuck",
+    "viewAll": "Alle ansehen",
+    "readOurStory": "Unsere Geschichte lesen",
+    "promiseKicker": "Das Ratnavue-Versprechen",
+    "promiseTitle": "Kaufen Sie mit vollem Vertrauen.",
+    "promiseBody": "Ein Edelstein ist für die meisten ein Kauf fürs Leben — für jeden Stein und jede Fassung gelten dieselben vier Zusagen.",
+    "submitSourcing": "Suchanfrage senden",
+    "openConfigurator": "Konfigurator öffnen"
+  },
+  "configurator": {
+    "kicker": "Gestalte deinen Edelstein",
+    "title": "Konfigurieren Sie Ihren Ceylon-Edelstein",
+    "intro": "Legen Sie Mineral, Schliff, Karatgewicht, Farbe, Tönung und Reinheit fest und fordern Sie dann ein persönliches Angebot an.",
+    "stepMineral": "Mineral / Edelsteinart",
+    "stepCut": "Schliff",
+    "stepCarat": "Karatgewicht",
+    "stepColour": "Farbe ({mineral})",
+    "stepTone": "Helligkeit / Tönung",
+    "stepClarity": "Reinheit",
+    "faceted": "Facettiert",
+    "cabochon": "Cabochon",
+    "colourOption": "Farbe {n} von {total}",
+    "colourNote": "Auf realistische Farbtöne für {mineral} beschränkt.",
+    "toneLight": "Hell",
+    "toneMedium": "Mittel",
+    "toneDark": "Dunkel",
+    "previewNote": "Illustrative Vorschau — die tatsächlichen Maße hängen von der Dichte des Minerals ab",
+    "previewSize": "etwa {length} × {width} mm bei {carat} ct.",
+    "productLabel": "Ihren konfigurierten Edelstein ({mineral})",
+    "gemFallback": "Edelstein"
+  },
+  "sourcing": {
+    "kicker": "Individuelle Suche",
+    "title": "Nicht gefunden, was Sie suchen?",
+    "intro": "Über unseren Katalog hinaus suchen wir auf Anfrage bestimmte Edelsteine direkt auf den Edelsteinmärkten Sri Lankas und in unserem Netzwerk von Schleifern. Sagen Sie uns, was Ihnen vorschwebt, und wir melden uns bei Ihnen.",
+    "step1Title": "Sagen Sie uns, was Ihnen vorschwebt",
+    "step1Body": "Mineral, Größe, Schliff oder Farbe.",
+    "step2Title": "Wir durchsuchen die Märkte",
+    "step2Body": "Unser Team sucht auf den Edelsteinmärkten Sri Lankas und in unserem Netzwerk vertrauenswürdiger Schleifer.",
+    "step3Title": "Sehen Sie, was wir finden",
+    "step3Body": "Unverbindlich, bis Sie sehen, was wir finden.",
+    "formTitle": "Suchanfrage starten",
+    "formIntro": "Beschreiben Sie den Stein — so viel oder so wenig Sie wissen.",
+    "signInPrompt": "Melden Sie sich an, um eine Suchanfrage zu senden.",
+    "signIn": "Anmelden",
+    "footnote": "Direkt von den Edelsteinmärkten Sri Lankas und aus unserem Netzwerk vertrauenswürdiger Schleifer."
+  },
+  "quote": {
+    "signInPrompt": "Melden Sie sich an, um ein Angebot für {product} anzufordern.",
+    "signInCta": "Für ein Angebot anmelden"
+  },
+  "theme": {
+    "toLight": "Zum hellen Design wechseln",
+    "toDark": "Zum dunklen Design wechseln"
   }
 }

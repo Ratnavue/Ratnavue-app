@@ -91,7 +91,7 @@ export function AdminMessagesInbox({ rows: initialRows, currentAdminId }: { rows
                     <div className="flex items-center gap-2 text-charcoal">
                       {r.customerName}
                       {r.unread > 0 && (
-                        <span className="flex items-center gap-1 rounded-full bg-gold px-1.5 py-0.5 text-[10px] font-medium text-charcoal">
+                        <span className="flex items-center gap-1 rounded-full bg-gold px-1.5 py-0.5 text-[10px] font-medium text-night">
                           <MessageCircle size={10} /> {r.unread}
                         </span>
                       )}

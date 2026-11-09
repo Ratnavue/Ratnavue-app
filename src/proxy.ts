@@ -4,6 +4,7 @@ import authConfig from "@/lib/auth.config";
 import { staffAreaForPath } from "@/lib/staff-permissions";
 import { APP_PATH_HEADER, LK_PREFIX, MARKET_HEADER, isLkPath, stripMarket } from "@/lib/market-shared";
 import { SALES_REF_COOKIE, SALES_REF_COOKIE_MAX_AGE_SECONDS } from "@/lib/sales-referrals-shared";
+import { STORE_PREF_COOKIE, STORE_PREF_MAX_AGE_SECONDS, countryFromHeaders, decideGeoLanding } from "@/lib/geo-landing";
 
 // Deliberately NOT `import { auth } from "@/lib/auth"` — that config pulls in
 // PrismaAdapter, Prisma Client, and the Credentials/Google providers
@@ -82,8 +83,39 @@ export default auth(async (req) => {
     return NextResponse.redirect(new URL(pathname + req.nextUrl.search, req.nextUrl.origin));
   }
 
+  // First-visit landing by location (lib/geo-landing.ts): Sri Lanka -> /lk,
+  // everywhere else -> the international store. Only a real browser's
+  // top-level page load, never: a crawler (both stores must stay indexable
+  // under their own URLs — the hreflang alternates in RootLayout already
+  // steer searchers), a client-side RSC fetch/prefetch or server action (a
+  // redirect there would break the in-app navigation), or the second,
+  // already-stamped pass of a /lk rewrite.
+  const userAgent = req.headers.get("user-agent") ?? "";
+  const isDocumentLoad =
+    req.method === "GET" &&
+    !req.headers.has("rsc") &&
+    !req.headers.has("next-router-prefetch") &&
+    !req.headers.has("next-action") &&
+    req.headers.get("sec-fetch-dest") !== "empty";
+  const geo =
+    isDocumentLoad && !alreadyStampedLk && isBrowserRequest(userAgent) && !ALLOWED_BOT_UA.test(userAgent)
+      ? decideGeoLanding({
+          rawPathname: rawPath,
+          country:
+            countryFromHeaders(req.headers) ??
+            // Local testing only — there's no geo header outside Vercel/Cloudflare.
+            (process.env.NODE_ENV !== "production" ? (process.env.DEV_GEO_COUNTRY ?? null) : null),
+          hasStorePref: req.cookies.has(STORE_PREF_COOKIE),
+        })
+      : ({ action: "none" } as const);
+  if (geo.action === "redirect") {
+    const target = new URL(geo.pathname + req.nextUrl.search, req.nextUrl.origin);
+    const redirect = NextResponse.redirect(target);
+    redirect.cookies.set(STORE_PREF_COOKIE, geo.market, { path: "/", sameSite: "lax", maxAge: STORE_PREF_MAX_AGE_SECONDS });
+    return redirect;
+  }
+
   if (pathname.startsWith("/collections")) {
-    const userAgent = req.headers.get("user-agent") ?? "";
     if (!isBrowserRequest(userAgent)) {
       // Reads as though the route doesn't exist, same as a page that's
       // actually Hidden — no hint that a stricter check exists at all.
@@ -175,6 +207,10 @@ export default auth(async (req) => {
   // clock to a fresh token. The query param itself is left in the URL,
   // same "doesn't need cleaning up" treatment a UTM param gets — the
   // cookie, not the param, is what actually persists across the site.
+  if (geo.action === "remember") {
+    response.cookies.set(STORE_PREF_COOKIE, geo.market, { path: "/", sameSite: "lax", maxAge: STORE_PREF_MAX_AGE_SECONDS });
+  }
+
   const refToken = req.nextUrl.searchParams.get("ref");
   if (refToken) {
     response.cookies.set(SALES_REF_COOKIE, refToken, {

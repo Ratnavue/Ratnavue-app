@@ -56,7 +56,7 @@ export function AccountMenu({
         aria-label={compact ? (user.name?.split(" ")[0] ?? "Account") : undefined}
         className={cn(
           "flex items-center gap-2 text-sm transition-colors duration-300",
-          transparent ? "text-ivory/85 hover:text-ivory" : "text-charcoal/80 hover:text-charcoal",
+          transparent ? "text-cream/85 hover:text-cream" : "text-charcoal/80 hover:text-charcoal",
         )}
       >
         <User size={compact ? 21 : 16} />

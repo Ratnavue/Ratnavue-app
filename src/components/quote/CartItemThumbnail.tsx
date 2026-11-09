@@ -43,7 +43,7 @@ export function CartItemThumbnail({
         <Image src={primary.url} alt="" fill sizes="64px" className="object-cover" />
       )}
       {extraCount > 0 && (
-        <span className="absolute bottom-0.5 right-0.5 rounded bg-charcoal/80 px-1 text-[10px] font-medium text-ivory">
+        <span className="absolute bottom-0.5 right-0.5 rounded bg-night/80 px-1 text-[10px] font-medium text-cream">
           +{extraCount}
         </span>
       )}

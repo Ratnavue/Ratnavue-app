@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { Cormorant_Garamond, Inter, Noto_Sans_Sinhala, Noto_Serif_Sinhala, Noto_Sans_Tamil, Noto_Serif_Tamil } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
@@ -14,7 +14,7 @@ import { getPaymentMethodOverrides } from "@/lib/payment-method-settings";
 import { SEASONAL_THEMES } from "@/lib/seasonal-themes";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { MainWrapper } from "@/components/layout/MainWrapper";
-import { getFooterMessages, getTrustBarMessages } from "@/lib/i18n-messages";
+import { getFooterMessages } from "@/lib/i18n-messages";
 import { getMarket } from "@/lib/market";
 import { hasAdminPortalAccess } from "@/lib/admin-access";
 import { APP_PATH_HEADER, withMarket } from "@/lib/market-shared";
@@ -23,6 +23,7 @@ import { MarketProvider } from "@/components/providers/MarketProvider";
 import { ConfirmProvider } from "@/components/providers/ConfirmProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import type { AppLocale } from "@/i18n/request";
+import { THEME_COOKIE, parseTheme, themeForPath } from "@/lib/theme";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -79,7 +80,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const market = await getMarket();
+  const [market, headerStore, cookieStore] = await Promise.all([getMarket(), headers(), cookies()]);
+  // Both storefronts share one palette; the visitor picks dark (default) or
+  // light with ThemeToggle. Rendered here so the first paint is already right.
+  const theme = themeForPath(headerStore.get(APP_PATH_HEADER) ?? "/", parseTheme(cookieStore.get(THEME_COOKIE)?.value));
   const seasonalKey = marketVisibilityKey("seasonal", market);
   const auctionKey = marketVisibilityKey("auction", market);
   const [session, visibilities, seasonalContent, locale, customLocales, paymentMethodOverrides, siteBanner] = await Promise.all([
@@ -112,10 +116,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // server) and threaded down through SiteChrome to Footer as plain
   // prop values — see src/lib/i18n-messages.ts for why Footer can't
   // resolve its own translations.
-  const [footerMessages, trustBarMessages] = await Promise.all([
-    getFooterMessages(new Date().getFullYear()),
-    getTrustBarMessages(),
-  ]);
+  const footerMessages = await getFooterMessages(new Date().getFullYear());
   // Same reasoning for the nav's cart badge — cheap enough to read fresh
   // on every navigation rather than push it into the session/JWT. Summed
   // quantity, not a row count, to match the cart page's own "N items"
@@ -128,7 +129,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     : 0;
 
   return (
-    <html lang={locale} data-market={market} className={`${cormorant.variable} ${inter.variable} ${notoSansSinhala.variable} ${notoSerifSinhala.variable} ${notoSansTamil.variable} ${notoSerifTamil.variable} h-full antialiased`}>
+    <html lang={locale} data-market={market} data-theme={theme} className={`${cormorant.variable} ${inter.variable} ${notoSansSinhala.variable} ${notoSerifSinhala.variable} ${notoSansTamil.variable} ${notoSerifTamil.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-ivory text-charcoal">
         <MarketProvider market={market}>
         <NextIntlClientProvider>
@@ -137,7 +138,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <SiteChrome
               user={session?.user ? { name: session.user.name, email: session.user.email, hasAdminAccess: hasAdminPortalAccess(session.user) } : null}
               footerMessages={footerMessages}
-              trustBarMessages={trustBarMessages}
               showPromotions={visibilities[seasonalKey] !== "HIDDEN"}
               showAuction={visibilities[auctionKey] !== "HIDDEN"}
               showDesignStudio={visibilities["design-studio"] === "LIVE"}

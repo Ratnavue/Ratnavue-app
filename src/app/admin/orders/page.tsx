@@ -111,7 +111,7 @@ export default async function AdminOrdersPage({ searchParams }: PageProps<"/admi
       <div className="mt-3 flex flex-wrap gap-2">
         <Link
           href={`/admin/orders?${new URLSearchParams({ ...(market ? { market } : {}), ...(q ? { q } : {}) }).toString()}`}
-          className={cn("rounded-full border px-3 py-1 text-xs", !status ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70")}
+          className={cn("rounded-full border px-3 py-1 text-xs", !status ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70")}
         >
           All
         </Link>
@@ -119,7 +119,7 @@ export default async function AdminOrdersPage({ searchParams }: PageProps<"/admi
           <Link
             key={s}
             href={`/admin/orders?${new URLSearchParams({ status: s, ...(market ? { market } : {}), ...(q ? { q } : {}) }).toString()}`}
-            className={cn("rounded-full border px-3 py-1 text-xs", status === s ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70")}
+            className={cn("rounded-full border px-3 py-1 text-xs", status === s ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70")}
           >
             {s.replaceAll("_", " ")}
           </Link>

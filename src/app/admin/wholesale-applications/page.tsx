@@ -53,7 +53,7 @@ export default async function AdminWholesaleApplicationsPage({ searchParams }: P
       <div className="mt-4 flex flex-wrap gap-2">
         <Link
           href={`/admin/wholesale-applications${q ? `?q=${encodeURIComponent(q)}` : ""}`}
-          className={cn("rounded-full border px-3 py-1 text-xs", !status ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70")}
+          className={cn("rounded-full border px-3 py-1 text-xs", !status ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70")}
         >
           All
         </Link>
@@ -61,7 +61,7 @@ export default async function AdminWholesaleApplicationsPage({ searchParams }: P
           <Link
             key={s}
             href={`/admin/wholesale-applications?status=${s}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-            className={cn("rounded-full border px-3 py-1 text-xs", status === s ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70")}
+            className={cn("rounded-full border px-3 py-1 text-xs", status === s ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70")}
           >
             {s.charAt(0) + s.slice(1).toLowerCase()}
           </Link>

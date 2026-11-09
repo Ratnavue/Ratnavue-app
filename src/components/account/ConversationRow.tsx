@@ -35,7 +35,7 @@ export function ConversationRow({ item, active }: { item: ConversationRowData; a
         <span className="mt-0.5 flex items-center justify-between gap-2">
           <span className="truncate text-xs text-charcoal/60">{item.preview ?? `${label} · no messages yet`}</span>
           {item.unread > 0 && (
-            <span className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-medium text-charcoal">
+            <span className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-medium text-night">
               {item.unread > 9 ? "9+" : item.unread}
             </span>
           )}

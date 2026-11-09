@@ -138,7 +138,7 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps<"/a
             className="mt-1 rounded-lg border border-border-subtle bg-surface px-3 py-1.5 text-sm text-charcoal"
           />
         </div>
-        <button type="submit" className="rounded-full border border-charcoal bg-charcoal px-4 py-1.5 text-xs text-ivory">Apply</button>
+        <button type="submit" className="rounded-full border border-charcoal bg-night px-4 py-1.5 text-xs text-cream">Apply</button>
         <a href="/admin/analytics" className="text-xs text-charcoal/60 underline-offset-2 hover:underline">Reset to this month</a>
       </form>
 

@@ -12,7 +12,7 @@ export const STOCK_STYLES: Record<string, string> = {
   // product photo) show straight through — unreadable. A solid dark pill
   // reads clearly against any photo, same family as those cards' own
   // "Ceylon" origin badge (bg-charcoal/85 + text-ivory).
-  SOLD: "bg-charcoal/90 text-ivory border-charcoal/90",
+  SOLD: "bg-night/90 text-cream border-charcoal/90",
 };
 
 const QUOTE_STATUS_STYLES: Record<string, string> = {

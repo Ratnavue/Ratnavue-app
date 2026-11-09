@@ -62,7 +62,7 @@ export default async function AdminQuotesPage({ searchParams }: PageProps<"/admi
       <div className="mt-4 flex flex-wrap gap-2">
         <Link
           href={`/admin/quotes${q ? `?q=${encodeURIComponent(q)}` : ""}`}
-          className={cn("rounded-full border px-3 py-1 text-xs", !status ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70")}
+          className={cn("rounded-full border px-3 py-1 text-xs", !status ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70")}
         >
           All
         </Link>
@@ -70,7 +70,7 @@ export default async function AdminQuotesPage({ searchParams }: PageProps<"/admi
           <Link
             key={s}
             href={`/admin/quotes?status=${s}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-            className={cn("rounded-full border px-3 py-1 text-xs", status === s ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70")}
+            className={cn("rounded-full border px-3 py-1 text-xs", status === s ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70")}
           >
             {s.replaceAll("_", " ")}
           </Link>
@@ -109,7 +109,7 @@ export default async function AdminQuotesPage({ searchParams }: PageProps<"/admi
                     )}
                     {q.gemstone?.name ?? q.jewelry?.name ?? (q.productType === "CUSTOM" ? "Custom Design" : "Configured gem")}
                     {unread > 0 && (
-                      <span className="flex items-center gap-1 rounded-full bg-gold px-1.5 py-0.5 text-[10px] font-medium text-charcoal">
+                      <span className="flex items-center gap-1 rounded-full bg-gold px-1.5 py-0.5 text-[10px] font-medium text-night">
                         <MessageCircle size={10} /> {unread}
                       </span>
                     )}

@@ -96,7 +96,7 @@ export default async function GemDetailPage({ params }: PageProps<"/gems/[slug]"
             <p className="text-xs uppercase tracking-widest text-gold-deep">{gem.mineral.name}</p>
             <StockBadge status={gem.stockStatus} />
             {gem.origin.isCeylon && (
-              <span className="rounded-full bg-charcoal/85 px-2.5 py-0.5 text-[11px] font-medium tracking-wide text-ivory">
+              <span className="rounded-full bg-night/85 px-2.5 py-0.5 text-[11px] font-medium tracking-wide text-cream">
                 {t("ceylonOrigin")}
               </span>
             )}

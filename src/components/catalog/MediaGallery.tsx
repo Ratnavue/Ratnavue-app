@@ -66,7 +66,7 @@ export function MediaGallery({ media, fallbackLabel }: { media: MediaItem[]; fal
               priority
               sizes="(min-width: 1024px) 50vw, 100vw"
             />
-            <span className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-charcoal/70 px-2.5 py-1 text-[11px] text-ivory">
+            <span className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-night/70 px-2.5 py-1 text-[11px] text-cream">
               <ZoomIn size={12} /> Click to zoom
             </span>
           </>
@@ -115,7 +115,7 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
   }, [onClose]);
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/90 p-4 sm:p-10" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-night/90 p-4 sm:p-10" onClick={onClose}>
       <button
         type="button"
         onClick={onClose}
@@ -124,7 +124,7 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
         // only narrows it in landscape), so without this it sits on top of
         // the button and swallows the tap. Offsets respect the phone's
         // notch/status bar, and the larger padding is a proper touch target.
-        className="absolute right-[max(1rem,env(safe-area-inset-right))] top-[max(1rem,env(safe-area-inset-top))] z-10 rounded-full bg-charcoal/70 p-3 text-ivory transition-colors hover:bg-charcoal/90"
+        className="absolute right-[max(1rem,env(safe-area-inset-right))] top-[max(1rem,env(safe-area-inset-top))] z-10 rounded-full bg-night/70 p-3 text-cream transition-colors hover:bg-night/90"
       >
         <X size={22} />
       </button>

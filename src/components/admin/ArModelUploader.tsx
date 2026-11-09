@@ -62,7 +62,7 @@ export function ArModelUploader({ jewelryId, modelUrl, pieceName }: { jewelryId:
           ref={fileInput}
           type="file"
           accept=".glb,model/gltf-binary"
-          className="w-40 text-[11px] text-charcoal/70 file:mr-2 file:cursor-pointer file:rounded-full file:border-0 file:bg-gold file:px-2.5 file:py-1 file:text-[10px] file:font-medium file:tracking-wide file:text-charcoal file:transition-colors hover:file:bg-gold-soft"
+          className="w-40 text-[11px] text-charcoal/70 file:mr-2 file:cursor-pointer file:rounded-full file:border-0 file:bg-gold file:px-2.5 file:py-1 file:text-[10px] file:font-medium file:tracking-wide file:text-night file:transition-colors hover:file:bg-gold-soft"
         />
         <p className="text-[10px] text-charcoal/45">.glb files only, up to 3.5MB.</p>
         <div className="flex gap-2">

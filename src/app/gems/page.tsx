@@ -13,6 +13,10 @@ import { CategoryTile, CategoryGrid } from "@/components/catalog/CategoryTile";
 import { ProductGridSkeleton } from "@/components/catalog/ProductGridSkeleton";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Pagination } from "@/components/ui/Pagination";
+import { LinkButton } from "@/components/ui/Button";
+import { ArrowRight } from "lucide-react";
+import { gemColorFor } from "@/lib/gem-palette";
+import type { StylizedGemShape } from "@/components/gem-visualizer/StylizedGem";
 
 export const metadata: Metadata = { title: "Shop Gemstones" };
 
@@ -40,42 +44,74 @@ export default async function GemsPage({ searchParams }: PageProps<"/gems">) {
 }
 
 async function GemsLanding({ market }: { market: Market }) {
-  const [t, tl, tb, categories] = await Promise.all([
+  const [t, tl, tb, categories, masterData] = await Promise.all([
     getTranslations("catalog.gems"),
     getTranslations("catalog.landing"),
     getTranslations("breadcrumb"),
     getGemCategories(market),
+    getMasterData(),
   ]);
+  const hueRangeBySlug = new Map(masterData.minerals.map((m) => [m.slug, m]));
 
   return (
     <div className="mx-auto max-w-[120rem] px-5 py-10 sm:px-8 lg:px-12 xl:px-16">
       <Breadcrumbs items={[{ label: tb("home"), href: "/" }, { label: tb("gems") }]} />
-      <div className="mb-10">
-        <p className="text-xs uppercase tracking-widest text-gold-deep">{tl("gems.kicker")}</p>
-        <h1 className="mt-2 font-serif text-4xl text-charcoal">{tl("gems.title")}</h1>
-        <p className="mt-3 max-w-2xl text-charcoal/70">{tl("gems.intro")}</p>
+      <div className="mb-10 flex flex-col gap-6 sm:mb-12 lg:flex-row lg:items-end lg:justify-between">
+        <div className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{tl("gems.kicker")}</p>
+          <h1 className="mt-3 font-serif text-5xl text-charcoal sm:text-6xl">{tl("gems.title")}</h1>
+          <p className="mt-4 text-lg leading-relaxed text-charcoal/75">{tl("gems.intro")}</p>
+        </div>
+        {categories.total > 0 && (
+          <LinkButton href="/gems?view=all" variant="primary" size="lg" className="self-start font-semibold lg:self-auto">
+            {tl("gems.viewAllCount", { count: categories.total })}
+            <ArrowRight size={18} />
+          </LinkButton>
+        )}
       </div>
 
       {categories.tiles.length === 0 ? (
         <p className="py-20 text-center text-charcoal/65">{t("empty")}</p>
       ) : (
         <CategoryGrid>
-          <CategoryTile
-            href="/gems?view=all"
-            label={tl("gems.viewAll")}
-            countLabel={tl("pieces", { count: categories.total })}
-            description={tl("gems.allDescription")}
-            image={categories.cover}
-            emphasis
-          />
           {categories.tiles.map((tile) => (
-            <CategoryTile key={tile.key} href={tile.href} label={tile.label} countLabel={tl("pieces", { count: tile.count })} image={tile.image} />
+            <CategoryTile
+              key={tile.key}
+              href={tile.href}
+              label={tile.label}
+              countLabel={tl("pieces", { count: tile.count })}
+              image={tile.image}
+              gemColor={gemColorFor(tile.key, hueRangeBySlug.get(tile.key))}
+              gemShape={GEM_TILE_SHAPES[tile.key] ?? "oval"}
+            />
           ))}
         </CategoryGrid>
       )}
+
+      {/* The way out when the catalog doesn't have it: shape one instead. */}
+      <div className="mt-14 flex flex-col gap-6 band-sapphire rounded-3xl px-6 py-10 sm:px-12 sm:py-12 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="font-serif text-3xl text-charcoal sm:text-4xl">{tl("gems.notSeeingTitle")}</h2>
+          <p className="mt-3 text-charcoal/85">{tl("gems.notSeeingBody")}</p>
+        </div>
+        <LinkButton href="/configurator" variant="primary" size="lg" className="shrink-0 self-start font-semibold md:self-auto">
+          {tl("gems.notSeeingCta")}
+        </LinkButton>
+      </div>
     </div>
   );
 }
+
+// A little variety across the grid, the way a tray of real stones reads:
+// sapphires as ovals, the brilliants round, spinel as a cushion.
+const GEM_TILE_SHAPES: Record<string, StylizedGemShape> = {
+  "white-sapphire": "round",
+  "pink-sapphire": "round",
+  spinel: "cushion",
+  garnet: "round",
+  topaz: "cushion",
+  ruby: "cushion",
+};
 
 async function GemsListing({ sp, market }: { sp: SearchParams; market: Market }) {
   const [t, tb, masterData] = await Promise.all([getTranslations("catalog.gems"), getTranslations("breadcrumb"), getMasterData()]);

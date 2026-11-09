@@ -34,7 +34,7 @@ export function AuctionCard({ name, href, imageUrl, state, startingPrice, highBi
             <Gem size={48} strokeWidth={1} />
           </div>
         )}
-        <span className="absolute left-3 top-3 rounded-full bg-charcoal/80 px-2.5 py-1 text-[11px] uppercase tracking-wide text-ivory">
+        <span className="absolute left-3 top-3 rounded-full bg-night/80 px-2.5 py-1 text-[11px] uppercase tracking-wide text-cream">
           {PUBLIC_AUCTION_STATE_LABELS[state]}
         </span>
       </div>

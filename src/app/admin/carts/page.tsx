@@ -56,19 +56,19 @@ export default async function AdminCartsPage({ searchParams }: PageProps<"/admin
       <div className="mt-4 flex flex-wrap gap-2">
         <Link
           href={`/admin/carts?${new URLSearchParams({ ...(q ? { q } : {}) }).toString()}`}
-          className={cn("rounded-full border px-3 py-1 text-xs", !paymentStatus ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70")}
+          className={cn("rounded-full border px-3 py-1 text-xs", !paymentStatus ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70")}
         >
           All
         </Link>
         <Link
           href={`/admin/carts?${new URLSearchParams({ payment: "AWAITING_PAYMENT", ...(q ? { q } : {}) }).toString()}`}
-          className={cn("rounded-full border px-3 py-1 text-xs", paymentStatus === "AWAITING_PAYMENT" ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70")}
+          className={cn("rounded-full border px-3 py-1 text-xs", paymentStatus === "AWAITING_PAYMENT" ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70")}
         >
           Awaiting Payment
         </Link>
         <Link
           href={`/admin/carts?${new URLSearchParams({ payment: "PAID", ...(q ? { q } : {}) }).toString()}`}
-          className={cn("rounded-full border px-3 py-1 text-xs", paymentStatus === "PAID" ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70")}
+          className={cn("rounded-full border px-3 py-1 text-xs", paymentStatus === "PAID" ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70")}
         >
           Paid
         </Link>

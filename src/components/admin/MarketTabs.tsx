@@ -21,7 +21,7 @@ export function MarketTabs({ basePath, current }: { basePath: string; current: M
           aria-selected={current === tab.market}
           className={cn(
             "rounded-full px-4 py-1.5 transition-colors",
-            current === tab.market ? "bg-charcoal text-ivory" : "text-charcoal/70 hover:text-charcoal",
+            current === tab.market ? "bg-night text-cream" : "text-charcoal/70 hover:text-charcoal",
           )}
         >
           {tab.label}

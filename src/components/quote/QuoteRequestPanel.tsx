@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import Link from "@/components/ui/MarketLink";
 import { useAppPathname } from "@/components/providers/MarketProvider";
 import { CircleCheck, AlertTriangle } from "lucide-react";
@@ -15,9 +16,13 @@ interface QuoteRequestPanelProps {
   jewelryId?: string;
   configuredSpec?: ConfiguredSpec;
   productLabel: string;
+  /** Unboxed, with a full-width button — for when the panel already sits
+   * inside its own card (the configurator). */
+  bare?: boolean;
 }
 
-export function QuoteRequestPanel({ isAuthenticated, gemstoneId, jewelryId, configuredSpec, productLabel }: QuoteRequestPanelProps) {
+export function QuoteRequestPanel({ isAuthenticated, gemstoneId, jewelryId, configuredSpec, productLabel, bare = false }: QuoteRequestPanelProps) {
+  const tq = useTranslations("quote");
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -28,10 +33,10 @@ export function QuoteRequestPanel({ isAuthenticated, gemstoneId, jewelryId, conf
 
   if (!isAuthenticated) {
     return (
-      <div className="rounded-xl border border-border-subtle bg-ivory-soft p-5">
-        <p className="text-sm text-charcoal/75">Sign in to request a quote on {productLabel}.</p>
-        <Link href={`/account/login?callbackUrl=${encodeURIComponent(pathname)}`}>
-          <Button variant="primary" className="mt-3">Sign in to request a quote</Button>
+      <div className={bare ? "" : "rounded-xl border border-border-subtle bg-ivory-soft p-5"}>
+        <p className={bare ? "text-charcoal/80" : "text-sm text-charcoal/75"}>{tq("signInPrompt", { product: productLabel })}</p>
+        <Link href={`/account/login?callbackUrl=${encodeURIComponent(pathname)}`} className={bare ? "mt-4 block" : undefined}>
+          <Button variant="primary" size={bare ? "lg" : "md"} className={bare ? "w-full" : "mt-3"}>{tq("signInCta")}</Button>
         </Link>
       </div>
     );
@@ -57,7 +62,7 @@ export function QuoteRequestPanel({ isAuthenticated, gemstoneId, jewelryId, conf
 
   if (!open) {
     return (
-      <Button variant="gold" size="lg" onClick={() => setOpen(true)}>
+      <Button variant="gold" size="lg" className={bare ? "w-full" : undefined} onClick={() => setOpen(true)}>
         Request a Quote
       </Button>
     );

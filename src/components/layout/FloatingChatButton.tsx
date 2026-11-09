@@ -136,7 +136,7 @@ export function FloatingChatButton() {
                       <div className="flex items-center justify-between gap-2">
                         <p className="truncate font-medium text-charcoal">{c.itemLabel}</p>
                         {c.unreadCount > 0 && (
-                          <span className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-medium text-charcoal">
+                          <span className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-medium text-night">
                             {c.unreadCount > 9 ? "9+" : c.unreadCount}
                           </span>
                         )}
@@ -208,7 +208,7 @@ export function FloatingChatButton() {
       >
         <MessageCircle size={24} />
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-gold px-1 text-[11px] font-medium text-charcoal">
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-gold px-1 text-[11px] font-medium text-night">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}

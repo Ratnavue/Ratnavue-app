@@ -127,7 +127,7 @@ function GemCardList(props: GemCardProps) {
         <div className="mt-2.5 flex flex-wrap items-center gap-2">
           {props.promoPrice != null && <PromotionBadge />}
           {props.isCeylon && (
-            <span className="rounded-full bg-charcoal/85 px-2.5 py-0.5 text-[10px] font-medium tracking-wide text-ivory">
+            <span className="rounded-full bg-night/85 px-2.5 py-0.5 text-[10px] font-medium tracking-wide text-cream">
               Ceylon
             </span>
           )}
@@ -186,7 +186,7 @@ function GemCardGrid(props: GemCardProps) {
         <div className="absolute left-2 top-2 flex flex-col items-start gap-1.5 sm:left-3 sm:top-3">
           {props.promoPrice != null && <PromotionBadge />}
           {props.isCeylon && (
-            <span className="rounded-full bg-charcoal/85 px-2 py-0.5 text-[10px] font-medium tracking-wide text-ivory sm:px-2.5 sm:text-[11px]">
+            <span className="rounded-full bg-night/85 px-2 py-0.5 text-[10px] font-medium tracking-wide text-cream sm:px-2.5 sm:text-[11px]">
               Ceylon
             </span>
           )}

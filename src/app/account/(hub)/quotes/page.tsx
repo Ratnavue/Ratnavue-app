@@ -59,7 +59,7 @@ export default async function AccountQuotesPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {unread > 0 && (
-                      <span className="flex items-center gap-1 rounded-full bg-gold px-2 py-0.5 text-[11px] font-medium text-charcoal">
+                      <span className="flex items-center gap-1 rounded-full bg-gold px-2 py-0.5 text-[11px] font-medium text-night">
                         <MessageCircle size={11} /> {unread}
                       </span>
                     )}

@@ -212,7 +212,11 @@
         "intro": "Choose a stone to explore, or browse every gemstone at once with the full filters.",
         "viewAll": "View all gemstones",
         "allTitle": "All gemstones",
-        "allDescription": "Every stone, with the full filters"
+        "allDescription": "Every stone, with the full filters",
+        "viewAllCount": "{count, plural, one {View # gemstone} other {View all # gemstones}}",
+        "notSeeingTitle": "Not seeing the one?",
+        "notSeeingBody": "Choose a stone and shape a piece around it with Design Your Gem.",
+        "notSeeingCta": "Design Your Gem"
       },
       "jewelry": {
         "kicker": "Shop by who it's for",
@@ -373,5 +377,66 @@
     "search": "Search",
     "account": "My Account",
     "results": "Results"
+  },
+  "home": {
+    "shopGemstones": "Shop Gemstones",
+    "designYourGem": "Design Your Gem",
+    "exploreByStone": "Explore by stone",
+    "handSelected": "Hand-Selected",
+    "featuredGems": "Featured Gemstones",
+    "featuredJewelry": "Featured Jewelry",
+    "viewAll": "View all",
+    "readOurStory": "Read Our Story",
+    "promiseKicker": "The Ratnavue Promise",
+    "promiseTitle": "Buy with complete confidence.",
+    "promiseBody": "A gemstone is a once-in-a-lifetime purchase for most people who make one — every stone and setting is backed by the same four commitments.",
+    "submitSourcing": "Submit a Sourcing Request",
+    "openConfigurator": "Open the Configurator"
+  },
+  "configurator": {
+    "kicker": "Design Your Gem",
+    "title": "Configure your Ceylon gemstone",
+    "intro": "Set the mineral, cut, carat weight, colour, tone and clarity, then request a private quote.",
+    "stepMineral": "Mineral / Gem Type",
+    "stepCut": "Cut",
+    "stepCarat": "Carat Weight",
+    "stepColour": "Colour ({mineral})",
+    "stepTone": "Darkness / Tone",
+    "stepClarity": "Clarity",
+    "faceted": "Faceted",
+    "cabochon": "Cabochon",
+    "colourOption": "Colour {n} of {total}",
+    "colourNote": "Constrained to hues realistic for {mineral}.",
+    "toneLight": "Light",
+    "toneMedium": "Medium",
+    "toneDark": "Dark",
+    "previewNote": "Illustrative preview — actual dimensions vary by the mineral's density",
+    "previewSize": "approximately {length} × {width} mm at {carat} ct.",
+    "productLabel": "your configured {mineral}",
+    "gemFallback": "gem"
+  },
+  "sourcing": {
+    "kicker": "Bespoke Sourcing",
+    "title": "Can't find what you're looking for?",
+    "intro": "Beyond our catalog, we source specific gemstones on request directly from Sri Lanka's gem markets and our network of cutters. Tell us what you have in mind and we'll get back to you.",
+    "step1Title": "Tell us what you have in mind",
+    "step1Body": "The mineral, size, cut, or colour.",
+    "step2Title": "We search the markets",
+    "step2Body": "Our team searches Sri Lanka's gem markets and our network of trusted cutters.",
+    "step3Title": "See what we find",
+    "step3Body": "No obligation until you see what we find.",
+    "formTitle": "Start a sourcing request",
+    "formIntro": "Describe the stone — as much or as little as you know.",
+    "signInPrompt": "Sign in to submit a sourcing request.",
+    "signIn": "Sign in",
+    "footnote": "Sourced directly from Sri Lanka's gem markets and our network of trusted cutters."
+  },
+  "quote": {
+    "signInPrompt": "Sign in to request a quote on {product}.",
+    "signInCta": "Sign in to request a quote"
+  },
+  "theme": {
+    "toLight": "Switch to light theme",
+    "toDark": "Switch to dark theme"
   }
 }

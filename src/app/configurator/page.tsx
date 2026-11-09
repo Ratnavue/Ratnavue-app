@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getMasterData } from "@/lib/catalog";
 import { auth } from "@/lib/auth";
 import { GemConfiguratorClient } from "@/components/configurator/GemConfiguratorClient";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
   title: "Design Your Gem",
@@ -10,17 +10,15 @@ export const metadata: Metadata = {
 };
 
 export default async function ConfiguratorPage() {
-  const [masterData, session] = await Promise.all([getMasterData(), auth()]);
+  const [masterData, session, t] = await Promise.all([getMasterData(), auth(), getTranslations("configurator")]);
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
-      <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Design Your Gem" }]} />
-      <div className="mb-10 max-w-2xl">
-        <p className="text-xs uppercase tracking-widest text-gold-deep">Design Your Gem</p>
-        <h1 className="mt-2 font-serif text-4xl text-charcoal">Configure your own Ceylon gemstone</h1>
-        <p className="mt-3 text-charcoal/65">
-          Choose a mineral, cut, size, colour, tone, and clarity to see an illustrative rendering update live.
-          When you&apos;re happy with the spec, request a quote and our gemologists will source or match it for you.
+    <div className="mx-auto max-w-[120rem] px-5 pb-20 pt-10 sm:px-8 sm:pt-14 lg:px-12 xl:px-16">
+      <div className="mb-10 max-w-5xl sm:mb-14">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{t("kicker")}</p>
+        <h1 className="mt-4 font-serif text-5xl leading-[1.05] text-charcoal sm:text-6xl lg:text-7xl">{t("title")}</h1>
+        <p className="mt-5 max-w-2xl text-lg leading-relaxed text-charcoal/75">
+          {t("intro")}
         </p>
       </div>
 

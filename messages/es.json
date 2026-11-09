@@ -212,7 +212,11 @@
         "intro": "Elija una piedra para explorar, o vea todas las gemas a la vez con los filtros completos.",
         "viewAll": "Ver todas las gemas",
         "allTitle": "Todas las gemas",
-        "allDescription": "Cada piedra, con los filtros completos"
+        "allDescription": "Cada piedra, con los filtros completos",
+        "viewAllCount": "{count, plural, one {Ver # gema} other {Ver las # gemas}}",
+        "notSeeingTitle": "¿No encuentra la indicada?",
+        "notSeeingBody": "Elija una piedra y cree una pieza a su medida con Diseña tu Gema.",
+        "notSeeingCta": "Diseña tu Gema"
       },
       "jewelry": {
         "kicker": "Comprar según para quién es",
@@ -373,5 +377,66 @@
     "search": "Buscar",
     "account": "Mi Cuenta",
     "results": "Resultados"
+  },
+  "home": {
+    "shopGemstones": "Comprar gemas",
+    "designYourGem": "Diseña tu Gema",
+    "exploreByStone": "Explorar por piedra",
+    "handSelected": "Selección a mano",
+    "featuredGems": "Gemas destacadas",
+    "featuredJewelry": "Joyas destacadas",
+    "viewAll": "Ver todo",
+    "readOurStory": "Lea nuestra historia",
+    "promiseKicker": "La promesa Ratnavue",
+    "promiseTitle": "Compre con total confianza.",
+    "promiseBody": "Para la mayoría, una gema es una compra única en la vida: cada piedra y cada engaste están respaldados por los mismos cuatro compromisos.",
+    "submitSourcing": "Enviar una solicitud de búsqueda",
+    "openConfigurator": "Abrir el configurador"
+  },
+  "configurator": {
+    "kicker": "Diseña tu Gema",
+    "title": "Configure su gema de Ceilán",
+    "intro": "Defina el mineral, la talla, el peso en quilates, el color, el tono y la pureza, y luego solicite una cotización privada.",
+    "stepMineral": "Mineral / tipo de gema",
+    "stepCut": "Talla",
+    "stepCarat": "Peso en quilates",
+    "stepColour": "Color ({mineral})",
+    "stepTone": "Oscuridad / tono",
+    "stepClarity": "Pureza",
+    "faceted": "Facetada",
+    "cabochon": "Cabujón",
+    "colourOption": "Color {n} de {total}",
+    "colourNote": "Limitado a tonalidades realistas para {mineral}.",
+    "toneLight": "Claro",
+    "toneMedium": "Medio",
+    "toneDark": "Oscuro",
+    "previewNote": "Vista previa ilustrativa: las dimensiones reales varían según la densidad del mineral",
+    "previewSize": "aproximadamente {length} × {width} mm con {carat} ct.",
+    "productLabel": "su gema configurada ({mineral})",
+    "gemFallback": "gema"
+  },
+  "sourcing": {
+    "kicker": "Búsqueda a medida",
+    "title": "¿No encuentra lo que busca?",
+    "intro": "Más allá de nuestro catálogo, buscamos gemas específicas por encargo directamente en los mercados de gemas de Sri Lanka y en nuestra red de talladores. Cuéntenos lo que tiene en mente y le responderemos.",
+    "step1Title": "Cuéntenos lo que tiene en mente",
+    "step1Body": "El mineral, el tamaño, la talla o el color.",
+    "step2Title": "Recorremos los mercados",
+    "step2Body": "Nuestro equipo busca en los mercados de gemas de Sri Lanka y en nuestra red de talladores de confianza.",
+    "step3Title": "Vea lo que encontramos",
+    "step3Body": "Sin compromiso hasta que vea lo que encontramos.",
+    "formTitle": "Iniciar una solicitud de búsqueda",
+    "formIntro": "Describa la piedra: tanto o tan poco como sepa.",
+    "signInPrompt": "Inicie sesión para enviar una solicitud de búsqueda.",
+    "signIn": "Iniciar sesión",
+    "footnote": "Obtenidas directamente de los mercados de gemas de Sri Lanka y de nuestra red de talladores de confianza."
+  },
+  "quote": {
+    "signInPrompt": "Inicie sesión para solicitar una cotización de {product}.",
+    "signInCta": "Iniciar sesión para cotizar"
+  },
+  "theme": {
+    "toLight": "Cambiar al tema claro",
+    "toDark": "Cambiar al tema oscuro"
   }
 }

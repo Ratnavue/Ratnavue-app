@@ -25,7 +25,7 @@ export function StoreFilterTabs({ basePath, current, q }: { basePath: string; cu
           href={tab.href}
           className={cn(
             "rounded-full border px-3 py-1 text-xs",
-            current === tab.key ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70",
+            current === tab.key ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70",
           )}
         >
           {tab.label}

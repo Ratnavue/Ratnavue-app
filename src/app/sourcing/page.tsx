@@ -1,72 +1,69 @@
 import type { Metadata } from "next";
-import Link from "@/components/ui/MarketLink";
-import Image from "next/image";
 import { auth } from "@/lib/auth";
 import { SourcingForm } from "@/components/quote/SourcingForm";
-import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
+import { StylizedGem } from "@/components/gem-visualizer/StylizedGem";
+import { gemColorFor } from "@/lib/gem-palette";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
   title: "Gem Sourcing",
   description: "Can't find what you're looking for? Submit a sourcing request and our gemologists will find it for you.",
 };
 
+const STEPS = [1, 2, 3] as const;
+
 export default async function SourcingPage() {
-  const session = await auth();
+  const [session, t] = await Promise.all([auth(), getTranslations("sourcing")]);
+  const signedIn = !!session?.user;
 
   return (
-    <div className="lg:grid lg:grid-cols-2 lg:items-stretch">
-      {/* ---------- Image side ---------- */}
-      {/* Deliberately NOT sticky: a pinned image next to a scrolling form
-          reads as artificial — two different scroll speeds on the same
-          screen, plus a gap while the sticky offset caught up with the
-          fixed nav. Just a normal tall column, stretched to the content
-          column's height via grid `items-stretch` + object-cover, that
-          scrolls in sync with the page like everything else. */}
-      <div className="relative h-64 sm:h-96 lg:h-full lg:min-h-[44rem]">
-        <Image
-          src="/images/heritage/sri-lanka-gem-trays.jpg"
-          alt="Trays of loose faceted gemstones at a gem trading table in Sri Lanka"
-          fill
-          priority
-          sizes="(min-width: 1024px) 50vw, 100vw"
-          className="object-cover"
-        />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background: "linear-gradient(0deg, rgba(33,29,26,0.85) 0%, rgba(33,29,26,0.15) 45%, transparent 70%)",
-          }}
-        />
-        <div className="absolute inset-x-0 bottom-0 p-6 sm:p-10">
-          <p className="text-xs uppercase tracking-[0.3em] text-gold-soft">Sourced Directly</p>
-          <p className="mt-2 max-w-sm font-serif text-xl text-ivory sm:text-2xl">
-            From Sri Lanka&apos;s gem markets and our network of trusted cutters.
-          </p>
-        </div>
+    <div className="mx-auto grid max-w-[120rem] gap-12 px-5 pb-20 pt-12 sm:px-8 sm:pt-20 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:px-12 xl:px-16">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{t("kicker")}</p>
+        <h1 className="mt-5 max-w-3xl font-serif text-5xl leading-[1.05] text-charcoal sm:text-6xl lg:text-7xl">
+          {t("title")}
+        </h1>
+        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-charcoal/75">
+          {t("intro")}
+        </p>
+
+        <ol className="mt-10 space-y-7">
+          {STEPS.map((n) => (
+            <li key={n} className="flex items-start gap-5">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-raised text-lg font-semibold text-gold-deep">
+                {n}
+              </span>
+              <div>
+                <p className="text-lg font-semibold text-charcoal sm:text-xl">{t(`step${n}Title`)}</p>
+                <p className="mt-1 text-charcoal/75">{t(`step${n}Body`)}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
       </div>
 
-      {/* ---------- Content side ---------- */}
-      <div className="flex items-center px-5 py-14 sm:px-8 sm:py-20 lg:px-16 lg:py-24 xl:px-20">
-        <div className="w-full max-w-xl">
-          <p className="text-xs uppercase tracking-widest text-gold-deep">Bespoke Sourcing</p>
-          <h1 className="mt-2 font-serif text-4xl text-charcoal sm:text-5xl">Can&apos;t find what you&apos;re looking for?</h1>
-          <p className="mt-4 leading-relaxed text-charcoal/70">
-            Beyond our catalog, we source specific gemstones on request directly from Sri Lanka&apos;s gem markets and
-            our network of cutters. Tell us what you have in mind and we&apos;ll get back to you.
-          </p>
-
-          <div className="mt-10">
-            {session?.user ? (
+      <div className={signedIn ? "" : "lg:pt-8"}>
+        <div className="rounded-3xl border border-border-subtle bg-surface p-6 sm:p-10">
+          {signedIn ? (
+            <>
+              <h2 className="font-serif text-3xl text-charcoal">{t("formTitle")}</h2>
+              <p className="mb-8 mt-2 text-charcoal/70">{t("formIntro")}</p>
               <SourcingForm />
-            ) : (
-              <div className="rounded-xl border border-border-subtle bg-ivory-soft p-6">
-                <p className="text-sm text-charcoal/75">Sign in to submit a sourcing request.</p>
-                <Link href="/account/login?callbackUrl=/sourcing">
-                  <Button variant="primary" className="mt-3">Sign in</Button>
-                </Link>
-              </div>
-            )}
-          </div>
+            </>
+          ) : (
+            <div className="text-center">
+              <StylizedGem color={gemColorFor("ruby")} shape="oval" className="mx-auto w-40" />
+              <h2 className="mt-6 font-serif text-3xl text-charcoal sm:text-4xl">{t("formTitle")}</h2>
+              <p className="mt-3 text-charcoal/75">{t("signInPrompt")}</p>
+              <LinkButton href="/account/login?callbackUrl=/sourcing" size="lg" className="mt-8 w-full">
+                {t("signIn")}
+              </LinkButton>
+              <p className="mt-6 text-sm text-charcoal/60">
+                {t("footnote")}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

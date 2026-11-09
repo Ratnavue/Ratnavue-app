@@ -45,7 +45,10 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     // to just its own padding. Verified live: below lg this was rendering
     // the spinner squashed into a ~48px strip under the mobile top bar
     // instead of filling the screen.
-    <div className="flex min-h-[calc(100vh-1px)] flex-col bg-ivory-soft print:block print:bg-white lg:flex-row">
+    // data-theme="light": the back office stays on the light palette even
+    // after a client-side hop from a storefront page in the dark theme (see
+    // lib/theme.ts's themeForPath, which covers full page loads).
+    <div data-theme="light" className="flex min-h-[calc(100vh-1px)] flex-col bg-ivory-soft print:block print:bg-white lg:flex-row">
       <AdminSidebar role={session.user.role} staffPermissions={session.user.staffPermissions} />
       {/* relative: lets AdminPageLoader (the Suspense fallback — see
           admin/loading.tsx) cover this box exactly via `absolute inset-0`

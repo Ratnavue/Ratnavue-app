@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import { Reveal } from "@/components/layout/Reveal";
+import { useTranslations } from "next-intl";
 import { LinkButton } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { SPACER_HEIGHT_LABELS, type AboutBlock, type AboutRow, type ColumnSpan, type SpacerHeight } from "@/lib/about-blocks";
@@ -41,41 +42,34 @@ const SPAN_CLASSES: Record<ColumnSpan, string> = {
 
 // ---------- Full section renderings (solo full-width rows) ----------
 
+// A centred editorial opener on the page itself (the redesign moved the
+// photography into the image blocks below, as rounded cards), so the block's
+// image is no longer shown here — the admin field stays for the boxed
+// (multi-column) rendering, which still uses it.
 function HeroSection({ block, animate }: { block: Extract<AboutBlock, { type: "hero" }>; animate: boolean }) {
   return (
-    <section className="relative flex h-dvh min-h-[520px] w-full items-center overflow-hidden bg-charcoal lg:max-h-[1100px]">
-      {block.image && <Image src={block.image} alt={block.heading} fill priority sizes="100vw" className="object-cover" />}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(90deg, rgba(33,29,26,0.92) 0%, rgba(33,29,26,0.72) 38%, rgba(33,29,26,0.3) 68%, transparent 100%)",
-        }}
-      />
-      <div className="relative mx-auto w-full max-w-[120rem] px-5 sm:px-8 lg:px-12 xl:px-16">
-        <Wrap animate={animate}>
-          <p className="text-xs uppercase tracking-[0.35em] text-gold-soft">{block.kicker}</p>
-          <h1 className="mt-5 max-w-3xl font-serif text-6xl leading-[1.05] text-ivory sm:text-7xl lg:text-8xl">
-            {block.heading}
-          </h1>
-        </Wrap>
-      </div>
+    <section className="mx-auto max-w-[120rem] px-5 pb-8 pt-12 text-center sm:px-8 sm:pt-20 lg:px-12 xl:px-16">
+      <Wrap animate={animate}>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{block.kicker}</p>
+        <h1 className="mx-auto mt-5 max-w-5xl font-serif text-5xl leading-[1.05] text-charcoal sm:text-6xl lg:text-7xl">
+          {block.heading}
+        </h1>
+      </Wrap>
     </section>
   );
 }
 
 function TextSection({ block, animate }: { block: Extract<AboutBlock, { type: "text" }>; animate: boolean }) {
   return (
-    <section className="mx-auto max-w-[120rem] px-5 py-20 sm:px-8 sm:py-28 lg:px-12 xl:px-16">
-      <Wrap animate={animate} className="grid gap-10 lg:grid-cols-2 lg:gap-20">
+    <section className="mx-auto max-w-[120rem] px-5 py-16 sm:px-8 sm:py-20 lg:px-12 xl:px-16">
+      <Wrap animate={animate} className="grid gap-8 lg:grid-cols-2 lg:gap-16">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-gold-deep">{block.label}</p>
-          <div className="mt-4 h-px w-12 bg-gold" />
-          <p className="mt-8 font-serif text-2xl leading-relaxed text-charcoal sm:text-3xl">{block.lead}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{block.label}</p>
+          <p className="mt-5 font-serif text-3xl leading-snug text-charcoal sm:text-4xl">{block.lead}</p>
         </div>
-        <div className="lg:pt-16">
-          <p className="leading-relaxed text-charcoal/70">{block.body1}</p>
-          <p className="mt-6 leading-relaxed text-charcoal/70">{block.body2}</p>
+        <div className="lg:pt-10">
+          <p className="text-lg leading-relaxed text-charcoal/75">{block.body1}</p>
+          {block.body2 && <p className="mt-5 text-lg leading-relaxed text-charcoal/75">{block.body2}</p>}
         </div>
       </Wrap>
     </section>
@@ -84,53 +78,81 @@ function TextSection({ block, animate }: { block: Extract<AboutBlock, { type: "t
 
 function ImageCaptionSection({ block, animate }: { block: Extract<AboutBlock, { type: "imageCaption" }>; animate: boolean }) {
   return (
-    <section className="mx-auto max-w-[120rem] px-5 sm:px-8 lg:px-12 xl:px-16">
-      <Wrap animate={animate} className="grid gap-8 lg:grid-cols-[2fr_1fr] lg:items-end lg:gap-14">
-        <div className="relative aspect-[16/10] overflow-hidden rounded-3xl bg-charcoal shadow-xl shadow-charcoal/10">
-          {block.image && <Image src={block.image} alt={block.kicker} fill sizes="(min-width: 1024px) 66vw, 100vw" className="object-cover" />}
-        </div>
-        <div className="lg:pb-4">
-          <p className="text-xs uppercase tracking-[0.25em] text-gold-deep">{block.kicker}</p>
-          <p className="mt-3 leading-relaxed text-charcoal/70">{block.body}</p>
+    <section className="mx-auto max-w-[120rem] px-5 py-8 sm:px-8 lg:px-12 xl:px-16">
+      <Wrap animate={animate} className="grid gap-8 lg:grid-cols-2 lg:items-center lg:gap-16">
+        <PhotoFrame src={block.image} alt={block.kicker} sizes="(min-width: 1024px) 50vw, 100vw" />
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{block.kicker}</p>
+          <p className="mt-4 text-lg leading-relaxed text-charcoal/75">{block.body}</p>
         </div>
       </Wrap>
     </section>
+  );
+}
+
+/** A real photo in the site's rounded, hairline-framed card. */
+function PhotoFrame({ src, alt, sizes, className }: { src: string; alt: string; sizes: string; className?: string }) {
+  return (
+    <div className={cn("relative aspect-[3/2] overflow-hidden rounded-3xl border border-border-subtle bg-night", className)}>
+      {src && <Image src={src} alt={alt} fill sizes={sizes} className="object-cover" />}
+    </div>
   );
 }
 
 function ImageBlockSection({ block, animate }: { block: Extract<AboutBlock, { type: "image" }>; animate: boolean }) {
   return (
-    <section className="mx-auto max-w-[120rem] px-5 py-12 sm:px-8 lg:px-12 xl:px-16">
+    <section className="mx-auto max-w-[120rem] px-5 py-10 sm:px-8 lg:px-12 xl:px-16">
       <Wrap animate={animate}>
-        <div className="relative aspect-[21/9] w-full overflow-hidden rounded-3xl bg-charcoal shadow-xl shadow-charcoal/10">
-          {block.image && <Image src={block.image} alt={block.caption || "About Ratnavue"} fill sizes="100vw" className="object-cover" />}
-        </div>
-        {block.caption && <p className="mt-4 text-center text-sm text-charcoal/60">{block.caption}</p>}
+        <PhotoFrame src={block.image} alt={block.caption || "About Ratnavue"} sizes="100vw" className="aspect-[21/9]" />
+        {block.caption && <p className="mt-4 text-center text-sm text-charcoal/65">{block.caption}</p>}
       </Wrap>
     </section>
   );
 }
 
+// A centred serif statement on the page (it used to be a full-width dark
+// band) — the highlighted tail in gold.
 function QuoteSection({ block, animate }: { block: Extract<AboutBlock, { type: "quote" }>; animate: boolean }) {
   return (
-    <section className="flex items-center bg-gradient-to-b from-midnight via-charcoal to-midnight py-20 sm:py-28">
-      <Wrap animate={animate} className="mx-auto w-full max-w-[120rem] px-5 sm:px-8 lg:px-12 xl:px-16">
-        <p className="max-w-4xl font-serif text-4xl leading-snug text-ivory sm:text-6xl lg:text-7xl">
-          {block.text} <span className="text-gold-soft">{block.highlight}</span>
+    <section className="mx-auto max-w-[120rem] px-5 pb-4 pt-16 text-center sm:px-8 sm:pt-24 lg:px-12 xl:px-16">
+      <Wrap animate={animate}>
+        <p className="mx-auto max-w-4xl font-serif text-4xl leading-snug text-charcoal sm:text-5xl">
+          {block.text} <span className="text-gold-deep">{block.highlight}</span>
         </p>
       </Wrap>
     </section>
   );
 }
 
+// Two layouts by count: an even list of four or more reads as steps (gold
+// serif numerals over hairlines, two columns); anything else as cards.
 function PrinciplesSection({ block, animate }: { block: Extract<AboutBlock, { type: "principles" }>; animate: boolean }) {
+  const asSteps = block.items.length >= 4 && block.items.length % 2 === 0;
+  if (asSteps) {
+    return (
+      <section className="mx-auto max-w-[120rem] px-5 py-10 sm:px-8 lg:px-12 xl:px-16">
+        <div className="grid gap-x-16 sm:grid-cols-2">
+          {block.items.map((item, i) => (
+            <Wrap animate={animate} delay={i * 0.06} key={`${block.id}-${i}`} className="border-t border-border-subtle py-8">
+              <div className="flex gap-6">
+                <span className="w-12 shrink-0 font-serif text-4xl leading-none text-gold-deep">{String(i + 1).padStart(2, "0")}</span>
+                <div>
+                  <h2 className="font-serif text-2xl text-charcoal">{item.title}</h2>
+                  <p className="mt-2 leading-relaxed text-charcoal/70">{item.body}</p>
+                </div>
+              </div>
+            </Wrap>
+          ))}
+        </div>
+      </section>
+    );
+  }
   return (
-    <section className="mx-auto max-w-[120rem] px-5 py-20 sm:px-8 sm:py-28 lg:px-12 xl:px-16">
-      <div className="grid gap-12 sm:gap-10 lg:gap-16" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+    <section className="mx-auto max-w-[120rem] px-5 py-10 sm:px-8 lg:px-12 xl:px-16">
+      <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
         {block.items.map((item, i) => (
-          <Wrap animate={animate} delay={i * 0.08} key={`${block.id}-${i}`}>
-            <span className="font-serif text-5xl text-gold/25 sm:text-6xl">{String(i + 1).padStart(2, "0")}</span>
-            <h2 className="mt-3 font-serif text-2xl text-charcoal">{item.title}</h2>
+          <Wrap animate={animate} delay={i * 0.08} key={`${block.id}-${i}`} className="rounded-2xl border border-border-subtle bg-surface p-7">
+            <h2 className="font-serif text-2xl text-charcoal">{item.title}</h2>
             <p className="mt-3 leading-relaxed text-charcoal/70">{item.body}</p>
           </Wrap>
         ))}
@@ -140,14 +162,15 @@ function PrinciplesSection({ block, animate }: { block: Extract<AboutBlock, { ty
 }
 
 function CtaSection({ block, animate }: { block: Extract<AboutBlock, { type: "cta" }>; animate: boolean }) {
+  const t = useTranslations("home");
   return (
-    <section className="py-20 text-center sm:py-28">
-      <Wrap animate={animate} className="mx-auto max-w-xl px-5 sm:px-8">
-        <h2 className="font-serif text-3xl text-charcoal sm:text-4xl">{block.heading}</h2>
-        <p className="mt-4 text-charcoal/70">{block.body}</p>
-        <div className="mt-8 flex flex-wrap justify-center gap-4">
-          <LinkButton href="/gems" variant="gold" size="lg">Shop Gemstones</LinkButton>
-          <LinkButton href="/sourcing" variant="outline" size="lg">Submit a Sourcing Request</LinkButton>
+    <section className="mx-auto max-w-[120rem] px-5 py-16 sm:px-8 sm:py-20 lg:px-12 xl:px-16">
+      <Wrap animate={animate} className="band-sapphire rounded-3xl px-6 py-14 text-center sm:px-12 sm:py-20">
+        <h2 className="font-serif text-4xl text-charcoal sm:text-5xl">{block.heading}</h2>
+        <p className="mx-auto mt-4 max-w-xl text-lg text-charcoal/80">{block.body}</p>
+        <div className="mt-9 flex flex-wrap justify-center gap-4">
+          <LinkButton href="/gems" size="lg">{t("shopGemstones")}</LinkButton>
+          <LinkButton href="/sourcing" variant="outline" size="lg">{t("submitSourcing")}</LinkButton>
         </div>
       </Wrap>
     </section>
@@ -163,7 +186,7 @@ const SPACER_HEIGHTS: Record<SpacerHeight, string> = {
 
 function SpacerSection({ block, animate }: { block: Extract<AboutBlock, { type: "spacer" }>; animate: boolean }) {
   return (
-    <div className={cn("relative w-full", SPACER_HEIGHTS[block.height])} style={{ backgroundColor: block.color.toLowerCase() === LEGACY_CREAM ? "#ffffff" : block.color }}>
+    <div className={cn("relative w-full", SPACER_HEIGHTS[block.height])} style={{ backgroundColor: PAGE_COLOURED_SPACERS.has(block.color.toLowerCase()) ? "transparent" : block.color }}>
       {/* Admin preview only (animate=false uniquely identifies that
           context — see AboutBlocksRenderer's animate prop). A Spacer set
           to its default colour is deliberately invisible on the real
@@ -174,7 +197,7 @@ function SpacerSection({ block, animate }: { block: Extract<AboutBlock, { type: 
           ever see. */}
       {!animate && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center border border-dashed border-charcoal/20">
-          <span className="rounded bg-charcoal/70 px-2 py-0.5 text-[10px] uppercase tracking-wide text-ivory">
+          <span className="rounded bg-night/70 px-2 py-0.5 text-[10px] uppercase tracking-wide text-cream">
             Spacer · {SPACER_HEIGHT_LABELS[block.height]}
           </span>
         </div>
@@ -217,7 +240,7 @@ function FullSection({ block, animate }: { block: AboutBlock; animate: boolean }
 
 function BoxedHero({ block }: { block: Extract<AboutBlock, { type: "hero" }> }) {
   return (
-    <div className="relative flex aspect-[4/3] w-full items-end overflow-hidden rounded-3xl bg-charcoal shadow-xl shadow-charcoal/10">
+    <div className="relative flex aspect-[4/3] w-full items-end overflow-hidden rounded-3xl bg-night border border-border-subtle">
       {block.image && <Image src={block.image} alt={block.heading} fill sizes="100vw" className="object-cover" />}
       <div
         className="pointer-events-none absolute inset-0"
@@ -225,7 +248,7 @@ function BoxedHero({ block }: { block: Extract<AboutBlock, { type: "hero" }> }) 
       />
       <div className="relative p-6">
         <p className="text-xs uppercase tracking-[0.3em] text-gold-soft">{block.kicker}</p>
-        <h2 className="mt-2 font-serif text-2xl leading-tight text-ivory sm:text-3xl">{block.heading}</h2>
+        <h2 className="mt-2 font-serif text-2xl leading-tight text-cream sm:text-3xl">{block.heading}</h2>
       </div>
     </div>
   );
@@ -246,7 +269,7 @@ function BoxedText({ block }: { block: Extract<AboutBlock, { type: "text" }> }) 
 function BoxedImageCaption({ block }: { block: Extract<AboutBlock, { type: "imageCaption" }> }) {
   return (
     <div>
-      <div className="relative aspect-[16/10] overflow-hidden rounded-3xl bg-charcoal shadow-xl shadow-charcoal/10">
+      <div className="relative aspect-[16/10] overflow-hidden rounded-3xl bg-night border border-border-subtle">
         {block.image && <Image src={block.image} alt={block.kicker} fill sizes="100vw" className="object-cover" />}
       </div>
       <p className="mt-4 text-xs uppercase tracking-[0.25em] text-gold-deep">{block.kicker}</p>
@@ -257,8 +280,8 @@ function BoxedImageCaption({ block }: { block: Extract<AboutBlock, { type: "imag
 
 function BoxedQuote({ block }: { block: Extract<AboutBlock, { type: "quote" }> }) {
   return (
-    <div className="flex h-full flex-col justify-center rounded-3xl bg-charcoal p-8 shadow-xl shadow-charcoal/10 sm:p-10">
-      <p className="font-serif text-2xl leading-snug text-ivory sm:text-3xl">
+    <div className="flex h-full flex-col justify-center rounded-3xl bg-night p-8 border border-border-subtle sm:p-10">
+      <p className="font-serif text-2xl leading-snug text-cream sm:text-3xl">
         {block.text} <span className="text-gold-soft">{block.highlight}</span>
       </p>
     </div>
@@ -305,8 +328,11 @@ function MultiColumnRow({ row, animate }: { row: AboutRow; animate: boolean }) {
   );
 }
 
-// The page background used to be cream (#faf7f1), which was also every new spacer's default -- saved spacers still carry that value, so it's treated as the page background (now white) at render time instead of showing as cream bands.
-const LEGACY_CREAM = "#faf7f1";
+// Spacer colours that just meant "the page background" when they were saved —
+// the default (#ffffff), the old cream page (#faf7f1) and the old ivory page
+// (#fbf8f2). Rendered transparent so they follow the current theme instead
+// of painting light bands across the dark one.
+const PAGE_COLOURED_SPACERS = new Set(["#ffffff", "#fff", "#faf7f1", "#fbf8f2"]);
 
 export function AboutBlocksRenderer({ rows, animate = true }: { rows: AboutRow[]; animate?: boolean }) {
   return (

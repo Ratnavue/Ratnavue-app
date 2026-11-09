@@ -3,13 +3,12 @@
 import { useAppPathname } from "@/components/providers/MarketProvider";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
-import { IntroLoader } from "./IntroLoader";
 import { NavigationOverlay } from "./NavigationOverlay";
 import { FloatingChatButton } from "./FloatingChatButton";
 import { BackToTop } from "./BackToTop";
 import { SiteStatusBanner } from "./SiteStatusBanner";
 import type { AppLocale } from "@/i18n/request";
-import type { FooterMessages, TrustBarMessages } from "@/lib/i18n-messages";
+import type { FooterMessages } from "@/lib/i18n-messages";
 import type { CustomLocale } from "@/lib/locales";
 
 interface SiteChromeUser {
@@ -19,7 +18,7 @@ interface SiteChromeUser {
 }
 
 /**
- * The public Navbar/Footer/IntroLoader wrap every route by default, but the
+ * The public Navbar/Footer wrap every route by default, but the
  * admin panel has its own self-contained shell (AdminSidebar + dark theme,
  * see admin/layout.tsx) — without this check, admin pages were rendering
  * sandwiched between the storefront's fixed nav and footer as well.
@@ -27,7 +26,6 @@ interface SiteChromeUser {
 export function SiteChrome({
   user,
   footerMessages,
-  trustBarMessages,
   showPromotions,
   showAuction,
   showDesignStudio,
@@ -44,8 +42,6 @@ export function SiteChrome({
    * plain prop — see src/lib/i18n-messages.ts for why Footer (rendered
    * from this Client Component) can't call getTranslations itself. */
   footerMessages: FooterMessages;
-  /** Same reasoning, forwarded through Footer to TrustBar. */
-  trustBarMessages: TrustBarMessages;
   /** Whether the seasonal promotions page is Coming Soon or Live —
    * fetched once server-side in RootLayout (see PageVisibility) rather
    * than Navbar querying it itself, same "compute where it's cheap,
@@ -92,7 +88,6 @@ export function SiteChrome({
 
   return (
     <>
-      <IntroLoader />
       <NavigationOverlay />
       {siteBannerMessage && <SiteStatusBanner message={siteBannerMessage} />}
       <Navbar
@@ -106,7 +101,7 @@ export function SiteChrome({
         customLocales={customLocales}
       />
       {children}
-      <Footer messages={footerMessages} trustBarMessages={trustBarMessages} showTrustBar={pathname !== "/"} paymentMethodsLive={lkPaymentMethodsLive} />
+      <Footer messages={footerMessages} paymentMethodsLive={lkPaymentMethodsLive} />
       <BackToTop />
       {user && <FloatingChatButton />}
     </>

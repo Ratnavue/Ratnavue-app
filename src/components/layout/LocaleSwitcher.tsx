@@ -81,12 +81,12 @@ export function LocaleSwitcher({
         aria-label="Change language"
         className={cn(
           "flex items-center gap-1.5 text-sm transition-colors duration-300 disabled:opacity-50",
-          transparent ? "text-ivory/85 hover:text-ivory" : "text-charcoal/80 hover:text-charcoal",
+          transparent ? "text-cream/85 hover:text-cream" : "text-charcoal/80 hover:text-charcoal",
         )}
       >
-        <Globe size={16} />
+        <Globe size={16} className="xl:hidden" />
         {current.label}
-        <ChevronDown size={13} className={cn("transition-transform max-[479px]:hidden", open && "rotate-180")} />
+        <ChevronDown size={13} className={cn("transition-transform max-[479px]:hidden xl:hidden", open && "rotate-180")} />
       </button>
 
       {open && (

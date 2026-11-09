@@ -212,7 +212,11 @@
         "intro": "Choisissez une pierre à explorer, ou parcourez toutes les gemmes à la fois avec les filtres complets.",
         "viewAll": "Voir toutes les gemmes",
         "allTitle": "Toutes les gemmes",
-        "allDescription": "Chaque pierre, avec les filtres complets"
+        "allDescription": "Chaque pierre, avec les filtres complets",
+        "viewAllCount": "{count, plural, one {Voir # gemme} other {Voir les # gemmes}}",
+        "notSeeingTitle": "Vous ne trouvez pas la bonne ?",
+        "notSeeingBody": "Choisissez une pierre et imaginez une pièce autour d'elle avec Concevez votre Gemme.",
+        "notSeeingCta": "Concevez votre Gemme"
       },
       "jewelry": {
         "kicker": "Acheter selon la personne",
@@ -373,5 +377,66 @@
     "search": "Rechercher",
     "account": "Mon Compte",
     "results": "Résultats"
+  },
+  "home": {
+    "shopGemstones": "Acheter des gemmes",
+    "designYourGem": "Concevez votre Gemme",
+    "exploreByStone": "Explorer par pierre",
+    "handSelected": "Sélectionnées à la main",
+    "featuredGems": "Gemmes à la une",
+    "featuredJewelry": "Bijoux à la une",
+    "viewAll": "Tout voir",
+    "readOurStory": "Lire notre histoire",
+    "promiseKicker": "La promesse Ratnavue",
+    "promiseTitle": "Achetez en toute confiance.",
+    "promiseBody": "Pour la plupart, une gemme est l'achat d'une vie — chaque pierre et chaque monture sont couvertes par les mêmes quatre engagements.",
+    "submitSourcing": "Envoyer une demande de recherche",
+    "openConfigurator": "Ouvrir le configurateur"
+  },
+  "configurator": {
+    "kicker": "Concevez votre Gemme",
+    "title": "Configurez votre gemme de Ceylan",
+    "intro": "Choisissez le minéral, la taille, le poids en carats, la couleur, la tonalité et la pureté, puis demandez un devis privé.",
+    "stepMineral": "Minéral / type de gemme",
+    "stepCut": "Taille",
+    "stepCarat": "Poids en carats",
+    "stepColour": "Couleur ({mineral})",
+    "stepTone": "Intensité / tonalité",
+    "stepClarity": "Pureté",
+    "faceted": "Facettée",
+    "cabochon": "Cabochon",
+    "colourOption": "Couleur {n} sur {total}",
+    "colourNote": "Limité aux teintes réalistes pour {mineral}.",
+    "toneLight": "Claire",
+    "toneMedium": "Moyenne",
+    "toneDark": "Foncée",
+    "previewNote": "Aperçu indicatif — les dimensions réelles varient selon la densité du minéral",
+    "previewSize": "environ {length} × {width} mm pour {carat} ct.",
+    "productLabel": "votre gemme configurée ({mineral})",
+    "gemFallback": "gemme"
+  },
+  "sourcing": {
+    "kicker": "Recherche sur mesure",
+    "title": "Vous ne trouvez pas ce que vous cherchez ?",
+    "intro": "Au-delà de notre catalogue, nous recherchons sur demande des gemmes précises, directement sur les marchés de pierres du Sri Lanka et auprès de notre réseau de tailleurs. Dites-nous ce que vous avez en tête, nous reviendrons vers vous.",
+    "step1Title": "Dites-nous ce que vous avez en tête",
+    "step1Body": "Le minéral, la dimension, la taille ou la couleur.",
+    "step2Title": "Nous parcourons les marchés",
+    "step2Body": "Notre équipe prospecte les marchés de gemmes du Sri Lanka et notre réseau de tailleurs de confiance.",
+    "step3Title": "Découvrez nos trouvailles",
+    "step3Body": "Aucun engagement avant d'avoir vu ce que nous trouvons.",
+    "formTitle": "Lancer une demande de recherche",
+    "formIntro": "Décrivez la pierre — autant ou aussi peu que vous en savez.",
+    "signInPrompt": "Connectez-vous pour envoyer une demande de recherche.",
+    "signIn": "Se connecter",
+    "footnote": "Issues directement des marchés de gemmes du Sri Lanka et de notre réseau de tailleurs de confiance."
+  },
+  "quote": {
+    "signInPrompt": "Connectez-vous pour demander un devis pour {product}.",
+    "signInCta": "Se connecter pour un devis"
+  },
+  "theme": {
+    "toLight": "Passer au thème clair",
+    "toDark": "Passer au thème sombre"
   }
 }

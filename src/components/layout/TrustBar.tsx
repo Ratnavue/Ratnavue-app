@@ -24,7 +24,7 @@ const TRUST_ITEMS = [
  * The site's trust/authenticity signals — the row of claims that answer a
  * first-time buyer's real hesitation ("is this genuine, and what if it
  * isn't right for me?") before they reach checkout. `variant="full"` is the
- * icon-plus-caption grid used on the footer; `variant="compact"` is a
+ * icon-plus-caption grid; `variant="cards"` the numbered cards on the home page; `variant="compact"` is a
  * single-line icon-plus-label list for tight spots like a product page's
  * buy box, right where that hesitation is highest.
  */
@@ -34,9 +34,26 @@ export function TrustBar({
   className,
 }: {
   messages: TrustBarMessages;
-  variant?: "full" | "compact";
+  variant?: "full" | "compact" | "cards";
   className?: string;
 }) {
+  // Numbered cards — the home page's "Ratnavue Promise" section.
+  if (variant === "cards") {
+    return (
+      <ol className={cn("grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4", className)}>
+        {TRUST_ITEMS.map((item, i) => (
+          <li key={item.titleKey} className="rounded-2xl border border-border-subtle bg-surface p-6 sm:p-7">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-raised text-sm font-semibold text-gold-deep">
+              {i + 1}
+            </span>
+            <p className="mt-6 font-serif text-2xl leading-snug text-charcoal">{messages[item.titleKey]}</p>
+            <p className="mt-2 leading-relaxed text-charcoal/70">{messages[item.detailKey]}</p>
+          </li>
+        ))}
+      </ol>
+    );
+  }
+
   if (variant === "compact") {
     return (
       <ul className={cn("flex flex-wrap gap-x-5 gap-y-2", className)}>

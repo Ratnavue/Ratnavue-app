@@ -57,7 +57,7 @@ function BlockImageField({ label, value, onChange }: { label: string; value: str
           ref={fileInput}
           type="file"
           accept="image/*"
-          className="text-xs file:mr-3 file:rounded-full file:border-0 file:bg-gold file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-charcoal file:hover:bg-gold-soft"
+          className="text-xs file:mr-3 file:rounded-full file:border-0 file:bg-gold file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-night file:hover:bg-gold-soft"
         />
         <Button type="button" variant="outline" size="sm" onClick={handleUpload} disabled={pending}>
           {pending ? "Uploading..." : "Replace image"}

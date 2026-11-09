@@ -120,7 +120,7 @@ export function AccountSidebar({
                       <span
                         className={cn(
                           "min-w-5 rounded-full px-1.5 py-0.5 text-center text-[11px] font-medium",
-                          item.attention ? "bg-gold text-charcoal" : "bg-charcoal/8 text-charcoal/70",
+                          item.attention ? "bg-gold text-night" : "bg-charcoal/8 text-charcoal/70",
                         )}
                       >
                         {badge > 99 ? "99+" : badge}
@@ -161,13 +161,13 @@ export function AccountSidebar({
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-2 whitespace-nowrap rounded-full border px-3.5 py-2 text-sm transition-colors",
-                  active ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle bg-surface text-charcoal/75",
+                  active ? "border-charcoal bg-night text-cream" : "border-border-subtle bg-surface text-charcoal/75",
                 )}
               >
                 <Icon size={15} />
                 {item.label}
                 {badge > 0 && (
-                  <span className={cn("rounded-full px-1.5 text-[11px] font-medium", active ? "bg-ivory/20" : item.attention ? "bg-gold text-charcoal" : "bg-charcoal/10")}>
+                  <span className={cn("rounded-full px-1.5 text-[11px] font-medium", active ? "bg-ivory/20" : item.attention ? "bg-gold text-night" : "bg-charcoal/10")}>
                     {badge > 99 ? "99+" : badge}
                   </span>
                 )}

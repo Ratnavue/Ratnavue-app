@@ -1,47 +1,142 @@
 @import "tailwindcss";
 
-/* Warm ivory rather than pure white: a stark #fff page against the near-black
-   text and the dark hero read clinical, not luxurious. The page is now a soft
-   parchment, cards ("surface") a shade lighter so they lift off it gently, and
-   the borders a warm sand. Contrast was re-checked on these: body text is
-   ~15.8:1, charcoal at 65% (the lightest text used for real copy) 5.1:1, and
-   the gold-deep accent text 5.0:1 on the page (4.6:1 on ivory-soft) — all
-   above WCAG AA. */
-:root {
-  --color-ivory: #fbf8f2;
-  --color-ivory-soft: #f3ede1;
-  --color-charcoal: #211d1a;
-  --color-charcoal-soft: #3a332d;
-  --color-gold: #b3915a;
-  --color-gold-soft: #d9c39a;
-  --color-gold-deep: #86662b;
-  --color-midnight: #131a29;
-  --color-sapphire: #1f3a5f;
-  --color-sapphire-soft: #345580;
+/* ---------------------------------------------------------------------------
+   Colour system — one palette shared by both storefronts (international and
+   /lk), in two themes: a deep Ceylon-sapphire night (the default) and a warm
+   ivory day. RootLayout sets <html data-theme="dark|light"> from the
+   visitor's saved choice (ThemeToggle, `ratnavue-theme` cookie), so the right
+   theme is in the very first paint — no flash.
+
+   The token NAMES predate the dark theme, so read them by role, not colour:
+     ivory / ivory-soft / surface  page, soft panels, cards        (flip)
+     charcoal / charcoal-soft      ink — body text, outlines        (flip)
+     border-subtle                 hairlines                        (flip)
+     night / night-soft            always-dark fills: dark sections, dark
+                                   buttons/chips, badges            (fixed)
+     cream                         always-light text on night fills,
+                                   photos and gold                  (fixed)
+     gold / gold-soft / gold-deep  accent; gold-deep is the accent used
+                                   as TEXT, so it brightens in dark (flip)
+
+   Contrast (WCAG AA) checked on both: dark — ink on page 14.9:1, ink at 65%
+   6.4:1, gold accent text 9.6:1, night text on gold buttons 9.3:1; light —
+   ink on page 16.2:1, ink at 65% 5.6:1, gold-deep text 5.2:1.
+   ------------------------------------------------------------------------- */
+:root,
+[data-theme="light"] {
+  --color-ivory: #f8f5ef;
+  --color-ivory-soft: #efe9de;
+  --color-charcoal: #141b2d;
+  --color-charcoal-soft: #2a3350;
+  --color-gold: #c99a4c;
+  --color-gold-soft: #e6c990;
+  --color-gold-deep: #85621f;
+  --color-midnight: #0d1424;
+  --color-sapphire: #1f3768;
+  --color-sapphire-soft: #34548d;
+  --color-night: #141b2d;
+  --color-night-soft: #222b45;
+  --color-cream: #f7f2e8;
+  /* Raised pill/chip fill: the active nav link, selected segments, chips. */
+  --color-raised: #e9e2d4;
+  /* Recessed band below the page: the footer. */
+  --color-sunken: #eee7da;
 
   --background: var(--color-ivory);
   --foreground: var(--color-charcoal);
   --surface: #fffdf9;
-  --border-subtle: #e7dece;
+  --border-subtle: #e3dbcc;
+  /* The stylised gem stage (preview cards, category tiles). */
+  --stage-from: #e9eef8;
+  --stage-to: #f8f5ef;
+  /* How strongly the sapphire feature bands (.band-sapphire) are tinted. */
+  --band-strength: 16%;
+  color-scheme: light;
+
+  /* Status tints (alerts, success/warning notes: bg-red-50 + text-red-700
+     and friends) — Tailwind's own values, restated so a light-pinned
+     subtree inside a dark page (the admin shell) gets them back. */
+  --color-red-50: oklch(97.1% 0.013 17.38);
+  --color-red-100: oklch(93.6% 0.032 17.717);
+  --color-red-200: oklch(88.5% 0.062 18.334);
+  --color-red-700: oklch(50.5% 0.213 27.518);
+  --color-red-800: oklch(44.4% 0.177 26.899);
+  --color-red-900: oklch(39.6% 0.141 25.723);
+  --color-amber-50: oklch(98.7% 0.022 95.277);
+  --color-amber-100: oklch(96.2% 0.059 95.617);
+  --color-amber-200: oklch(92.4% 0.12 95.746);
+  --color-amber-700: oklch(55.5% 0.163 48.998);
+  --color-amber-800: oklch(47.3% 0.137 46.201);
+  --color-amber-900: oklch(41.4% 0.112 45.904);
+  --color-green-50: oklch(98.2% 0.018 155.826);
+  --color-green-100: oklch(96.2% 0.044 156.743);
+  --color-green-200: oklch(92.5% 0.084 155.995);
+  --color-green-700: oklch(52.7% 0.154 150.069);
+  --color-green-800: oklch(44.8% 0.119 151.328);
+  --color-green-900: oklch(39.3% 0.095 152.535);
+  --color-emerald-50: oklch(97.9% 0.021 166.113);
+  --color-emerald-100: oklch(95% 0.052 163.051);
+  --color-emerald-200: oklch(90.5% 0.093 164.15);
+  --color-emerald-700: oklch(50.8% 0.118 165.612);
+  --color-emerald-800: oklch(43.2% 0.095 166.913);
+  --color-emerald-900: oklch(37.8% 0.077 168.94);
 }
 
-/* The Sri Lanka store (/lk) — RootLayout sets <html data-market="lk">. The
-   same token names, re-pointed: marigold/saffron gold in place of the
-   antique gold, deep Ceylon maroon where the international site uses navy
-   for its dark sections, teal for the sapphire accent, and a warmer
-   sandalwood cream for soft surfaces. The page itself stays white. Contrast
-   was checked against the tokens they sit on: gold-deep on white/soft cream
-   is ~6:1, charcoal on gold (buttons) ~5.5:1. */
-html[data-market="lk"] {
-  --color-ivory: #fdf9f0;
-  --color-ivory-soft: #f8efdd;
-  --color-gold: #cc8a2b;
-  --color-gold-soft: #f0cf8c;
-  --color-gold-deep: #86490a;
-  --color-midnight: #2e1019;
-  --color-sapphire: #14534f;
-  --color-sapphire-soft: #24807a;
-  --border-subtle: #ebd9b9;
+[data-theme="dark"] {
+  --color-ivory: #0c1220;
+  --color-ivory-soft: #121a2d;
+  --color-charcoal: #ece6da;
+  --color-charcoal-soft: #cfc8bb;
+  --color-gold: #e3b562;
+  --color-gold-soft: #f0d39a;
+  --color-gold-deep: #e3b562;
+  --color-midnight: #070b15;
+  --color-sapphire: #1b2a52;
+  --color-sapphire-soft: #2a3f73;
+  --color-night: #1a2340;
+  --color-night-soft: #222d4d;
+  --color-cream: #f4efe6;
+  --color-raised: #1b2647;
+  --color-sunken: #080c17;
+
+  --background: var(--color-ivory);
+  --foreground: var(--color-charcoal);
+  --surface: #131b2f;
+  --border-subtle: #232d45;
+  --stage-from: #1f2e5a;
+  --stage-to: #121a2e;
+  --band-strength: 100%;
+  color-scheme: dark;
+
+  /* The same status tints, re-pointed for the dark page: the pale -50/-100/
+     -200 fills and borders become deep washes and the -700/-800/-900 text
+     shades become light, so every existing alert reads correctly without
+     touching its markup. (Solid fills use other shades — see Button's
+     destructive variant.) */
+  --color-red-50: #2b1519;
+  --color-red-100: #3a1b21;
+  --color-red-200: #5e2a33;
+  --color-red-700: #f2a0a0;
+  --color-red-800: #f5b1b1;
+  --color-red-900: #f8c8c8;
+  --color-amber-50: #2a2213;
+  --color-amber-100: #3a2e15;
+  --color-amber-200: #5e4a22;
+  --color-amber-700: #f1c56e;
+  --color-amber-800: #f4cf86;
+  --color-amber-900: #f7dca2;
+  --color-green-50: #10281a;
+  --color-green-100: #143521;
+  --color-green-200: #1f5233;
+  --color-green-700: #7dd99c;
+  --color-green-800: #95e1ae;
+  --color-green-900: #b0eac3;
+  --color-emerald-50: #0f2921;
+  --color-emerald-100: #133528;
+  --color-emerald-200: #1e5342;
+  --color-emerald-700: #72d4ab;
+  --color-emerald-800: #8bdcba;
+  --color-emerald-900: #a8e6cc;
 }
 
 @theme inline {
@@ -59,8 +154,25 @@ html[data-market="lk"] {
   --color-midnight: var(--color-midnight);
   --color-sapphire: var(--color-sapphire);
   --color-sapphire-soft: var(--color-sapphire-soft);
+  --color-night: var(--color-night);
+  --color-night-soft: var(--color-night-soft);
+  --color-cream: var(--color-cream);
+  --color-raised: var(--color-raised);
+  --color-sunken: var(--color-sunken);
   --font-serif: var(--font-cormorant);
   --font-sans: var(--font-inter);
+}
+
+/* The sapphire feature band (CTA panels, "Not seeing the one?"): deep
+   sapphire fading into the soft surface in the dark theme, a pale wash of the
+   same in the light theme — ink text stays readable on both. */
+.band-sapphire {
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--color-sapphire) var(--band-strength), var(--color-ivory-soft)) 0%,
+    color-mix(in srgb, var(--color-sapphire) calc(var(--band-strength) * 0.55), var(--color-ivory-soft)) 60%,
+    var(--color-ivory-soft) 100%
+  );
 }
 
 body {
@@ -208,7 +320,7 @@ html[lang="ta"] body {
   }
   50% {
     opacity: 1;
-    text-shadow: 0 0 16px rgba(179, 145, 90, 0.6);
+    text-shadow: 0 0 16px color-mix(in srgb, var(--color-gold) 60%, transparent);
   }
 }
 
@@ -227,7 +339,7 @@ html[lang="ta"] body {
   }
   50% {
     opacity: 1;
-    box-shadow: 0 0 12px 1px rgba(179, 145, 90, 0.7);
+    box-shadow: 0 0 12px 1px color-mix(in srgb, var(--color-gold) 70%, transparent);
   }
 }
 
@@ -520,4 +632,48 @@ html[lang="ta"] body {
   .animate-leaf-blow-drop {
     animation: none;
   }
+}
+
+/* Gold range slider (the configurator's carat weight): a thin rounded track
+   filled in gold up to the thumb. The fill amount comes from the element's
+   own --fill custom property, set inline as a percentage. */
+.range-gold {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+}
+.range-gold::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--color-gold) var(--fill, 0%), color-mix(in srgb, var(--color-charcoal) 22%, transparent) var(--fill, 0%));
+}
+.range-gold::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-charcoal) 22%, transparent);
+}
+.range-gold::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-gold);
+}
+.range-gold::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -7px;
+  border-radius: 999px;
+  background: var(--color-gold);
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--color-gold);
+}
+.range-gold::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--color-gold);
+  border: 3px solid var(--surface);
 }

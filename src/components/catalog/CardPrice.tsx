@@ -61,7 +61,7 @@ export function CardPrice({ price, showPrice, retailPrice, promoPrice, priceClas
 // else it appears.
 export function PromotionBadge({ className }: { className?: string }) {
   return (
-    <span className={cn("rounded-full bg-gold px-2 py-0.5 text-[10px] uppercase tracking-wide text-charcoal sm:px-2.5 sm:py-1 sm:text-[11px]", className)}>
+    <span className={cn("rounded-full bg-gold px-2 py-0.5 text-[10px] uppercase tracking-wide text-night sm:px-2.5 sm:py-1 sm:text-[11px]", className)}>
       Promotion
     </span>
   );

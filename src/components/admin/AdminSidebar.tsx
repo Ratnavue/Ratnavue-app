@@ -73,8 +73,8 @@ function NavLinks({ pathname, onNavigate, role, staffPermissions }: { pathname: 
         href={item.href}
         onClick={onNavigate}
         className={cn(
-          "block rounded-md px-3 py-2 text-sm transition-colors hover:bg-white/10 hover:text-ivory",
-          isActive(item.href, item.exact) && "bg-white/10 text-ivory"
+          "block rounded-md px-3 py-2 text-sm transition-colors hover:bg-white/10 hover:text-cream",
+          isActive(item.href, item.exact) && "bg-white/10 text-cream"
         )}
       >
         {item.label}
@@ -86,11 +86,11 @@ function NavLinks({ pathname, onNavigate, role, staffPermissions }: { pathname: 
     return (
       <>
         <div className="space-y-1">{section(staffNavLinks(staffPermissions))}</div>
-        <Link href="/" onClick={onNavigate} className="mt-8 block px-3 text-xs text-ivory/40 hover:text-ivory/70">
+        <Link href="/" onClick={onNavigate} className="mt-8 block px-3 text-xs text-cream/40 hover:text-cream/70">
           ← Back to storefront
         </Link>
         <form action={signOutAction} className="mt-2">
-          <button type="submit" className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-ivory/40 transition-colors hover:text-ivory/70">
+          <button type="submit" className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-cream/40 transition-colors hover:text-cream/70">
             <LogOut size={13} /> Sign Out
           </button>
         </form>
@@ -102,16 +102,16 @@ function NavLinks({ pathname, onNavigate, role, staffPermissions }: { pathname: 
     <>
       <div className="space-y-1">{section(NAV)}</div>
 
-      <p className="mt-8 px-3 text-xs uppercase tracking-wide text-ivory/40">Master Data</p>
+      <p className="mt-8 px-3 text-xs uppercase tracking-wide text-cream/40">Master Data</p>
       <div className="mt-2 space-y-1">{section(MASTER_DATA)}</div>
 
-      <p className="mt-8 px-3 text-xs uppercase tracking-wide text-ivory/40">CMS</p>
+      <p className="mt-8 px-3 text-xs uppercase tracking-wide text-cream/40">CMS</p>
       <div className="mt-2 space-y-1">{section(PAGE_CONTENT)}</div>
 
-      <p className="mt-8 px-3 text-xs uppercase tracking-wide text-ivory/40">Rewards</p>
+      <p className="mt-8 px-3 text-xs uppercase tracking-wide text-cream/40">Rewards</p>
       <div className="mt-2 space-y-1">{section(REWARDS)}</div>
 
-      <Link href="/" onClick={onNavigate} className="mt-8 block px-3 text-xs text-ivory/40 hover:text-ivory/70">
+      <Link href="/" onClick={onNavigate} className="mt-8 block px-3 text-xs text-cream/40 hover:text-cream/70">
         ← Back to storefront
       </Link>
 
@@ -120,7 +120,7 @@ function NavLinks({ pathname, onNavigate, role, staffPermissions }: { pathname: 
       <form action={signOutAction} className="mt-2">
         <button
           type="submit"
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-ivory/40 transition-colors hover:text-ivory/70"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-cream/40 transition-colors hover:text-cream/70"
         >
           <LogOut size={13} /> Sign Out
         </button>
@@ -131,7 +131,7 @@ function NavLinks({ pathname, onNavigate, role, staffPermissions }: { pathname: 
 
 function Logo({ children }: { children: ReactNode }) {
   return (
-    <Link href="/admin" className="block px-2 font-serif text-xl text-ivory">
+    <Link href="/admin" className="block px-2 font-serif text-xl text-cream">
       {children}
     </Link>
   );
@@ -166,13 +166,13 @@ export function AdminSidebar({ role, staffPermissions = [] }: { role: string; st
           a phone screen — it used to render unconditionally and squeeze
           every admin page's real content into a ~130px sliver. Below lg,
           navigation instead lives behind this bar's toggle. */}
-      <div className="sticky top-0 z-40 flex items-center justify-between border-b border-white/10 bg-charcoal px-4 py-3 print:hidden lg:hidden">
+      <div className="sticky top-0 z-40 flex items-center justify-between border-b border-white/10 bg-night px-4 py-3 print:hidden lg:hidden">
         <Logo>Ratnavue Admin</Logo>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-label="Toggle admin menu"
-          className="text-ivory"
+          className="text-cream"
         >
           {open ? <X size={22} /> : <Menu size={22} />}
         </button>
@@ -188,10 +188,10 @@ export function AdminSidebar({ role, staffPermissions = [] }: { role: string; st
         // this the same way. The link list has grown past one phone
         // screen (25+ entries across three sections), so this isn't
         // optional here.
-        <div className="fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden bg-charcoal text-ivory/80 lg:hidden">
+        <div className="fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden bg-night text-cream/80 lg:hidden">
           <div className="flex shrink-0 items-center justify-between px-6 py-6">
             <Logo>Ratnavue Admin</Logo>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Close menu" className="text-ivory">
+            <button type="button" onClick={() => setOpen(false)} aria-label="Close menu" className="text-cream">
               <X size={22} />
             </button>
           </div>
@@ -203,7 +203,7 @@ export function AdminSidebar({ role, staffPermissions = [] }: { role: string; st
 
       {/* Desktop sidebar — unchanged from before, just now gated to lg+
           instead of always rendering. */}
-      <nav className="hidden w-60 shrink-0 border-r border-white/10 bg-charcoal px-4 py-8 text-ivory/80 print:hidden lg:block">
+      <nav className="hidden w-60 shrink-0 border-r border-white/10 bg-night px-4 py-8 text-cream/80 print:hidden lg:block">
         <Logo>Ratnavue Admin</Logo>
         <div className="mt-8">
           <NavLinks pathname={pathname} role={role} staffPermissions={staffPermissions} />

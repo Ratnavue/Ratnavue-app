@@ -7,15 +7,17 @@ import { useMarket } from "@/components/providers/MarketProvider";
 import { withMarket } from "@/lib/market-shared";
 
 const VARIANTS = {
-  // Warm espresso rather than near-black: the darkest, most contrasty thing on
-  // a cream page was the primary button; this keeps it clearly the main action
-  // (11.9:1 with ivory text) without the hard edge.
-  primary: "bg-charcoal-soft text-ivory hover:bg-charcoal",
-  gold: "bg-gold text-charcoal hover:bg-gold-soft",
+  // Gold is the one primary action colour across both themes (the mockup's
+  // "Sign in", "View all gemstones", "Request a quote"), always with dark
+  // night text — 9.3:1 on the dark theme's gold, 7.9:1 on the light one's.
+  primary: "bg-gold font-semibold text-night hover:bg-gold-soft",
+  gold: "bg-gold font-semibold text-night hover:bg-gold-soft",
   outline: "border border-charcoal/30 text-charcoal hover:border-charcoal bg-transparent",
-  "outline-light": "border border-ivory/40 text-ivory hover:border-ivory hover:bg-ivory/10 bg-transparent",
+  "outline-light": "border border-cream/40 text-cream hover:border-cream hover:bg-cream/10 bg-transparent",
   ghost: "text-charcoal hover:bg-charcoal/5",
-  destructive: "bg-red-700 text-ivory hover:bg-red-800",
+  // red-600 (not -700/-800): those shades are re-pointed to light text
+  // colours in the dark theme (see globals.css status tints).
+  destructive: "bg-red-600 text-white hover:brightness-110",
 };
 
 // min-h keeps every size at a comfortable thumb target (~44px for md/lg,

@@ -66,18 +66,18 @@ export function PageLoader() {
     // not carrying a transform once its entrance animation ends (see
     // .animate-page-in's `transform: none` in globals.css) — a transformed
     // ancestor would otherwise become fixed's containing block.
-    <div className="fixed inset-0 z-40 flex flex-col items-center justify-center overflow-y-auto bg-gradient-to-b from-midnight via-charcoal to-midnight pb-16 pt-28">
+    <div className="fixed inset-0 z-40 flex flex-col items-center justify-center overflow-y-auto bg-ivory pb-16 pt-28">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
-        style={{ background: "radial-gradient(42% 48% at 50% 44%, rgba(179,145,90,0.16), transparent 72%)" }}
+        style={{ background: "radial-gradient(42% 48% at 50% 44%, color-mix(in srgb, var(--color-gold) 16%, transparent), transparent 72%)" }}
       />
       <div className="animate-loader-in relative flex flex-col items-center">
         <LoaderGem />
-        <p className="animate-loader-text-glow mb-4 mt-3 text-[10px] uppercase tracking-[0.35em] text-gold-soft">
+        <p className="animate-loader-text-glow mb-4 mt-3 text-[10px] uppercase tracking-[0.35em] text-gold-deep">
           Ceylon Gemstones
         </p>
-        <h1 className="animate-loader-text-glow font-serif text-3xl tracking-[0.12em] text-ivory sm:text-4xl">
+        <h1 className="animate-loader-text-glow font-serif text-3xl tracking-[0.12em] text-charcoal sm:text-4xl">
           RATNAVUE
         </h1>
         <div className="animate-loader-line-glow mt-6 h-px w-32 bg-gold sm:w-40" />

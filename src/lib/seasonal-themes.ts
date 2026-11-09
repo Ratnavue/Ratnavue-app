@@ -83,10 +83,10 @@ export const SEASONAL_THEMES: Record<SeasonalThemeKey, SeasonalThemeDef> = {
   halloween: {
     key: "halloween",
     label: "Halloween",
-    backgroundClass: "bg-gradient-to-b from-charcoal via-[#1a1220] to-charcoal",
+    backgroundClass: "bg-gradient-to-b from-night via-[#1a1220] to-night",
     isDark: true,
-    headingClass: "text-ivory",
-    bodyClass: "text-ivory/70",
+    headingClass: "text-cream",
+    bodyClass: "text-cream/70",
     kickerClass: "text-orange-400",
     particleDirection: "fall",
     particles: ["🦇"],

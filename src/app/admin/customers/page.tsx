@@ -46,7 +46,7 @@ export default async function AdminCustomersPage({ searchParams }: PageProps<"/a
           <Link
             key={label}
             href={`/admin/customers?${new URLSearchParams({ ...(value ? { type: value } : {}), ...(q ? { q } : {}) }).toString()}`}
-            className={cn("rounded-full border px-3 py-1 text-xs", type === value ? "border-charcoal bg-charcoal text-ivory" : "border-border-subtle text-charcoal/70")}
+            className={cn("rounded-full border px-3 py-1 text-xs", type === value ? "border-charcoal bg-night text-cream" : "border-border-subtle text-charcoal/70")}
           >
             {label}
           </Link>

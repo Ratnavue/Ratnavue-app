@@ -3,6 +3,7 @@ import Image from "next/image";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCachedHomeContent } from "@/lib/site-config-cache";
+import { getMasterData } from "@/lib/catalog";
 import { getActivePromotionMaps } from "@/lib/promotion-items";
 import { getWishlistedIds } from "@/lib/wishlist";
 import { auth } from "@/lib/auth";
@@ -11,26 +12,16 @@ import { pricesForMarket } from "@/lib/market-pricing";
 import { LinkButton } from "@/components/ui/Button";
 import { GemCard } from "@/components/catalog/GemCard";
 import { JewelryCard } from "@/components/catalog/JewelryCard";
-import { GemVisualizer } from "@/components/gem-visualizer/GemVisualizer";
-import { Marquee } from "@/components/layout/Marquee";
+import { GemStage, StylizedGem } from "@/components/gem-visualizer/StylizedGem";
+import { gemColorFor } from "@/lib/gem-palette";
+import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/layout/Reveal";
 import { HeroSlideshow } from "@/components/layout/HeroSlideshow";
-import { HeroScrollCue } from "@/components/layout/HeroScrollCue";
 import { CardSlider } from "@/components/ui/CardSlider";
 import { TrustBar } from "@/components/layout/TrustBar";
 import { getTrustBarMessages } from "@/lib/i18n-messages";
+import { getTranslations } from "next-intl/server";
 import { LkStrip } from "@/components/layout/LkStrip";
-
-const MINERAL_MARQUEE = [
-  { label: "Blue Sapphire", color: "#3a5f9e" },
-  { label: "Padparadscha", color: "#e08a5c" },
-  { label: "Ruby", color: "#a4283f" },
-  { label: "Alexandrite", color: "#4a7c5d" },
-  { label: "Cat's Eye Chrysoberyl", color: "#b8934a" },
-  { label: "Spinel", color: "#c05a82" },
-  { label: "Moonstone", color: "#9fb8cc" },
-  { label: "Zircon", color: "#5a9bc4" },
-];
 
 // The home page's two heaviest queries (each a multi-table join over the
 // full catalog) — cached per market for 60s, with an on-demand
@@ -69,111 +60,87 @@ const getFeaturedJewelryForMarket = unstable_cache(
 
 export default async function HomePage() {
   const market = await getMarket();
-  const session = await auth();
+  const [session, t] = await Promise.all([auth(), getTranslations("home")]);
   // Each storefront features its own listings only (a listing belongs to one
   // storefront) and has its own home copy (see getHomeContent).
-  const [rawFeaturedGems, rawFeaturedJewelry, content, { gemstonePrices, jewelryPrices }, trustBarMessages, wishlistedIds] = await Promise.all([
+  const [rawFeaturedGems, rawFeaturedJewelry, content, { gemstonePrices, jewelryPrices }, trustBarMessages, wishlistedIds, { minerals }] = await Promise.all([
     getFeaturedGemsForMarket(market),
     getFeaturedJewelryForMarket(market),
     getCachedHomeContent(market),
     getActivePromotionMaps(market),
     getTrustBarMessages(),
     getWishlistedIds(session?.user?.id),
+    getMasterData(),
   ]);
   const featuredGems = pricesForMarket(rawFeaturedGems, market);
   const featuredJewelry = pricesForMarket(rawFeaturedJewelry, market);
 
   // Each of these two sections is curated by admins (feature specific items
   // from their list pages) and independently switched on/off from Home Page
-  // content — either can be absent, so the hero's scroll cue can't hardcode
-  // which section comes next. It targets the first one that actually rendered.
+  // content — either can be absent.
   const showFeaturedGems = content.showFeaturedGems && featuredGems.length > 0;
   const showFeaturedJewelry = content.showFeaturedJewelry && featuredJewelry.length > 0;
-  const heroNextSection = showFeaturedGems ? "featured" : showFeaturedJewelry ? "featured-jewelry" : "editorial";
 
   return (
-    <div>
+    <div className="pb-20 sm:pb-28">
       {/* ---------- Hero ---------- */}
-      {/*
-        `h-dvh`, not `h-screen`: on iOS/Android, 100vh is sized against the
-        largest possible viewport (as if browser chrome were hidden), not
-        the viewport actually visible on load — so a `100vh` hero either
-        shows a sliver of the next section under the address bar, or looks
-        short once the chrome collapses. `dvh` tracks the real, current
-        viewport instead. The `lg:max-h` cap only kicks in at `lg`+ (desktop)
-        and only for genuinely oversized monitors — it exists purely to stop
-        the hero ballooning on ultra-tall displays, not to clip it on
-        ordinary ~900-1100px desktop viewport heights, which a lower cap
-        here was doing.
-
-        `min-h-[720px]` is scoped to `sm:` and up, not applied on narrow
-        phones: it exists to keep the hero from looking cramped on a short
-        landscape/small-window viewport, but on an actual portrait phone
-        (an iPhone SE's 375×667 dvh, say) it does the opposite — 720 is
-        taller than the real viewport, so `items-center` centers the
-        content around the section's own midpoint rather than the
-        viewport's, and the second CTA button ends up partly below the
-        fold. The hero's own content (~520px stacked) already fits a
-        667px dvh comfortably on its own; the floor just isn't needed
-        there.
-      */}
-      <section id="hero" className="relative flex h-dvh w-full items-center overflow-hidden bg-charcoal sm:min-h-[720px] lg:max-h-[1100px]">
-        <HeroSlideshow images={content.heroSlides} />
+      {/* Two columns (stacked on phones): the copy, and the admin-managed
+          hero photos (Home Page content) in a rounded card on a soft
+          sapphire glow — or the stylised gem when no slides are set. */}
+      <section id="hero" className="relative overflow-hidden">
         <div
+          aria-hidden
           className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(90deg, rgba(33,29,26,0.97) 0%, rgba(33,29,26,0.88) 32%, rgba(33,29,26,0.55) 58%, rgba(33,29,26,0.25) 100%)",
-          }}
+          style={{ background: "radial-gradient(55% 70% at 78% 30%, color-mix(in srgb, var(--color-sapphire-soft) 45%, transparent), transparent 70%)" }}
         />
-
-        {/* Mobile sizing (pt-10/text-4xl/mt-4/mt-6, and the two CTA
-            buttons' own shrunk padding/text below, all overridden back to
-            the original values at sm: and up) isn't just cosmetic — a real
-            phone's dvh on first load is smaller than its "full" size (the
-            browser's address bar is visible until the user scrolls), so
-            the full-size stack below could still run into the CTA row on
-            an actual device even once the hero's own min-height stopped
-            forcing it past the viewport (see the sm:min-h-[720px] note
-            above). Measured against a 600px dvh — a realistic small-state
-            height, not just the 667px "full" one — with real headroom to
-            spare, not just barely fitting. The buttons specifically: at
-            their default `lg` size, "Design Your Gem" and "Shop
-            Gemstones" together don't fit a ~375px phone's width side by
-            side, so flex-wrap drops the second one to its own line —
-            harmless on its own, but that's ~75px of extra height the
-            short-viewport math above doesn't have to spare. */}
-        <div className="relative mx-auto w-full max-w-[120rem] px-5 pt-10 sm:px-8 sm:pt-16 lg:px-12 xl:px-16">
-          <div className="max-w-xl">
-            <p className="text-xs uppercase tracking-[0.35em] text-gold-soft">{content.heroKicker}</p>
-            <h1 className="mt-4 font-serif text-4xl leading-[1.05] text-ivory sm:mt-5 sm:text-6xl md:text-7xl lg:text-[5.5rem]">
-              {content.heroHeadingLine1}
-              <br />
-              {content.heroHeadingLine2}
-              <br />
-              <span className="text-gold-soft">{content.heroHeadingHighlight}</span>
+        <div className="relative mx-auto grid max-w-[120rem] items-center gap-10 px-5 pb-16 pt-10 sm:px-8 sm:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:px-12 lg:pb-24 xl:px-16">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{content.heroKicker}</p>
+            <h1 className="mt-5 font-serif text-5xl leading-[1.04] text-charcoal sm:text-6xl xl:text-7xl">
+              {content.heroHeadingLine1} {content.heroHeadingLine2}{" "}
+              <span className="text-gold-deep">{content.heroHeadingHighlight}</span>
             </h1>
-            <p className="mt-4 max-w-md text-ivory/60 sm:mt-7">{content.heroSubtext}</p>
-            <div className="mt-6 flex flex-wrap gap-3 sm:mt-10 sm:gap-4">
-              <LinkButton href="/configurator" variant="gold" size="lg" className="px-5 py-2.5 text-sm sm:px-8 sm:py-4 sm:text-base">
-                Design Your Gem
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-charcoal/75">{content.heroSubtext}</p>
+            <div className="mt-9 flex flex-wrap gap-3 sm:gap-4">
+              <LinkButton href="/gems" size="lg">
+                {t("shopGemstones")} <ArrowRight size={18} />
               </LinkButton>
-              <LinkButton href="/gems" variant="outline-light" size="lg" className="px-5 py-2.5 text-sm sm:px-8 sm:py-4 sm:text-base">
-                Shop Gemstones
+              <LinkButton href="/configurator" variant="outline" size="lg">
+                {t("designYourGem")}
               </LinkButton>
             </div>
           </div>
+          <div className="relative aspect-[5/4] overflow-hidden rounded-3xl border border-border-subtle bg-night shadow-2xl shadow-night/30">
+            {content.heroSlides.length > 0 ? (
+              <HeroSlideshow images={content.heroSlides} />
+            ) : (
+              <GemStage color={gemColorFor("blue-sapphire")} className="absolute inset-0 flex items-center justify-center">
+                <StylizedGem color={gemColorFor("blue-sapphire")} className="w-1/2" />
+              </GemStage>
+            )}
+          </div>
         </div>
-
-        <HeroScrollCue target={heroNextSection} />
       </section>
 
-      {/* ---------- Marquee ---------- */}
-      <div className="py-5 text-charcoal">
-        <Marquee items={MINERAL_MARQUEE} />
-      </div>
-
-      {market === "lk" && <LkStrip />}
+      {/* ---------- Explore by stone ---------- */}
+      {minerals.length > 0 && (
+        <section className="mx-auto max-w-[120rem] px-5 sm:px-8 lg:px-12 xl:px-16">
+          <p className="text-sm text-charcoal/65">{t("exploreByStone")}</p>
+          <ul className="mt-4 flex flex-wrap gap-2.5">
+            {minerals.map((m) => (
+              <li key={m.id}>
+                <Link
+                  href={`/gems?mineral=${m.slug}`}
+                  className="flex items-center gap-2.5 rounded-full border border-border-subtle bg-surface px-4 py-2 text-sm text-charcoal transition-colors hover:border-gold/60"
+                >
+                  <span aria-hidden className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: gemColorFor(m.slug, m) }} />
+                  {m.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* ---------- Featured Gemstones ---------- */}
       {/* Curated, not automatic: admins mark items Gemstone.isFeatured from
@@ -181,16 +148,8 @@ export default async function HomePage() {
           switched off from Home Page content regardless of how many items
           are marked — see showFeaturedGems above. */}
       {showFeaturedGems && (
-        <section id="featured" className="relative mx-auto flex w-full max-w-[120rem] flex-col justify-center px-5 py-16 sm:px-8 sm:py-24 lg:px-12 xl:px-16">
-          <Reveal className="mb-8 flex items-end justify-between sm:mb-14">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-gold-deep">Hand-Selected</p>
-              <h2 className="mt-3 font-serif text-4xl text-charcoal sm:text-5xl">Featured Gemstones</h2>
-            </div>
-            <Link href="/gems" className="hidden text-sm text-charcoal/70 underline decoration-charcoal/30 underline-offset-4 hover:text-charcoal sm:block">
-              View all
-            </Link>
-          </Reveal>
+        <section id="featured" className="mx-auto max-w-[120rem] px-5 pt-20 sm:px-8 sm:pt-28 lg:px-12 xl:px-16">
+          <SectionHeading kicker={t("handSelected")} title={t("featuredGems")} viewAll={t("viewAll")} href="/gems" />
           <Reveal>
             <CardSlider>
               {featuredGems.map((gem) => (
@@ -229,16 +188,8 @@ export default async function HomePage() {
       {/* Same curation pattern as Featured Gemstones, independently toggled
           (JewelryPiece.isFeatured + showFeaturedJewelry). */}
       {showFeaturedJewelry && (
-        <section id="featured-jewelry" className="relative mx-auto flex w-full max-w-[120rem] flex-col justify-center px-5 py-16 sm:px-8 sm:py-24 lg:px-12 xl:px-16">
-          <Reveal className="mb-8 flex items-end justify-between sm:mb-14">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-gold-deep">Hand-Selected</p>
-              <h2 className="mt-3 font-serif text-4xl text-charcoal sm:text-5xl">Featured Jewelry</h2>
-            </div>
-            <Link href="/jewelry" className="hidden text-sm text-charcoal/70 underline decoration-charcoal/30 underline-offset-4 hover:text-charcoal sm:block">
-              View all
-            </Link>
-          </Reveal>
+        <section id="featured-jewelry" className="mx-auto max-w-[120rem] px-5 pt-20 sm:px-8 sm:pt-28 lg:px-12 xl:px-16">
+          <SectionHeading kicker={t("handSelected")} title={t("featuredJewelry")} viewAll={t("viewAll")} href="/jewelry" />
           <Reveal>
             <CardSlider>
               {featuredJewelry.map((piece) => (
@@ -265,118 +216,98 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ---------- Editorial statement ---------- */}
-      <section id="editorial" className="relative flex items-center bg-gradient-to-b from-midnight via-charcoal to-midnight py-20 sm:py-32">
-        <Reveal className="mx-auto max-w-4xl px-5 text-center sm:px-8">
-          <p className="font-serif text-3xl leading-snug text-ivory sm:text-5xl">
-            &ldquo;{content.editorialQuote} <span className="text-gold-soft">{content.editorialQuoteHighlight}</span>&rdquo;
-          </p>
-          <div className="mx-auto mt-8 h-px w-16 bg-gold" />
-          <p className="mt-6 text-xs uppercase tracking-[0.3em] text-ivory/45">{content.editorialAttribution}</p>
+      {/* ---------- Heritage ---------- */}
+      {/* Photo card left, story right — with the editorial quote (it used to
+          be its own full-width dark band) set as a gold-ruled pull quote. */}
+      <section id="heritage" className="mx-auto grid max-w-[120rem] items-center gap-10 px-5 pt-20 sm:px-8 sm:pt-28 lg:grid-cols-2 lg:gap-16 lg:px-12 xl:px-16">
+        <Reveal>
+          <PhotoCard src={content.heritageImage} alt={content.heritageHeading} />
         </Reveal>
-      </section>
-
-      {/* ---------- Heritage / Sourcing ---------- */}
-      {/* Edge-to-edge split — no gap, no rounded corners, no card shadow —
-          and text anchored at the bottom with an upward dark-to-clear
-          scrim, rather than the earlier rounded-card / left-anchored
-          treatment. Side by side at lg+ (one row, so both panels share the
-          same full-viewport height); stacked below that. Each panel is
-          h-dvh at sm+ (not a fixed rem height). */}
-      <section id="heritage-sourcing" className="relative lg:grid lg:grid-cols-2">
-        <Reveal className="relative h-[80dvh] min-h-[460px] w-full overflow-hidden bg-charcoal sm:h-dvh sm:min-h-[520px] lg:max-h-[1100px]">
-          <Image src={content.heritageImage} alt={content.heritageHeading} fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{ background: "linear-gradient(0deg, rgba(20,17,14,0.92) 10%, rgba(20,17,14,0.15) 65%, transparent 100%)" }}
-          />
-          <div className="relative flex h-full flex-col justify-end px-8 pb-12 sm:px-12 lg:px-14">
-            <p className="text-xs uppercase tracking-[0.3em] text-gold-soft">{content.heritageKicker}</p>
-            <h2 className="mt-3 max-w-md font-serif text-3xl text-ivory sm:text-4xl">{content.heritageHeading}</h2>
-            <p className="mt-4 max-w-md leading-relaxed text-ivory/70">{content.heritageBody}</p>
-            <Link
-              href="/about"
-              className="mt-6 inline-flex w-fit items-center text-xs font-bold uppercase tracking-wide text-gold-soft transition-colors hover:text-ivory"
-            >
-              Read Our Story →
-            </Link>
-          </div>
-        </Reveal>
-
-        <Reveal delay={0.1} className="relative h-[80dvh] min-h-[460px] w-full overflow-hidden bg-charcoal sm:h-dvh sm:min-h-[520px] lg:max-h-[1100px]">
-          <Image src={content.sourcingImage} alt={content.sourcingHeading} fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{ background: "linear-gradient(0deg, rgba(20,17,14,0.92) 10%, rgba(20,17,14,0.15) 65%, transparent 100%)" }}
-          />
-          <div className="relative flex h-full flex-col justify-end px-8 pb-12 sm:px-12 lg:px-14">
-            <p className="text-xs uppercase tracking-[0.3em] text-gold-soft">{content.sourcingKicker}</p>
-            <h2 className="mt-3 max-w-md font-serif text-3xl text-ivory sm:text-4xl">{content.sourcingHeading}</h2>
-            <p className="mt-4 max-w-md leading-relaxed text-ivory/70">{content.sourcingBody}</p>
-            <Link
-              href="/sourcing"
-              className="mt-6 inline-flex w-fit items-center text-xs font-bold uppercase tracking-wide text-gold-soft transition-colors hover:text-ivory"
-            >
-              Submit a Sourcing Request →
-            </Link>
-          </div>
+        <Reveal delay={0.1}>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{content.heritageKicker}</p>
+          <h2 className="mt-4 font-serif text-4xl leading-tight text-charcoal sm:text-5xl">{content.heritageHeading}</h2>
+          <p className="mt-5 text-lg leading-relaxed text-charcoal/75">{content.heritageBody}</p>
+          <blockquote className="mt-7 border-l-2 border-gold pl-5 font-serif text-2xl leading-snug text-charcoal">
+            {content.editorialQuote} {content.editorialQuoteHighlight}
+          </blockquote>
+          <LinkButton href="/about" variant="outline" className="mt-8">
+            {t("readOurStory")} <ArrowRight size={16} />
+          </LinkButton>
         </Reveal>
       </section>
 
       {/* ---------- The Ratnavue Promise ---------- */}
-      {/* A dedicated beat for the site's trust signals, right where a
-          shopper who's just read the heritage story and is warming up to
-          the closing CTA still has one real question left: "but is it
-          genuine, and what if it isn't right for me?" Answers it before
-          they ever have to ask. */}
-      <section id="promise" className="relative flex w-full flex-col justify-center px-5 py-16 sm:px-8 sm:py-24 lg:px-12 xl:px-16">
-        <Reveal className="mx-auto max-w-5xl text-center">
-          <p className="text-xs uppercase tracking-[0.3em] text-gold-deep">The Ratnavue Promise</p>
-          <h2 className="mx-auto mt-3 max-w-2xl font-serif text-4xl text-charcoal sm:text-5xl">
-            Buy with complete confidence.
-          </h2>
-          <p className="mx-auto mt-5 max-w-xl text-charcoal/65">
-            A gemstone is a once-in-a-lifetime purchase for most people who make one — every stone and setting we
-            sell is backed by the same four commitments, no exceptions.
+      {/* The site's trust signals, right where a shopper who's just read the
+          heritage story still has one real question left: "but is it
+          genuine, and what if it isn't right for me?" */}
+      <section id="promise" className="mx-auto max-w-[120rem] px-5 pt-20 sm:px-8 sm:pt-28 lg:px-12 xl:px-16">
+        <Reveal className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{t("promiseKicker")}</p>
+          <h2 className="mt-4 font-serif text-4xl text-charcoal sm:text-5xl">{t("promiseTitle")}</h2>
+          <p className="mt-4 text-lg leading-relaxed text-charcoal/70">
+            {t("promiseBody")}
           </p>
         </Reveal>
-        <Reveal delay={0.1} className="mx-auto mt-10 w-full max-w-5xl sm:mt-14">
-          <TrustBar messages={trustBarMessages} />
+        <Reveal delay={0.1} className="mt-10">
+          <TrustBar messages={trustBarMessages} variant="cards" />
+        </Reveal>
+      </section>
+
+      {/* ---------- Sourcing ---------- */}
+      <section id="sourcing" className="mx-auto grid max-w-[120rem] items-center gap-10 px-5 pt-20 sm:px-8 sm:pt-28 lg:grid-cols-2 lg:gap-16 lg:px-12 xl:px-16">
+        <Reveal className="order-2 lg:order-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{content.sourcingKicker}</p>
+          <h2 className="mt-4 font-serif text-4xl leading-tight text-charcoal sm:text-5xl">{content.sourcingHeading}</h2>
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-charcoal/75">{content.sourcingBody}</p>
+          <LinkButton href="/sourcing" className="mt-8">
+            {t("submitSourcing")} <ArrowRight size={16} />
+          </LinkButton>
+        </Reveal>
+        <Reveal delay={0.1} className="order-1 lg:order-2">
+          <PhotoCard src={content.sourcingImage} alt={content.sourcingHeading} />
         </Reveal>
       </section>
 
       {/* ---------- Closing CTA ---------- */}
-      <section id="closing-cta" className="relative flex items-center overflow-hidden bg-gradient-to-br from-midnight via-charcoal to-charcoal py-20 sm:py-32">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-60"
-          style={{ background: "radial-gradient(50% 60% at 50% 100%, rgba(179,145,90,0.18), transparent 70%)" }}
-        />
-        <div className="relative mx-auto grid max-w-4xl items-center gap-10 px-5 text-center sm:px-8 lg:grid-cols-[1fr_auto] lg:gap-16 lg:text-left">
-          <Reveal className="order-2 lg:order-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-gold-soft">{content.closingKicker}</p>
-            <h2 className="mt-4 font-serif text-4xl text-ivory sm:text-5xl">{content.closingHeading}</h2>
-            <p className="mt-5 text-ivory/60">{content.closingBody}</p>
-            <div className="mt-9">
-              <LinkButton href="/configurator" variant="gold" size="lg">Open the Configurator</LinkButton>
+      <section id="closing-cta" className="mx-auto max-w-[120rem] px-5 pt-20 sm:px-8 sm:pt-28 lg:px-12 xl:px-16">
+        <Reveal className="band-sapphire rounded-3xl px-6 py-10 sm:px-12 sm:py-14">
+          <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{content.closingKicker}</p>
+              <h2 className="mt-4 font-serif text-4xl text-charcoal sm:text-5xl">{content.closingHeading}</h2>
+              <p className="mt-4 text-lg text-charcoal/80">{content.closingBody}</p>
             </div>
-          </Reveal>
-          {/* A small showcase of the visualizer itself — the same procedural
-              renderer used across the catalog and configurator, now with
-              real per-facet shading (see gem-visualizer commit) rather than
-              the flat "flower" look it used to have. */}
-          <Reveal delay={0.1} className="animate-gem-color-wave order-1 mx-auto w-44 sm:w-56 lg:order-2 lg:w-64">
-            <GemVisualizer
-              cutSlug="round-brilliant"
-              hue={221}
-              darkness={42}
-              claritySlug="loupe-clean"
-              caratWeight={2.5}
-              seedKey="closing-cta-showcase"
-              className="w-full drop-shadow-[0_20px_40px_rgba(0,0,0,0.35)]"
-            />
-          </Reveal>
-        </div>
+            <LinkButton href="/configurator" size="lg" className="shrink-0 self-start md:self-auto">
+              {t("openConfigurator")}
+            </LinkButton>
+          </div>
+          {market === "lk" && <LkStrip className="mt-10 border-t border-charcoal/15 pt-8" />}
+        </Reveal>
       </section>
+    </div>
+  );
+}
+
+function SectionHeading({ kicker, title, viewAll, href }: { kicker: string; title: string; viewAll: string; href: string }) {
+  return (
+    <Reveal className="mb-8 flex items-end justify-between gap-4 sm:mb-12">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-deep">{kicker}</p>
+        <h2 className="mt-3 font-serif text-4xl text-charcoal sm:text-5xl">{title}</h2>
+      </div>
+      <Link href={href} className="hidden items-center gap-1.5 text-sm font-medium text-charcoal/80 transition-colors hover:text-gold-deep sm:flex">
+        {viewAll} <ArrowRight size={15} />
+      </Link>
+    </Reveal>
+  );
+}
+
+/** A real photograph in the site's rounded, hairline-framed card. */
+function PhotoCard({ src, alt }: { src: string; alt: string }) {
+  return (
+    <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-border-subtle bg-night">
+      <Image src={src} alt={alt} fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-t from-night/35 to-transparent" />
     </div>
   );
 }

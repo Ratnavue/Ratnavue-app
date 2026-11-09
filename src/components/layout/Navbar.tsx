@@ -12,8 +12,8 @@ import { AccountMenu } from "@/components/layout/AccountMenu";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { LocaleSwitcher } from "@/components/layout/LocaleSwitcher";
 import { MarketSwitcher, MarketSwitcherInline } from "@/components/layout/MarketSwitcher";
-import { KandyanBand } from "@/components/decor/Kandyan";
 import { HeaderSearch } from "@/components/layout/HeaderSearch";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import type { AppLocale } from "@/i18n/request";
 import type { CustomLocale } from "@/lib/locales";
 
@@ -59,7 +59,9 @@ function solidThresholdFor(isHome: boolean): number {
 // pages' dark ones. /promotions and /promotions/collection are handled
 // separately below — their hero's darkness depends on the active
 // seasonal theme (see promotionsThemeIsDark).
-const TRANSPARENT_NAV_ROUTES = ["/"];
+// Home no longer opens on a full-bleed photo (its hero is a two-column
+// layout with the imagery in a card), so the nav sits solid there too.
+const TRANSPARENT_NAV_ROUTES: string[] = [];
 const PROMOTIONS_ROUTES = ["/promotions", "/promotions/collection"];
 
 export function Navbar({
@@ -173,18 +175,17 @@ export function Navbar({
   }, [open]);
 
   return (
-    <motion.header
-      initial={false}
-      animate={{
-        backgroundColor: transparent ? "rgba(33,29,26,0)" : "rgba(251,248,242,0.96)",
-        boxShadow: transparent ? "0 1px 0 rgba(255,255,255,0)" : "0 1px 0 rgba(33,29,26,0.08)",
-      }}
-      transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
+    <header
       className={cn(
+        // A themed solid bar with a hairline (the colours are CSS variables,
+        // so this follows the dark/light theme with no JS); fully clear only
+        // while floating over a full-bleed hero.
+        "border-b transition-[background-color,border-color] duration-500",
+        transparent ? "border-transparent bg-transparent" : "border-border-subtle bg-ivory/95",
         // top tracks --site-banner-h (see SiteStatusBanner) rather than a
         // bare 0 — when the site status banner is showing, the fixed nav
         // floats directly below it instead of under/behind it.
-        "fixed top-[var(--site-banner-h,0px)] z-50 w-full backdrop-blur-sm",
+        "fixed top-[var(--site-banner-h,0px)] z-50 w-full backdrop-blur-md",
         transparent && !open && "backdrop-blur-0",
         // Capped at (not forced to) full-viewport height while open — the
         // dropdown sizes to its own content and scrolls internally if it's
@@ -196,12 +197,12 @@ export function Navbar({
         open && "flex max-h-dvh flex-col overflow-hidden bg-ivory",
       )}
     >
-      <div className="mx-auto flex w-full max-w-[120rem] shrink-0 items-center justify-between px-5 py-5 sm:px-8 lg:px-12 xl:px-16">
+      <div className="mx-auto flex w-full max-w-[120rem] shrink-0 items-center justify-between px-5 py-4 sm:px-8 lg:px-12 xl:px-16">
         <Link
           href="/"
           className={cn(
             "font-serif text-2xl tracking-wide transition-colors duration-300",
-            transparent ? "text-ivory" : "text-charcoal"
+            transparent ? "text-cream" : "text-charcoal"
           )}
         >
           Ratnavue
@@ -210,7 +211,7 @@ export function Navbar({
           {market === "lk" && locale !== "si" && locale !== "ta" && (
             <span
               className={cn(
-                "ml-2 hidden align-super font-sans sm:inline lg:hidden xl:inline text-[10px] font-medium uppercase tracking-[0.22em] transition-colors duration-300",
+                "ml-2.5 hidden font-sans sm:inline lg:hidden xl:inline text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors duration-300",
                 transparent ? "text-gold-soft" : "text-gold-deep",
               )}
             >
@@ -219,7 +220,7 @@ export function Navbar({
           )}
         </Link>
 
-        <nav className={cn(wide ? "hidden 2xl:flex" : "hidden lg:flex", "items-center gap-5 xl:gap-6 2xl:gap-8")}>
+        <nav className={cn(wide ? "hidden 2xl:flex" : "hidden lg:flex", "items-center gap-1 xl:gap-2")}>
           {navLinks.map((link) => {
             const active = pathname.startsWith(link.href);
             return (
@@ -227,21 +228,19 @@ export function Navbar({
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "relative whitespace-nowrap pb-1 text-sm tracking-wide transition-colors duration-300 after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 after:bg-gold after:transition-all after:duration-300 hover:after:w-full",
-                  transparent ? "text-ivory/85 hover:text-ivory" : "text-charcoal/75 hover:text-charcoal",
-                  active && (transparent ? "text-ivory" : "text-charcoal font-medium")
+                  "relative whitespace-nowrap rounded-full px-3.5 py-2 text-[15px] transition-colors duration-300 xl:px-4",
+                  transparent ? "text-cream/85 hover:text-cream" : "text-charcoal/70 hover:text-charcoal",
+                  active && (transparent ? "text-cream" : "font-semibold text-charcoal"),
                 )}
               >
-                {t(link.key)}
-                {/* Shared layoutId — Framer Motion tracks this element's
-                    identity across renders and animates it from wherever it
-                    was (under the previously active link) to wherever it now
-                    is, instead of the underline just snapping from link to
-                    link the way the hover-only `after:` pseudo-element does. */}
+                <span className="relative z-[1]">{t(link.key)}</span>
+                {/* Shared layoutId — Framer Motion tracks this pill's identity
+                    across renders and glides it from the previously active
+                    link to the new one instead of snapping. */}
                 {active && (
                   <motion.span
                     layoutId="navbar-active-indicator"
-                    className={cn("absolute -bottom-1 left-0 h-px w-full", transparent ? "bg-ivory" : "bg-gold")}
+                    className={cn("absolute inset-0 rounded-full", transparent ? "bg-cream/15" : "bg-raised")}
                     transition={{ type: "spring", stiffness: 380, damping: 32 }}
                   />
                 )}
@@ -250,19 +249,19 @@ export function Navbar({
           })}
         </nav>
 
-        <div className={cn(wide ? "hidden 2xl:flex" : "hidden lg:flex", "items-center gap-5")}>
+        <div className={cn(wide ? "hidden 2xl:flex" : "hidden lg:flex", "items-center gap-5 xl:gap-6")}>
           <HeaderSearch transparent={transparent} />
           <Link
             href={user ? "/account/retail-cart" : "/account/login?callbackUrl=%2Faccount%2Fretail-cart"}
             aria-label={t("cart")}
             className={cn(
               "relative transition-colors duration-300",
-              transparent ? "text-ivory/85 hover:text-ivory" : "text-charcoal/80 hover:text-charcoal"
+              transparent ? "text-cream/85 hover:text-cream" : "text-charcoal/80 hover:text-charcoal"
             )}
           >
             <ShoppingBag size={19} />
             {cartItemCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-medium text-charcoal">
+              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-medium text-night">
                 {cartItemCount > 99 ? "99+" : cartItemCount}
               </span>
             )}
@@ -274,27 +273,27 @@ export function Navbar({
             <Link
               href="/account/login"
               className={cn(
-                "flex items-center gap-2 whitespace-nowrap text-sm transition-colors duration-300",
-                transparent ? "text-ivory/85 hover:text-ivory" : "text-charcoal/80 hover:text-charcoal"
+                "whitespace-nowrap text-[15px] font-medium transition-colors duration-300",
+                transparent ? "text-cream/90 hover:text-cream" : "text-charcoal/90 hover:text-gold-deep"
               )}
             >
-              <User size={16} />
               {t("signIn")}
             </Link>
           )}
           <MarketSwitcher transparent={transparent} />
           <LocaleSwitcher locale={locale} transparent={transparent} customLocales={customLocales} />
+          <ThemeToggle />
         </div>
 
         <div className={cn(wide ? "2xl:hidden" : "lg:hidden", "flex items-center gap-2.5 min-[430px]:gap-4")}>
           <Link
             href={user ? "/account/retail-cart" : "/account/login?callbackUrl=%2Faccount%2Fretail-cart"}
             aria-label={t("cart")}
-            className={cn("relative transition-colors duration-300", transparent ? "text-ivory" : "text-charcoal")}
+            className={cn("relative transition-colors duration-300", transparent ? "text-cream" : "text-charcoal")}
           >
             <ShoppingBag size={21} />
             {cartItemCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-medium text-charcoal">
+              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-medium text-night">
                 {cartItemCount > 99 ? "99+" : cartItemCount}
               </span>
             )}
@@ -309,14 +308,15 @@ export function Navbar({
           {user ? (
             <AccountMenu user={user} transparent={transparent} compact />
           ) : (
-            <Link href="/account/login" aria-label={t("signIn")} className={cn("transition-colors duration-300", transparent ? "text-ivory" : "text-charcoal")}>
+            <Link href="/account/login" aria-label={t("signIn")} className={cn("transition-colors duration-300", transparent ? "text-cream" : "text-charcoal")}>
               <User size={21} />
             </Link>
           )}
           <MarketSwitcher transparent={transparent} />
           <LocaleSwitcher locale={locale} transparent={transparent} customLocales={customLocales} />
+          <ThemeToggle className="h-9 w-9 max-[379px]:hidden" />
           <button
-            className={cn("transition-colors duration-300", transparent ? "text-ivory" : "text-charcoal")}
+            className={cn("transition-colors duration-300", transparent ? "text-cream" : "text-charcoal")}
             onClick={() => setOpen((v) => !v)}
             aria-label={t("toggleMenu")}
           >
@@ -324,16 +324,6 @@ export function Navbar({
           </button>
         </div>
       </div>
-
-      {/* Sri Lanka store: a slim Kandyan frieze along the header's lower edge.
-          Absolute (not in flow) so it doesn't change the header's height, and
-          hidden while the nav is transparent over a hero or the mobile menu is
-          open. */}
-      {market === "lk" && !open && (
-        <KandyanBand
-          className={cn("pointer-events-none absolute inset-x-0 bottom-0 h-2 text-gold transition-opacity duration-300", transparent ? "opacity-0" : "opacity-55")}
-        />
-      )}
 
       {open && (
         <nav className={cn(wide ? "2xl:hidden" : "lg:hidden", "flex flex-col gap-1 overflow-y-auto border-t border-border-subtle bg-ivory px-5 py-4")}>
@@ -364,6 +354,6 @@ export function Navbar({
           </div>
         </nav>
       )}
-    </motion.header>
+    </header>
   );
 }
