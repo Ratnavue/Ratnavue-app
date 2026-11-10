@@ -30,6 +30,7 @@ function renderForm() {
       treatments={[option("unheated")]}
       origins={[option("ratnapura")]}
       certificationLabs={[]}
+      specialties={[{ id: "spec-star", name: "Star", description: "Asterism" }]}
       shippingWeightTiers={[]}
       defaultMarket="intl"
     />,

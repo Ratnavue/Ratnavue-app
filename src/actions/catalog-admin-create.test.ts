@@ -66,29 +66,25 @@ describe("gem speciality tags", () => {
     return fd;
   }
 
-  it("saves every ticked speciality on create", async () => {
+  it("links every ticked speciality that exists on create", async () => {
     prismaMock.gemstone.findUnique.mockResolvedValue(null);
     prismaMock.gemstone.create.mockResolvedValue({ id: "gem-new" } as never);
+    prismaMock.specialty.findMany.mockResolvedValue([{ id: "spec-star" }] as never);
 
-    await createGemstone(withSpecialties(gemFields, ["COLOR_CHANGE", "STAR"]));
+    await createGemstone(withSpecialties(gemFields, ["spec-star", "spec-gone"]));
 
-    expect(prismaMock.gemstone.create.mock.calls[0][0].data.specialties).toEqual(["COLOR_CHANGE", "STAR"]);
+    expect(prismaMock.specialty.findMany).toHaveBeenCalledWith({ where: { id: { in: ["spec-star", "spec-gone"] } }, select: { id: true } });
+    expect(prismaMock.gemstone.create.mock.calls[0][0].data.specialtyTags).toEqual({ connect: [{ id: "spec-star" }] });
   });
 
-  it("saves an empty list when none are ticked", async () => {
+  it("links none when none are ticked, without a lookup", async () => {
     prismaMock.gemstone.findUnique.mockResolvedValue(null);
     prismaMock.gemstone.create.mockResolvedValue({ id: "gem-new" } as never);
 
     await createGemstone(formData(gemFields));
 
-    expect(prismaMock.gemstone.create.mock.calls[0][0].data.specialties).toEqual([]);
-  });
-
-  it("rejects an unknown speciality instead of silently dropping it", async () => {
-    const result = await createGemstone(withSpecialties(gemFields, ["COLOR_CHANGE", "GLOWS_IN_THE_DARK"]));
-
-    expect(result.ok).toBe(false);
-    expect(prismaMock.gemstone.create).not.toHaveBeenCalled();
+    expect(prismaMock.specialty.findMany).not.toHaveBeenCalled();
+    expect(prismaMock.gemstone.create.mock.calls[0][0].data.specialtyTags).toEqual({ connect: [] });
   });
 
   it("clears the tags on edit when the admin unticks them all", async () => {
@@ -98,7 +94,7 @@ describe("gem speciality tags", () => {
     const result = await updateGemstone("gem-1", formData(gemFields));
 
     expect(result).toEqual({ ok: true });
-    expect(prismaMock.gemstone.update.mock.calls[0][0].data.specialties).toEqual([]);
+    expect(prismaMock.gemstone.update.mock.calls[0][0].data.specialtyTags).toEqual({ set: [] });
   });
 });
 

@@ -14,7 +14,7 @@ import { ListingStatusBadge } from "@/components/admin/ListingStatusField";
 export default async function EditGemstonePage({ params }: PageProps<"/admin/gems/[id]">) {
   const { id } = await params;
   const [gem, masterData, shippingWeightTiers] = await Promise.all([
-    prisma.gemstone.findUnique({ where: { id }, include: { media: { orderBy: { sortOrder: "asc" } } } }),
+    prisma.gemstone.findUnique({ where: { id }, include: { media: { orderBy: { sortOrder: "asc" } }, specialtyTags: { select: { id: true } } } }),
     getMasterData(),
     getActiveShippingWeightTiers(),
   ]);
@@ -48,6 +48,7 @@ export default async function EditGemstonePage({ params }: PageProps<"/admin/gem
           treatments={masterData.treatments}
           origins={masterData.origins}
           certificationLabs={masterData.certificationLabs}
+          specialties={masterData.specialties}
           shippingWeightTiers={shippingWeightTiers}
           initial={initial}
           staff={staff}

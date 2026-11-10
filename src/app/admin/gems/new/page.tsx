@@ -10,7 +10,7 @@ export default async function NewGemstonePage({ searchParams }: PageProps<"/admi
   const user = (await auth())?.user;
   if (!user || !hasStaffArea(user, "catalog")) notFound();
   const scopedMarket = marketFilterFor(user);
-  const [{ minerals, cuts, clarityGrades, treatments, origins, certificationLabs }, shippingWeightTiers] = await Promise.all([
+  const [{ minerals, cuts, clarityGrades, treatments, origins, certificationLabs, specialties }, shippingWeightTiers] = await Promise.all([
     getMasterData(),
     getActiveShippingWeightTiers(),
   ]);
@@ -28,6 +28,7 @@ export default async function NewGemstonePage({ searchParams }: PageProps<"/admi
           treatments={treatments}
           origins={origins}
           certificationLabs={certificationLabs}
+          specialties={specialties}
           shippingWeightTiers={shippingWeightTiers}
           defaultMarket={defaultMarket}
           staff={user.role === "STAFF"}

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { GEM_SPECIALTIES, PIECE_TYPES } from "@/lib/gem-constants";
+import { PIECE_TYPES } from "@/lib/gem-constants";
 import { LISTING_STATUSES } from "@/lib/item-number";
 
 // Coerces the "true"/"false" STRING an HTML checkbox form submits (via
@@ -90,14 +90,14 @@ export const gemstoneSchema = z.object({
   isFeatured: formBoolean(false),
   shippingWeightTierId: z.string().optional().or(z.literal("")),
   quoteShipping: formBoolean(false),
-  // The form's ticked "specialties" checkboxes, joined with commas by the
-  // action (FormData repeats the key once per box). Unknown values are an
-  // error rather than silently dropped.
+  // The form's ticked "specialties" checkboxes (Specialty ids), joined with
+  // commas by the action (FormData repeats the key once per box). The action
+  // checks they exist before linking them.
   specialties: z
     .string()
     .optional()
     .transform((v) => [...new Set((v ?? "").split(",").map((s) => s.trim()).filter(Boolean))])
-    .pipe(z.array(z.enum(GEM_SPECIALTIES))),
+    .pipe(z.array(z.string().max(64)).max(50)),
 }).superRefine(requireLkPrice).superRefine(requireExclusiveShippingOverride);
 
 export type GemstoneInput = z.infer<typeof gemstoneSchema>;
@@ -186,6 +186,15 @@ export const mineralSchema = z.object({
 export const clarityGradeSchema = z.object({
   name: z.string().min(2).max(100),
   description: z.string().min(2).max(300),
+  sortOrder: z.coerce.number().min(0).max(100).default(0),
+  active: formBoolean(true),
+});
+
+// A speciality tag (Specialty). The description is the hint shown beside
+// its checkbox on the gem form; optional, unlike a clarity grade's.
+export const specialtySchema = z.object({
+  name: z.string().min(2).max(60),
+  description: z.string().max(300).optional().or(z.literal("")),
   sortOrder: z.coerce.number().min(0).max(100).default(0),
   active: formBoolean(true),
 });

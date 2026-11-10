@@ -7,6 +7,7 @@ import { CardPrice, PromotionBadge } from "@/components/catalog/CardPrice";
 import { WishlistButton } from "@/components/catalog/WishlistButton";
 import { SpecialtyBadges } from "@/components/catalog/SpecialtyBadges";
 import { cn } from "@/lib/utils";
+import type { SpecialtyTag } from "@/lib/gem-constants";
 
 interface GemCardProps {
   /** Needed only for the wishlist heart button — omit it (or leave
@@ -28,7 +29,7 @@ interface GemCardProps {
   treatmentName: string;
   isCeylon: boolean;
   /** Speciality tags (GemSpecialty) — colour change, star, etc. Usually empty. */
-  specialties?: readonly string[];
+  specialties?: readonly SpecialtyTag[];
   stockStatus: string;
   /** Real product photo, when one has been uploaded. Falls back to the illustrative SVG preview. */
   primaryImageUrl?: string;

@@ -7,7 +7,7 @@ import { requireAdmin } from "@/lib/rbac";
 import { slugify } from "@/lib/utils";
 import { saveLabLogo, deleteUploadedFile } from "@/lib/media";
 import { MASTER_DATA_TAG } from "@/lib/catalog";
-import { mineralSchema, clarityGradeSchema, simpleMasterDataSchema, certLabSchema } from "@/lib/validation/catalog";
+import { mineralSchema, clarityGradeSchema, simpleMasterDataSchema, certLabSchema, specialtySchema } from "@/lib/validation/catalog";
 import type { ActionResult } from "./auth";
 
 function obj(formData: FormData) {
@@ -107,6 +107,54 @@ export async function updateClarityGrade(id: string, formData: FormData): Promis
     throw err;
   }
   revalidatePath("/admin/master-data/clarity");
+  revalidateMasterData();
+  return { ok: true };
+}
+
+// Specialities (colour change, star, ...) — same shape as the clarity scale.
+// Revalidating the master data also refreshes the gem form's checkbox list;
+// the storefront picks up a renamed/hidden tag on its normal revalidation.
+export async function createSpecialty(formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const parsed = specialtySchema.safeParse(obj(formData));
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid speciality." };
+  const d = parsed.data;
+  try {
+    await prisma.specialty.create({ data: { ...d, description: d.description || null, slug: slugify(d.name) } });
+  } catch (err) {
+    const message = uniqueConstraintMessage(err, "speciality");
+    if (message) return { ok: false, error: message };
+    throw err;
+  }
+  revalidatePath("/admin/master-data/specialties");
+  revalidateMasterData();
+  return { ok: true };
+}
+
+export async function updateSpecialty(id: string, formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const parsed = specialtySchema.safeParse(obj(formData));
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid speciality." };
+  const d = parsed.data;
+  try {
+    // The slug stays as created: the four original tags' slugs key their
+    // storefront translations (see specialtyMessageKey).
+    await prisma.specialty.update({ where: { id }, data: { ...d, description: d.description || null } });
+  } catch (err) {
+    const message = uniqueConstraintMessage(err, "speciality");
+    if (message) return { ok: false, error: message };
+    throw err;
+  }
+  revalidatePath("/admin/master-data/specialties");
+  revalidateMasterData();
+  return { ok: true };
+}
+
+/** Deleting a speciality also removes it from every gem that had it. */
+export async function deleteSpecialty(id: string): Promise<ActionResult> {
+  await requireAdmin();
+  await prisma.specialty.delete({ where: { id } });
+  revalidatePath("/admin/master-data/specialties");
   revalidateMasterData();
   return { ok: true };
 }

@@ -5,6 +5,7 @@ import { ViewToggle } from "@/components/catalog/ViewToggle";
 import { RevealGroup, RevealItem } from "@/components/layout/Reveal";
 import { useCatalogView } from "@/lib/useCatalogView";
 import { cn } from "@/lib/utils";
+import type { SpecialtyTag } from "@/lib/gem-constants";
 
 export interface GemResultItem {
   id: string;
@@ -18,7 +19,7 @@ export interface GemResultItem {
   clarityGrade: { slug: string; name: string };
   treatment: { name: string };
   origin: { isCeylon: boolean };
-  specialties?: readonly string[];
+  specialtyTags?: readonly SpecialtyTag[];
   stockStatus: string;
   media: { isPrimary: boolean; url: string }[];
   price: number | null;
@@ -74,7 +75,7 @@ export function GemResults({
               clarityName={gem.clarityGrade.name}
               treatmentName={gem.treatment.name}
               isCeylon={gem.origin.isCeylon}
-              specialties={gem.specialties}
+              specialties={gem.specialtyTags}
               stockStatus={gem.stockStatus}
               primaryImageUrl={gem.media.find((m) => m.isPrimary)?.url ?? gem.media[0]?.url}
               price={gem.price}

@@ -1,9 +1,11 @@
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { getActivePromotionMaps } from "@/lib/promotion-items";
 import type { Market } from "@/lib/market-shared";
 import { priceColumns, priceForMarket, pricesForMarket } from "@/lib/market-pricing";
+import { SPECIALTY_TAGS_INCLUDE } from "@/lib/gem-constants";
 import { audienceValuesFor, isAudienceSlug, JEWELRY_AUDIENCES, PIECE_TYPE_ORDER, type JewelryAudienceSlug } from "@/lib/jewelry-categories";
 
 // Reference/taxonomy data (minerals, cuts, clarity grades, treatments,
@@ -179,6 +181,7 @@ export async function getGemstones(filters: GemFilters) {
         clarityGrade: true,
         treatment: true,
         origin: true,
+        specialtyTags: SPECIALTY_TAGS_INCLUDE,
         // Cards show one image: the primary if flagged, otherwise the first.
         // Loading every photo of every listed item was pure waste.
         media: { orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }], take: 1 },
@@ -190,7 +193,12 @@ export async function getGemstones(filters: GemFilters) {
   return { items: pricesForMarket(items, market), page, pageSize: GEMS_PAGE_SIZE, total, totalPages: Math.max(1, Math.ceil(total / GEMS_PAGE_SIZE)) };
 }
 
-export async function getGemstoneBySlug(slug: string, market: Market = "intl") {
+// Wrapped in React's per-request cache() (below): a product page calls this
+// from both generateMetadata and the page itself, and without it that was
+// the same multi-relation lookup twice per request.
+export const getGemstoneBySlug = cache(getGemstoneBySlugUncached);
+
+async function getGemstoneBySlugUncached(slug: string, market: Market = "intl") {
   const gem = await prisma.gemstone.findUnique({
     where: { slug },
     include: {
@@ -200,6 +208,7 @@ export async function getGemstoneBySlug(slug: string, market: Market = "intl") {
       treatment: true,
       origin: true,
       certLab: true,
+      specialtyTags: SPECIALTY_TAGS_INCLUDE,
       media: { orderBy: { sortOrder: "asc" } },
     },
   });
@@ -218,7 +227,7 @@ export async function getRelatedGemstones(gem: { id: string; mineralId: string }
     where: { isPublished: true, market, id: { not: gem.id }, mineralId: gem.mineralId },
     orderBy: { createdAt: "desc" },
     take,
-    include: { mineral: true, cut: true, clarityGrade: true, treatment: true, origin: true, media: { orderBy: { sortOrder: "asc" } } },
+    include: { mineral: true, cut: true, clarityGrade: true, treatment: true, origin: true, specialtyTags: SPECIALTY_TAGS_INCLUDE, media: { orderBy: { sortOrder: "asc" } } },
   });
   if (sameVariety.length >= take) return pricesForMarket(sameVariety, market);
 
@@ -226,7 +235,7 @@ export async function getRelatedGemstones(gem: { id: string; mineralId: string }
     where: { isPublished: true, market, id: { notIn: [gem.id, ...sameVariety.map((g) => g.id)] } },
     orderBy: { createdAt: "desc" },
     take: take - sameVariety.length,
-    include: { mineral: true, cut: true, clarityGrade: true, treatment: true, origin: true, media: { orderBy: { sortOrder: "asc" } } },
+    include: { mineral: true, cut: true, clarityGrade: true, treatment: true, origin: true, specialtyTags: SPECIALTY_TAGS_INCLUDE, media: { orderBy: { sortOrder: "asc" } } },
   });
   return pricesForMarket([...sameVariety, ...fallback], market);
 }
@@ -408,7 +417,10 @@ export async function getJewelryCategoryData(market: Market = "intl") {
   };
 }
 
-export async function getJewelryBySlug(slug: string, market: Market = "intl") {
+// Same per-request dedupe as getGemstoneBySlug.
+export const getJewelryBySlug = cache(getJewelryBySlugUncached);
+
+async function getJewelryBySlugUncached(slug: string, market: Market = "intl") {
   const piece = await prisma.jewelryPiece.findUnique({
     where: { slug },
     include: {
@@ -448,15 +460,16 @@ export async function getRelatedJewelry(piece: { id: string; pieceType: string }
 // getFeaturedGemsForMarket) on every single one of those loads.
 export const getMasterData = unstable_cache(
   async () => {
-    const [minerals, cuts, clarityGrades, treatments, origins, certificationLabs] = await Promise.all([
+    const [minerals, cuts, clarityGrades, treatments, origins, certificationLabs, specialties] = await Promise.all([
       prisma.mineral.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
       prisma.cut.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
       prisma.clarityGrade.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
       prisma.treatment.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
       prisma.origin.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
       prisma.certificationLab.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
+      prisma.specialty.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" }, select: { id: true, name: true, description: true } }),
     ]);
-    return { minerals, cuts, clarityGrades, treatments, origins, certificationLabs };
+    return { minerals, cuts, clarityGrades, treatments, origins, certificationLabs, specialties };
   },
   ["catalog-master-data"],
   { revalidate: 60, tags: [MASTER_DATA_TAG] },

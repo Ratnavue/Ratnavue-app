@@ -22,6 +22,13 @@ function gemFormToObject(formData: FormData): Record<string, FormDataEntryValue>
   return { ...formToObject(formData), specialties: formData.getAll("specialties").map(String).join(",") };
 }
 
+// The ticked speciality ids that really exist — an unknown id (a stale form,
+// a hand-edited request) is dropped rather than failing the whole save.
+async function existingSpecialtyIds(ids: string[]): Promise<{ id: string }[]> {
+  if (ids.length === 0) return [];
+  return prisma.specialty.findMany({ where: { id: { in: ids } }, select: { id: true } });
+}
+
 async function uniqueSlug(base: string, check: (slug: string) => Promise<boolean>) {
   const root = slugify(base) || "item";
   let slug = root;
@@ -121,7 +128,7 @@ export async function createGemstone(formData: FormData): Promise<ActionResult> 
       isFeatured: data.isFeatured,
       shippingWeightTierId: data.shippingWeightTierId || undefined,
       quoteShipping: data.quoteShipping,
-      specialties: data.specialties,
+      specialtyTags: { connect: await existingSpecialtyIds(data.specialties) },
     },
   });
 
@@ -202,7 +209,7 @@ export async function updateGemstone(id: string, formData: FormData): Promise<Ac
       // Same "empty selection actually clears it" reasoning as certLabId above.
       shippingWeightTierId: data.shippingWeightTierId || null,
       quoteShipping: data.quoteShipping,
-      specialties: data.specialties,
+      specialtyTags: { set: await existingSpecialtyIds(data.specialties) },
     },
   });
 

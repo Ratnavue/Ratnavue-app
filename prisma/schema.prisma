@@ -1,5 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  // Loads a query's `include`d relations in the same SQL statement (JOINs)
+  // instead of one follow-up query per relation, run one after another — a
+  // product page's gem + mineral + cut + clarity + treatment + origin +
+  // media went from 7 sequential round trips to 1.
+  previewFeatures = ["relationJoins"]
 }
 
 datasource db {
@@ -271,6 +276,22 @@ model ClarityGrade {
   gemstones Gemstone[]
 }
 
+// A gem's speciality tags — optical phenomena and the like (colour change,
+// star, cat's eye, bi-colour, ...) — managed in the back office like the
+// clarity scale (/admin/master-data/specialties), shown as pills on the
+// gem's card and page. Inactive ones stay on the gems that have them but
+// are hidden and can't be picked for new ones.
+model Specialty {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  description String?
+  sortOrder   Int     @default(0)
+  active      Boolean @default(true)
+
+  gemstones Gemstone[] @relation("GemstoneSpecialties")
+}
+
 model Treatment {
   id        String  @id @default(cuid())
   name      String  @unique
@@ -451,8 +472,13 @@ model Gemstone {
   shippingWeightTier   ShippingWeightTier? @relation(fields: [shippingWeightTierId], references: [id], onDelete: SetNull)
   quoteShipping         Boolean             @default(false)
 
-  // Speciality tags (colour change, star, cat's eye, bi-colour) — empty for
-  // most stones.
+  // Speciality tags (colour change, star, ...) — the managed list above;
+  // empty for most stones.
+  specialtyTags Specialty[] @relation("GemstoneSpecialties")
+  // LEGACY — the fixed list specialtyTags replaced. No longer read or
+  // written; kept only so the previous deployment keeps working while the
+  // new one rolls out. Drop in a follow-up migration (with the
+  // GemSpecialty enum).
   specialties GemSpecialty[] @default([])
 
   media MediaAsset[]

@@ -223,17 +223,27 @@ export const CERTIFICATION_LABS = [
 
 // Mirrors the GemSpecialty enum in prisma/schema.prisma (labels: messages
 // catalog.specialty.*). Order is the display order.
-export const GEM_SPECIALTIES = ["COLOR_CHANGE", "STAR", "CATS_EYE", "BI_COLOR"] as const;
-export type GemSpecialtyKey = (typeof GEM_SPECIALTIES)[number];
+// A gem's speciality tags come from the managed Specialty list (see
+// prisma/schema.prisma, /admin/master-data/specialties). This is the shape
+// the storefront renders them from.
+export type SpecialtyTag = { name: string; slug: string };
 
-// The admin form's labels and hints (the back office is English-only; the
-// storefront's translated labels are in messages catalog.specialty.*).
-export const GEM_SPECIALTY_ADMIN: Record<GemSpecialtyKey, { label: string; hint: string }> = {
-  COLOR_CHANGE: { label: "Colour change", hint: "Shows a different colour in daylight and incandescent light (alexandrite effect)." },
-  STAR: { label: "Star", hint: "Asterism — a star of light across a cabochon." },
-  CATS_EYE: { label: "Cat's eye", hint: "Chatoyancy — a single bright band across a cabochon." },
-  BI_COLOR: { label: "Bi-colour", hint: "Two distinct colour zones in one stone." },
+/** The relation filter every storefront gem query uses: active tags only, in the admin's order. */
+export const SPECIALTY_TAGS_INCLUDE = {
+  where: { active: true },
+  orderBy: { sortOrder: "asc" as const },
+  select: { name: true, slug: true },
 };
+
+/**
+ * The storefront's translated label key for a speciality (messages
+ * catalog.specialty.*) — the four original ones have translations, keyed
+ * "color-change" -> "COLOR_CHANGE"; anything an admin adds later shows its
+ * own name.
+ */
+export function specialtyMessageKey(slug: string): string {
+  return slug.toUpperCase().replace(/-/g, "_");
+}
 
 export const PIECE_TYPES = ["RING", "PENDANT", "EARRINGS", "NECKLACE", "BRACELET", "ANKLET", "JEWELRY_SET", "BROOCH", "CUFFLINKS", "OTHER"] as const;
 

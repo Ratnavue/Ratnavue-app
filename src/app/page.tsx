@@ -25,6 +25,7 @@ import { LkStrip } from "@/components/layout/LkStrip";
 import type { Metadata } from "next";
 import { DEFAULT_DESCRIPTION, homeJsonLd, jsonLdScript, pageMetadata } from "@/lib/seo";
 import { PAGE_SEO } from "@/lib/seo-copy";
+import { SPECIALTY_TAGS_INCLUDE } from "@/lib/gem-constants";
 
 export async function generateMetadata(): Promise<Metadata> {
   const market = await getMarket();
@@ -52,7 +53,7 @@ const getFeaturedGemsForMarket = unstable_cache(
       where: { isPublished: true, isFeatured: true, market },
       orderBy: { createdAt: "desc" },
       take: 8,
-      include: { mineral: true, cut: true, clarityGrade: true, treatment: true, origin: true, media: true },
+      include: { mineral: true, cut: true, clarityGrade: true, treatment: true, origin: true, specialtyTags: SPECIALTY_TAGS_INCLUDE, media: true },
     }),
   ["home-featured-gems"],
   { revalidate: 60, tags: ["home-featured"] },
@@ -183,7 +184,7 @@ export default async function HomePage() {
                     clarityName={gem.clarityGrade.name}
                     treatmentName={gem.treatment.name}
                     isCeylon={gem.origin.isCeylon}
-                    specialties={gem.specialties}
+                    specialties={gem.specialtyTags}
                     stockStatus={gem.stockStatus}
                     primaryImageUrl={gem.media.find((m) => m.isPrimary)?.url ?? gem.media[0]?.url}
                     price={gem.price}

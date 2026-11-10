@@ -120,7 +120,7 @@ export default async function GemDetailPage({ params }: PageProps<"/gems/[slug]"
               </span>
             )}
             {gem.certLab && <CertifiedBadge lab={gem.certLab} />}
-            <SpecialtyBadges specialties={gem.specialties} size="md" />
+            <SpecialtyBadges specialties={gem.specialtyTags} size="md" />
           </div>
           <div className="mt-2 flex items-start justify-between gap-3">
             <h1 className="font-serif text-3xl text-charcoal sm:text-4xl">{gem.name}</h1>
@@ -256,7 +256,7 @@ export default async function GemDetailPage({ params }: PageProps<"/gems/[slug]"
                     clarityName={related.clarityGrade.name}
                     treatmentName={related.treatment.name}
                     isCeylon={related.origin.isCeylon}
-                    specialties={related.specialties}
+                    specialties={related.specialtyTags}
                     stockStatus={related.stockStatus}
                     primaryImageUrl={related.media.find((m) => m.isPrimary)?.url ?? related.media[0]?.url}
                     price={related.price}

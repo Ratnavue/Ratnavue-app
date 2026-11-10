@@ -6,6 +6,7 @@ import { APP_PATH_HEADER, LK_PREFIX, MARKET_HEADER, isLkPath, stripMarket } from
 import { SALES_REF_COOKIE, SALES_REF_COOKIE_MAX_AGE_SECONDS } from "@/lib/sales-referrals-shared";
 import { STORE_CHOICE_COOKIE, countryFromHeaders, decideGeoLanding, isDirectEntry, parseStoreChoice } from "@/lib/geo-landing";
 import { canonicalRedirectOrigin } from "@/lib/canonical-host";
+import { MISSING_LISTING_PATH, listingExists, productPathOf } from "@/lib/listing-exists";
 
 // Deliberately NOT `import { auth } from "@/lib/auth"` — that config pulls in
 // PrismaAdapter, Prisma Client, and the Credentials/Google providers
@@ -197,17 +198,30 @@ export default auth(async (req) => {
   // own valid signature (the second pass above), so `x-market` can't be
   // spoofed by sending the header yourself.
   const market = isLk ? "lk" : "intl";
+
+  // A full page load of a product that doesn't exist on this store (removed,
+  // unpublished, or the other store's) is answered with a real 404: the
+  // request is rewritten to a path no route matches, so Next renders
+  // app/not-found.tsx with a 404 status. Left to the page, its notFound()
+  // runs after app/loading.tsx has started the response as a 200 — a
+  // "soft 404" to search engines. Only on document loads (what crawlers
+  // make), never client navigations; if the check can't answer, the page
+  // is served as before. See lib/listing-exists.ts.
+  const product = isDocumentLoad && !alreadyStampedLk ? productPathOf(pathname) : null;
+  const missing = product ? (await listingExists(req.nextUrl.origin, product, market)) === false : false;
+  const target = missing ? MISSING_LISTING_PATH : pathname;
+
   const headers = new Headers(req.headers);
   headers.set(MARKET_HEADER, market);
-  headers.set(MARKET_SIG_HEADER, await signMarket(market, pathname));
+  headers.set(MARKET_SIG_HEADER, await signMarket(market, target));
   // The market-stripped path, for the root layout's canonical/hreflang tags
   // (layouts can't read the URL themselves). Overwritten for the same reason.
   headers.set(APP_PATH_HEADER, pathname);
 
-  const response = isLkPath(rawPath)
+  const response = isLkPath(rawPath) || missing
     ? NextResponse.rewrite((() => {
         const rewritten = req.nextUrl.clone();
-        rewritten.pathname = pathname;
+        rewritten.pathname = target;
         return rewritten;
       })(), { request: { headers } })
     : NextResponse.next({ request: { headers } });

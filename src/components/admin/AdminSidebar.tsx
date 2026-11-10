@@ -39,6 +39,7 @@ const MASTER_DATA = [
   { href: "/admin/master-data/minerals", label: "Minerals" },
   { href: "/admin/master-data/cuts", label: "Cuts" },
   { href: "/admin/master-data/clarity", label: "Clarity Scale" },
+  { href: "/admin/master-data/specialties", label: "Specialities" },
   { href: "/admin/master-data/treatments", label: "Treatments" },
   { href: "/admin/master-data/origins", label: "Origins" },
   { href: "/admin/master-data/certification-labs", label: "Certification Labs" },

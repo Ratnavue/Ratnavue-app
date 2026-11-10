@@ -16,6 +16,7 @@ import { AdminSearchBox } from "@/components/admin/AdminSearchBox";
 import { CatalogBulkSelectionProvider, CatalogRowCheckbox, CatalogBulkToolbar } from "@/components/admin/CatalogBulkSelection";
 import { formatPrice } from "@/lib/utils";
 import { SpecialtyBadges } from "@/components/catalog/SpecialtyBadges";
+import { SPECIALTY_TAGS_INCLUDE } from "@/lib/gem-constants";
 import { CARD_TABLE, CARD_THEAD, CARD_TBODY, CARD_TR, CARD_TD, CARD_FIRST, CARD_SECOND } from "@/components/admin/responsive-table";
 
 const PAGE_SIZE = 20;
@@ -54,7 +55,7 @@ export default async function AdminGemsPage({ searchParams }: PageProps<"/admin/
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
-      include: { mineral: true, cut: true },
+      include: { mineral: true, cut: true, certLab: { select: { name: true } }, specialtyTags: SPECIALTY_TAGS_INCLUDE },
     }),
     prisma.gemstone.count({ where }),
   ]);
@@ -111,6 +112,7 @@ export default async function AdminGemsPage({ searchParams }: PageProps<"/admin/
                 <th className="px-4 py-3">Mineral</th>
                 <th className="px-4 py-3">Cut</th>
                 <th className="px-4 py-3">Carat</th>
+                <th className="px-4 py-3">Certification</th>
                 <th className="px-4 py-3">Retail price</th>
                 <th className="px-4 py-3">Stock</th>
                 <th className="px-4 py-3">Listing</th>
@@ -134,7 +136,7 @@ export default async function AdminGemsPage({ searchParams }: PageProps<"/admin/
                   <td data-label="Item #" className={`${CARD_TD} whitespace-nowrap font-mono text-xs text-charcoal/70`}>{gem.itemNumber}</td>
                   <td className={CARD_FIRST}>
                     <Link href={`/admin/gems/${gem.id}`} className="text-charcoal hover:text-gold">{gem.name}</Link>
-                    <SpecialtyBadges specialties={gem.specialties} className="mt-1" />
+                    <SpecialtyBadges specialties={gem.specialtyTags} className="mt-1" />
                   </td>
                   <td data-label="Store" className={CARD_TD}>
                     <Badge className={gem.market === "lk" ? "border-gold/40 bg-gold/15 text-charcoal" : "border-border-subtle bg-charcoal/5 text-charcoal/70"}>
@@ -144,6 +146,26 @@ export default async function AdminGemsPage({ searchParams }: PageProps<"/admin/
                   <td data-label="Mineral" className={`${CARD_TD} text-charcoal/70`}>{gem.mineral.name}</td>
                   <td data-label="Cut" className={`${CARD_TD} text-charcoal/70`}>{gem.cut.name}</td>
                   <td data-label="Carat" className={`${CARD_TD} text-charcoal/70`}>{gem.caratWeight} ct</td>
+                  <td data-label="Certification" className={CARD_TD}>
+                    {/* Certified = a lab is set; the report number (if any) beneath it. */}
+                    {gem.certLab ? (
+                      <div className="flex flex-col items-end gap-0.5 lg:items-start">
+                        <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800">Certified</Badge>
+                        <span className="text-xs text-charcoal/75">{gem.certLab.name}</span>
+                        {gem.certReportNumber && <span className="font-mono text-[11px] text-charcoal/55">{gem.certReportNumber}</span>}
+                      </div>
+                    ) : gem.certFileUrl || gem.certReportNumber ? (
+                      // Certificate details without a lab picked — worth fixing,
+                      // since the storefront's certified badge needs the lab.
+                      <div className="flex flex-col items-end gap-0.5 lg:items-start">
+                        <span className="text-xs text-charcoal/70">Certificate on file</span>
+                        {gem.certReportNumber && <span className="font-mono text-[11px] text-charcoal/55">{gem.certReportNumber}</span>}
+                        <span className="text-[11px] text-amber-700">No lab set</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-charcoal/45">Not certified</span>
+                    )}
+                  </td>
                   <td data-label="Retail price" className={`${CARD_TD} text-charcoal/70`}>
                     {gem.market === "lk"
                       ? gem.lkrRetailPrice != null ? formatPrice(gem.lkrRetailPrice, "LKR") : "—"
@@ -154,7 +176,7 @@ export default async function AdminGemsPage({ searchParams }: PageProps<"/admin/
                 </tr>
               ))}
               {gems.length === 0 && (
-                <tr className="max-lg:block"><td colSpan={11} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No gemstones yet.</td></tr>
+                <tr className="max-lg:block"><td colSpan={12} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No gemstones yet.</td></tr>
               )}
             </tbody>
           </table>

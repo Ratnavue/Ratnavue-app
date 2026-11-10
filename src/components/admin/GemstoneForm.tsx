@@ -13,7 +13,6 @@ import { StoreField, type ListingMarket } from "@/components/admin/StoreField";
 import { ListingStatusField } from "@/components/admin/ListingStatusField";
 import { LkPricingFields } from "@/components/admin/LkPricingFields";
 import { DraftMediaPicker } from "@/components/admin/DraftMediaPicker";
-import { GEM_SPECIALTIES, GEM_SPECIALTY_ADMIN } from "@/lib/gem-constants";
 
 interface Option {
   id: string;
@@ -31,6 +30,8 @@ interface GemstoneFormProps {
   treatments: Option[];
   origins: Option[];
   certificationLabs: Option[];
+  /** The managed speciality list (active ones), for the checkboxes. */
+  specialties: { id: string; name: string; description: string | null }[];
   shippingWeightTiers: { id: string; label: string }[];
   initial?: {
     id: string;
@@ -62,7 +63,8 @@ interface GemstoneFormProps {
     stockStatus: string;
     listingStatus: string;
     isFeatured: boolean;
-    specialties?: readonly string[];
+    /** The gem's current tags (ids), from its edit page. */
+    specialtyTags?: readonly { id: string }[];
     market: string;
     lkrRetailPrice: number | null;
     lkrPrice: number | null;
@@ -78,7 +80,7 @@ interface GemstoneFormProps {
   lockMarket?: boolean;
 }
 
-export function GemstoneForm({ minerals, cuts, clarityGrades, treatments, origins, certificationLabs, shippingWeightTiers, initial, defaultMarket, staff = false, lockMarket = false }: GemstoneFormProps) {
+export function GemstoneForm({ minerals, cuts, clarityGrades, treatments, origins, certificationLabs, specialties, shippingWeightTiers, initial, defaultMarket, staff = false, lockMarket = false }: GemstoneFormProps) {
   const lockPricing = staff && !!initial;
   const router = useRouter();
   const [market, setMarket] = useState<ListingMarket>((initial?.market as ListingMarket | undefined) ?? defaultMarket ?? "intl");
@@ -266,14 +268,24 @@ export function GemstoneForm({ minerals, cuts, clarityGrades, treatments, origin
         {/* Shown as gold tags on the gem's card and product page. */}
         <fieldset>
           <legend className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-charcoal/70">Speciality</legend>
-          <p className="mb-3 text-xs text-charcoal/60">Tick any that apply — they appear as tags on the gem&apos;s card and page.</p>
+          <p className="mb-3 text-xs text-charcoal/60">
+            Tick any that apply — they appear as tags on the gem&apos;s card and page. Manage the list under Master Data →
+            Specialities.
+          </p>
+          {specialties.length === 0 && <p className="text-xs text-charcoal/50">No specialities set up yet.</p>}
           <div className="grid gap-2 sm:grid-cols-2">
-            {GEM_SPECIALTIES.map((key) => (
-              <label key={key} className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border-subtle p-3 text-sm hover:border-gold/50 has-[:checked]:border-gold has-[:checked]:bg-gold/10">
-                <input type="checkbox" name="specialties" value={key} defaultChecked={initial?.specialties?.includes(key)} className="mt-0.5 accent-gold" />
+            {specialties.map((spec) => (
+              <label key={spec.id} className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border-subtle p-3 text-sm hover:border-gold/50 has-[:checked]:border-gold has-[:checked]:bg-gold/10">
+                <input
+                  type="checkbox"
+                  name="specialties"
+                  value={spec.id}
+                  defaultChecked={initial?.specialtyTags?.some((t) => t.id === spec.id)}
+                  className="mt-0.5 accent-gold"
+                />
                 <span>
-                  <span className="block font-medium text-charcoal">{GEM_SPECIALTY_ADMIN[key].label}</span>
-                  <span className="block text-xs text-charcoal/60">{GEM_SPECIALTY_ADMIN[key].hint}</span>
+                  <span className="block font-medium text-charcoal">{spec.name}</span>
+                  {spec.description && <span className="block text-xs text-charcoal/60">{spec.description}</span>}
                 </span>
               </label>
             ))}
