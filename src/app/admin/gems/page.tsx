@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/Button";
 import { Pagination } from "@/components/ui/Pagination";
 import { ToggleFeaturedButton } from "@/components/admin/ToggleFeaturedButton";
 import { BackLink } from "@/components/admin/BackLink";
-import { StoreFilterTabs, parseStoreFilter } from "@/components/admin/StoreFilterTabs";
+import { StoreFilterTabs, ListingStatusFilterTabs, parseStoreFilter, parseListingStatusFilter } from "@/components/admin/StoreFilterTabs";
+import { ListingStatusBadge } from "@/components/admin/ListingStatusField";
+import { parseItemNumber } from "@/lib/item-number";
 import { AdminSearchBox } from "@/components/admin/AdminSearchBox";
 import { CatalogBulkSelectionProvider, CatalogRowCheckbox, CatalogBulkToolbar } from "@/components/admin/CatalogBulkSelection";
 import { formatPrice } from "@/lib/utils";
@@ -30,9 +32,20 @@ export default async function AdminGemsPage({ searchParams }: PageProps<"/admin/
   const scopedMarket = marketFilterFor(user);
   const store = scopedMarket ?? parseStoreFilter(sp.market);
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
+  const status = parseListingStatusFilter(sp.status);
+  // The search box takes a name or an item number ("G-000123", "g123").
+  const searchedNumber = q ? parseItemNumber(q)?.itemNumber : undefined;
   const where = {
     ...(store === "all" ? {} : { market: store }),
-    ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
+    ...(status === "all" ? {} : { listingStatus: status }),
+    ...(q
+      ? {
+          OR: [
+            { name: { contains: q, mode: "insensitive" as const } },
+            { itemNumber: { contains: searchedNumber ?? q, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
   };
 
   const [gems, total] = await Promise.all([
@@ -74,10 +87,11 @@ export default async function AdminGemsPage({ searchParams }: PageProps<"/admin/
       </p>
 
       <div className="mt-4">
-        <AdminSearchBox placeholder="Search gemstones by name..." />
+        <AdminSearchBox placeholder="Search gemstones by name or item number..." />
       </div>
 
-      {!scopedMarket && <StoreFilterTabs basePath="/admin/gems" current={store} q={q} />}
+      {!scopedMarket && <StoreFilterTabs basePath="/admin/gems" current={store} q={q} status={status} />}
+      <ListingStatusFilterTabs basePath="/admin/gems" current={status} q={q} market={scopedMarket ? undefined : store} />
 
       <CatalogBulkSelectionProvider>
         <CatalogBulkToolbar kind="gemstone" />
@@ -91,14 +105,15 @@ export default async function AdminGemsPage({ searchParams }: PageProps<"/admin/
                 <th className="w-10 px-4 py-3">
                   <span className="sr-only">Featured</span>
                 </th>
+                <th className="px-4 py-3">Item #</th>
                 <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">Store</th>
                 <th className="px-4 py-3">Mineral</th>
                 <th className="px-4 py-3">Cut</th>
                 <th className="px-4 py-3">Carat</th>
                 <th className="px-4 py-3">Retail price</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Published</th>
+                <th className="px-4 py-3">Stock</th>
+                <th className="px-4 py-3">Listing</th>
               </tr>
             </thead>
             <tbody className={CARD_TBODY}>
@@ -116,6 +131,7 @@ export default async function AdminGemsPage({ searchParams }: PageProps<"/admin/
                       />
                     )}
                   </td>
+                  <td data-label="Item #" className={`${CARD_TD} whitespace-nowrap font-mono text-xs text-charcoal/70`}>{gem.itemNumber}</td>
                   <td className={CARD_FIRST}>
                     <Link href={`/admin/gems/${gem.id}`} className="text-charcoal hover:text-gold">{gem.name}</Link>
                     <SpecialtyBadges specialties={gem.specialties} className="mt-1" />
@@ -133,12 +149,12 @@ export default async function AdminGemsPage({ searchParams }: PageProps<"/admin/
                       ? gem.lkrRetailPrice != null ? formatPrice(gem.lkrRetailPrice, "LKR") : "—"
                       : gem.retailPrice != null ? formatPrice(gem.retailPrice) : "—"}
                   </td>
-                  <td data-label="Status" className={CARD_SECOND}><StockBadge status={gem.stockStatus} /></td>
-                  <td data-label="Published" className={`${CARD_TD} text-charcoal/70`}>{gem.isPublished ? "Yes" : "No"}</td>
+                  <td data-label="Stock" className={CARD_SECOND}><StockBadge status={gem.stockStatus} /></td>
+                  <td data-label="Listing" className={CARD_TD}><ListingStatusBadge status={gem.listingStatus} /></td>
                 </tr>
               ))}
               {gems.length === 0 && (
-                <tr className="max-lg:block"><td colSpan={10} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No gemstones yet.</td></tr>
+                <tr className="max-lg:block"><td colSpan={11} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No gemstones yet.</td></tr>
               )}
             </tbody>
           </table>

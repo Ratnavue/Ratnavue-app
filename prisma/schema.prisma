@@ -333,9 +333,25 @@ enum StockStatus {
   SOLD
 }
 
+// Where a gemstone/jewelry listing is in its lifecycle. DRAFT: still being
+// entered. FINISHED: complete and checked, but not on the storefront yet.
+// LIVE: on the storefront. isPublished on both models is kept equal to
+// (listingStatus == LIVE) by the admin actions, so every storefront query
+// that already filters on isPublished keeps working unchanged.
+enum ListingStatus {
+  DRAFT
+  FINISHED
+  LIVE
+}
+
 model Gemstone {
   id          String  @id @default(cuid())
   slug        String  @unique
+  // Permanent human-readable stock number ("G-000123"), assigned by the
+  // database from its own sequence on insert and never changed. Printed QR
+  // labels point at /i/<itemNumber> (see app/i/[itemNumber]) rather than the
+  // slug, so they don't depend on how the product URL is built.
+  itemNumber String @unique @default(dbgenerated("('G-'::text || lpad((nextval('gemstone_item_number_seq'::regclass))::text, 6, '0'::text))"))
   name        String
   description String? @db.Text
 
@@ -410,8 +426,10 @@ model Gemstone {
   lkrPrice       Float?
   isFeaturedLk   Boolean @default(false)
 
-  stockStatus StockStatus @default(AVAILABLE)
-  isPublished Boolean     @default(true)
+  stockStatus   StockStatus   @default(AVAILABLE)
+  listingStatus ListingStatus @default(DRAFT)
+  // Derived: true exactly when listingStatus is LIVE — see ListingStatus.
+  isPublished   Boolean       @default(true)
 
   // Curated by admins for the homepage's Featured Gemstones section
   // (independent of isPublished — a piece can be published but not
@@ -455,6 +473,7 @@ model Gemstone {
   updatedAt DateTime @updatedAt
 
   @@index([mineralId])
+  @@index([listingStatus])
   @@index([cutId])
   @@index([stockStatus])
   @@index([isFeatured])
@@ -502,6 +521,11 @@ enum MetalType {
 model JewelryPiece {
   id          String  @id @default(cuid())
   slug        String  @unique
+  // Permanent human-readable stock number ("J-000123"), assigned by the
+  // database from its own sequence on insert and never changed. Printed QR
+  // labels point at /i/<itemNumber> (see app/i/[itemNumber]) rather than the
+  // slug, so they don't depend on how the product URL is built.
+  itemNumber String @unique @default(dbgenerated("('J-'::text || lpad((nextval('jewelry_item_number_seq'::regclass))::text, 6, '0'::text))"))
   name        String
   description String? @db.Text
 
@@ -529,8 +553,10 @@ model JewelryPiece {
   lkrPrice       Float?
   isFeaturedLk   Boolean @default(false)
 
-  stockStatus StockStatus @default(AVAILABLE)
-  isPublished Boolean     @default(true)
+  stockStatus   StockStatus   @default(AVAILABLE)
+  listingStatus ListingStatus @default(DRAFT)
+  // Derived: true exactly when listingStatus is LIVE — see ListingStatus.
+  isPublished   Boolean       @default(true)
 
   // Same curation flag as Gemstone.isFeatured, for the homepage's
   // Featured Jewelry section.
@@ -574,6 +600,7 @@ model JewelryPiece {
   updatedAt DateTime @updatedAt
 
   @@index([pieceType])
+  @@index([listingStatus])
   @@index([audience])
   @@index([stockStatus])
   @@index([isFeatured])

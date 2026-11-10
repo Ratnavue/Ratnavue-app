@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { GEM_SPECIALTIES, PIECE_TYPES } from "@/lib/gem-constants";
+import { LISTING_STATUSES } from "@/lib/item-number";
 
 // Coerces the "true"/"false" STRING an HTML checkbox form submits (via
 // the hidden-false + checkbox-true pattern every boolean toggle on these
@@ -85,7 +86,7 @@ export const gemstoneSchema = z.object({
   lkrRetailPrice: optionalMoney,
   lkrPrice: optionalMoney,
   stockStatus: z.enum(["AVAILABLE", "RESERVED", "SOLD"]).default("AVAILABLE"),
-  isPublished: formBoolean(true),
+  listingStatus: z.enum(LISTING_STATUSES).default("DRAFT"),
   isFeatured: formBoolean(false),
   shippingWeightTierId: z.string().optional().or(z.literal("")),
   quoteShipping: formBoolean(false),
@@ -119,7 +120,7 @@ export const jewelrySchema = z.object({
   lkrRetailPrice: optionalMoney,
   lkrPrice: optionalMoney,
   stockStatus: z.enum(["AVAILABLE", "RESERVED", "SOLD"]).default("AVAILABLE"),
-  isPublished: formBoolean(true),
+  listingStatus: z.enum(LISTING_STATUSES).default("DRAFT"),
   isFeatured: formBoolean(false),
   shippingWeightTierId: z.string().optional().or(z.literal("")),
   quoteShipping: formBoolean(false),

@@ -8,6 +8,7 @@ import { saveCertificateFile, deleteUploadedFile } from "@/lib/media";
 import { gemstoneSchema, jewelrySchema, jewelryVariantSchema } from "@/lib/validation/catalog";
 import { recomputeJewelryAvailability } from "@/lib/orders";
 import { parseDraftMedia, attachDraftMedia } from "@/lib/media-gallery";
+import { isLiveStatus, LISTING_STATUSES, type ListingStatus } from "@/lib/item-number";
 import type { ActionResult } from "./auth";
 
 function formToObject(formData: FormData) {
@@ -115,7 +116,8 @@ export async function createGemstone(formData: FormData): Promise<ActionResult> 
       lkrRetailPrice: lk ? data.lkrRetailPrice : undefined,
       lkrPrice: lk ? data.lkrPrice : undefined,
       stockStatus: data.stockStatus,
-      isPublished: data.isPublished,
+      listingStatus: data.listingStatus,
+      isPublished: isLiveStatus(data.listingStatus),
       isFeatured: data.isFeatured,
       shippingWeightTierId: data.shippingWeightTierId || undefined,
       quoteShipping: data.quoteShipping,
@@ -194,7 +196,8 @@ export async function updateGemstone(id: string, formData: FormData): Promise<Ac
       lkrRetailPrice: lk ? (data.lkrRetailPrice ?? null) : null,
       lkrPrice: lk ? (data.lkrPrice ?? null) : null,
       stockStatus: data.stockStatus,
-      isPublished: data.isPublished,
+      listingStatus: data.listingStatus,
+      isPublished: isLiveStatus(data.listingStatus),
       isFeatured: data.isFeatured,
       // Same "empty selection actually clears it" reasoning as certLabId above.
       shippingWeightTierId: data.shippingWeightTierId || null,
@@ -330,7 +333,8 @@ export async function createJewelry(formData: FormData): Promise<ActionResult> {
       lkrRetailPrice: lk ? data.lkrRetailPrice : undefined,
       lkrPrice: lk ? data.lkrPrice : undefined,
       stockStatus: data.stockStatus,
-      isPublished: data.isPublished,
+      listingStatus: data.listingStatus,
+      isPublished: isLiveStatus(data.listingStatus),
       isFeatured: data.isFeatured,
       shippingWeightTierId: data.shippingWeightTierId || undefined,
       quoteShipping: data.quoteShipping,
@@ -386,7 +390,8 @@ export async function updateJewelry(id: string, formData: FormData): Promise<Act
       lkrRetailPrice: lk ? (data.lkrRetailPrice ?? null) : null,
       lkrPrice: lk ? (data.lkrPrice ?? null) : null,
       stockStatus: data.stockStatus,
-      isPublished: data.isPublished,
+      listingStatus: data.listingStatus,
+      isPublished: isLiveStatus(data.listingStatus),
       isFeatured: data.isFeatured,
       shippingWeightTierId: data.shippingWeightTierId || null,
       quoteShipping: data.quoteShipping,
@@ -563,15 +568,17 @@ export async function deleteJewelryVariant(variantId: string, jewelryId: string)
 export type CatalogKind = "gemstone" | "jewelry";
 
 /**
- * Bulk-publish or bulk-hide a batch of catalog items at once — e.g.
- * clearing a run of newly-sold items off the storefront without opening
- * each one's edit form. Never touches stockStatus/isFeatured; those keep
- * their own dedicated per-item controls (StockBadge, ToggleFeaturedButton
- * respectively), this is purely about storefront visibility.
+ * Moves a batch of catalog items to one listing status (Draft / Finished /
+ * Live) at once — e.g. taking a run of finished stones live, or clearing
+ * newly-sold items off the storefront, without opening each one's edit
+ * form. isPublished follows the status (only Live is public). Never touches
+ * stockStatus/isFeatured; those keep their own per-item controls.
  */
-export async function bulkSetCatalogPublished(kind: CatalogKind, ids: string[], isPublished: boolean): Promise<ActionResult> {
+export async function bulkSetCatalogStatus(kind: CatalogKind, ids: string[], listingStatus: ListingStatus): Promise<ActionResult> {
   const user = await requireStaffArea("catalog");
   if (ids.length === 0) return { ok: false, error: "Nothing selected." };
+  if (!LISTING_STATUSES.includes(listingStatus)) return { ok: false, error: "Unknown status." };
+  const isPublished = isLiveStatus(listingStatus);
 
   // Every selected item must be in a store the caller may touch — checked
   // per item, never assumed from the list they were looking at.
@@ -581,10 +588,10 @@ export async function bulkSetCatalogPublished(kind: CatalogKind, ids: string[], 
   for (const row of rows) await requireMarketAccess(user, row.market);
 
   if (kind === "gemstone") {
-    await prisma.gemstone.updateMany({ where: { id: { in: ids } }, data: { isPublished } });
+    await prisma.gemstone.updateMany({ where: { id: { in: ids } }, data: { listingStatus, isPublished } });
     revalidatePath("/admin/gems");
   } else {
-    await prisma.jewelryPiece.updateMany({ where: { id: { in: ids } }, data: { isPublished } });
+    await prisma.jewelryPiece.updateMany({ where: { id: { in: ids } }, data: { listingStatus, isPublished } });
     revalidatePath("/admin/jewelry");
   }
   revalidatePath("/");

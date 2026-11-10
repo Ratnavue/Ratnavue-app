@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/Button";
 import { Pagination } from "@/components/ui/Pagination";
 import { ToggleFeaturedButton } from "@/components/admin/ToggleFeaturedButton";
 import { BackLink } from "@/components/admin/BackLink";
-import { StoreFilterTabs, parseStoreFilter } from "@/components/admin/StoreFilterTabs";
+import { StoreFilterTabs, ListingStatusFilterTabs, parseStoreFilter, parseListingStatusFilter } from "@/components/admin/StoreFilterTabs";
+import { ListingStatusBadge } from "@/components/admin/ListingStatusField";
+import { parseItemNumber } from "@/lib/item-number";
 import { AdminSearchBox } from "@/components/admin/AdminSearchBox";
 import { CatalogBulkSelectionProvider, CatalogRowCheckbox, CatalogBulkToolbar } from "@/components/admin/CatalogBulkSelection";
 import { formatPrice } from "@/lib/utils";
@@ -27,9 +29,20 @@ export default async function AdminJewelryPage({ searchParams }: PageProps<"/adm
   const scopedMarket = marketFilterFor(user);
   const store = scopedMarket ?? parseStoreFilter(sp.market);
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
+  const status = parseListingStatusFilter(sp.status);
+  // The search box takes a name or an item number ("J-000123", "j123").
+  const searchedNumber = q ? parseItemNumber(q)?.itemNumber : undefined;
   const where = {
     ...(store === "all" ? {} : { market: store }),
-    ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
+    ...(status === "all" ? {} : { listingStatus: status }),
+    ...(q
+      ? {
+          OR: [
+            { name: { contains: q, mode: "insensitive" as const } },
+            { itemNumber: { contains: searchedNumber ?? q, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
   };
 
   const [pieces, total] = await Promise.all([
@@ -70,10 +83,11 @@ export default async function AdminJewelryPage({ searchParams }: PageProps<"/adm
       </p>
 
       <div className="mt-4">
-        <AdminSearchBox placeholder="Search jewelry by name..." />
+        <AdminSearchBox placeholder="Search jewelry by name or item number..." />
       </div>
 
-      <StoreFilterTabs basePath="/admin/jewelry" current={store} q={q} />
+      <StoreFilterTabs basePath="/admin/jewelry" current={store} q={q} status={status} />
+      <ListingStatusFilterTabs basePath="/admin/jewelry" current={status} q={q} market={scopedMarket ? undefined : store} />
 
       <CatalogBulkSelectionProvider>
         <CatalogBulkToolbar kind="jewelry" />
@@ -87,13 +101,14 @@ export default async function AdminJewelryPage({ searchParams }: PageProps<"/adm
                 <th className="w-10 px-4 py-3">
                   <span className="sr-only">Featured</span>
                 </th>
+                <th className="px-4 py-3">Item #</th>
                 <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">Store</th>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Metal</th>
                 <th className="px-4 py-3">Retail price</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Published</th>
+                <th className="px-4 py-3">Stock</th>
+                <th className="px-4 py-3">Listing</th>
               </tr>
             </thead>
             <tbody className={CARD_TBODY}>
@@ -109,6 +124,7 @@ export default async function AdminJewelryPage({ searchParams }: PageProps<"/adm
                       onToggle={toggleJewelryFeatured.bind(null, piece.id)}
                     />
                   </td>
+                  <td data-label="Item #" className={`${CARD_TD} whitespace-nowrap font-mono text-xs text-charcoal/70`}>{piece.itemNumber}</td>
                   <td className={CARD_FIRST}>
                     <Link href={`/admin/jewelry/${piece.id}`} className="text-charcoal hover:text-gold">{piece.name}</Link>
                   </td>
@@ -124,12 +140,12 @@ export default async function AdminJewelryPage({ searchParams }: PageProps<"/adm
                       ? piece.lkrRetailPrice != null ? formatPrice(piece.lkrRetailPrice, "LKR") : "—"
                       : piece.retailPrice != null ? formatPrice(piece.retailPrice) : "—"}
                   </td>
-                  <td data-label="Status" className={CARD_SECOND}><StockBadge status={piece.stockStatus} /></td>
-                  <td data-label="Published" className={`${CARD_TD} text-charcoal/70`}>{piece.isPublished ? "Yes" : "No"}</td>
+                  <td data-label="Stock" className={CARD_SECOND}><StockBadge status={piece.stockStatus} /></td>
+                  <td data-label="Listing" className={CARD_TD}><ListingStatusBadge status={piece.listingStatus} /></td>
                 </tr>
               ))}
               {pieces.length === 0 && (
-                <tr className="max-lg:block"><td colSpan={9} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No jewelry pieces yet.</td></tr>
+                <tr className="max-lg:block"><td colSpan={10} className="px-4 py-8 text-center text-charcoal/65 max-lg:block">No jewelry pieces yet.</td></tr>
               )}
             </tbody>
           </table>

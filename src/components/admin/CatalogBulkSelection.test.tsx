@@ -2,10 +2,10 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CatalogBulkSelectionProvider, CatalogRowCheckbox, CatalogBulkToolbar } from "./CatalogBulkSelection";
-import { bulkSetCatalogPublished } from "@/actions/catalog-admin";
+import { bulkSetCatalogStatus } from "@/actions/catalog-admin";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
-vi.mock("@/actions/catalog-admin", () => ({ bulkSetCatalogPublished: vi.fn() }));
+vi.mock("@/actions/catalog-admin", () => ({ bulkSetCatalogStatus: vi.fn() }));
 
 function renderTable() {
   return render(
@@ -31,26 +31,26 @@ describe("CatalogBulkSelection", () => {
   });
 
   it("passes every checked id to the bulk action and clears selection on success", async () => {
-    vi.mocked(bulkSetCatalogPublished).mockResolvedValue({ ok: true });
+    vi.mocked(bulkSetCatalogStatus).mockResolvedValue({ ok: true });
     const user = userEvent.setup();
     renderTable();
 
     const [row1, row2] = screen.getAllByLabelText("Select row");
     await user.click(row1);
     await user.click(row2);
-    await user.click(screen.getByRole("button", { name: "Hide from storefront" }));
+    await user.click(screen.getByRole("button", { name: "Draft" }));
 
-    expect(bulkSetCatalogPublished).toHaveBeenCalledWith("gemstone", ["gem-1", "gem-2"], false);
+    expect(bulkSetCatalogStatus).toHaveBeenCalledWith("gemstone", ["gem-1", "gem-2"], "DRAFT");
     await waitFor(() => expect(screen.queryByText(/selected/)).not.toBeInTheDocument());
   });
 
   it("shows an error and keeps the selection when the action is declined", async () => {
-    vi.mocked(bulkSetCatalogPublished).mockResolvedValue({ ok: false, error: "Nothing selected." });
+    vi.mocked(bulkSetCatalogStatus).mockResolvedValue({ ok: false, error: "Nothing selected." });
     const user = userEvent.setup();
     renderTable();
 
     await user.click(screen.getAllByLabelText("Select row")[0]);
-    await user.click(screen.getByRole("button", { name: "Publish" }));
+    await user.click(screen.getByRole("button", { name: "Live" }));
 
     await waitFor(() => expect(screen.getByText("Nothing selected.")).toBeInTheDocument());
     expect(screen.getByText("1 selected")).toBeInTheDocument();

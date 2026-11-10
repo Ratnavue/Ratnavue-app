@@ -10,6 +10,7 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { Input, Textarea, Select, Label, FieldError } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { StoreField, type ListingMarket } from "@/components/admin/StoreField";
+import { ListingStatusField } from "@/components/admin/ListingStatusField";
 import { LkPricingFields } from "@/components/admin/LkPricingFields";
 import { DraftMediaPicker } from "@/components/admin/DraftMediaPicker";
 import { GEM_SPECIALTIES, GEM_SPECIALTY_ADMIN } from "@/lib/gem-constants";
@@ -59,7 +60,7 @@ interface GemstoneFormProps {
     retailPrice: number | null;
     costPrice: number | null;
     stockStatus: string;
-    isPublished: boolean;
+    listingStatus: string;
     isFeatured: boolean;
     specialties?: readonly string[];
     market: string;
@@ -386,11 +387,7 @@ export function GemstoneForm({ minerals, cuts, clarityGrades, treatments, origin
           </p>
         )}
 
-        <label className="flex items-center gap-2 text-sm text-charcoal/75">
-          <input type="hidden" name="isPublished" value="false" />
-          <input type="checkbox" name="isPublished" value="true" defaultChecked={initial?.isPublished ?? true} className="accent-gold" />
-          Published (visible in the public catalog)
-        </label>
+        <ListingStatusField defaultValue={initial?.listingStatus} />
 
         {!staff && (
         <label className="flex items-center gap-2 text-sm text-charcoal/75">

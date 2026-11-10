@@ -11,7 +11,7 @@ import {
   deleteJewelryVariant,
   updateJewelryVariant,
   createJewelryVariant,
-  bulkSetCatalogPublished,
+  bulkSetCatalogStatus,
 } from "@/actions/catalog-admin";
 import { setPrimaryMedia, deleteProductMedia, registerProductMedia, reorderProductMedia } from "@/actions/media";
 import { auth } from "@/lib/auth";
@@ -63,7 +63,7 @@ describe("STAFF without the catalog area", () => {
     staff("both", ["orders", "reviews"]);
     await expect(createGemstone(formData(gemFields))).rejects.toThrow("FORBIDDEN");
     await expect(updateGemstone("gem-1", formData(gemFields))).rejects.toThrow("FORBIDDEN");
-    await expect(bulkSetCatalogPublished("gemstone", ["gem-1"], true)).rejects.toThrow("FORBIDDEN");
+    await expect(bulkSetCatalogStatus("gemstone", ["gem-1"], "LIVE")).rejects.toThrow("FORBIDDEN");
     expect(prismaMock.gemstone.create).not.toHaveBeenCalled();
     expect(prismaMock.gemstone.update).not.toHaveBeenCalled();
   });
@@ -86,7 +86,7 @@ describe("STAFF with the catalog area — market scope", () => {
   it("can't bulk-publish a batch that includes an out-of-scope item", async () => {
     staff("intl");
     prismaMock.gemstone.findMany.mockResolvedValue([{ market: "intl" }, { market: "lk" }] as never);
-    await expect(bulkSetCatalogPublished("gemstone", ["a", "b"], true)).rejects.toThrow("FORBIDDEN");
+    await expect(bulkSetCatalogStatus("gemstone", ["a", "b"], "LIVE")).rejects.toThrow("FORBIDDEN");
     expect(prismaMock.gemstone.updateMany).not.toHaveBeenCalled();
   });
 

@@ -9,6 +9,8 @@ import { GemstoneLinkManager } from "@/components/admin/GemstoneLinkManager";
 import { VariantManager } from "@/components/admin/VariantManager";
 import { getActiveShippingWeightTiers } from "@/lib/shipping";
 import { BackLink } from "@/components/admin/BackLink";
+import { ItemQrPanel } from "@/components/admin/ItemQrPanel";
+import { ListingStatusBadge } from "@/components/admin/ListingStatusField";
 
 export default async function EditJewelryPage({ params }: PageProps<"/admin/jewelry/[id]">) {
   const { id } = await params;
@@ -37,7 +39,17 @@ export default async function EditJewelryPage({ params }: PageProps<"/admin/jewe
   return (
     <div>
       <BackLink href="/admin/jewelry" label="Back to Jewelry" />
-      <h1 className="font-serif text-3xl text-charcoal">{piece.name}</h1>
+      <div className="flex flex-wrap items-center gap-3">
+        <h1 className="font-serif text-3xl text-charcoal">{piece.name}</h1>
+        <ListingStatusBadge status={piece.listingStatus} />
+      </div>
+
+      <section className="mt-6 max-w-3xl rounded-xl border border-border-subtle bg-surface p-5">
+        <p className="font-serif text-xl text-charcoal">Item Number &amp; QR Code</p>
+        <div className="mt-4">
+          <ItemQrPanel kind="jewelry" id={piece.id} itemNumber={piece.itemNumber} live={piece.listingStatus === "LIVE"} />
+        </div>
+      </section>
 
       <div className="mt-6">
         <JewelryForm initial={initial} shippingWeightTiers={shippingWeightTiers} staff={staff} />

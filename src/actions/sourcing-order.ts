@@ -67,6 +67,7 @@ export async function quickCreateGemstoneForSourcing(formData: FormData): Promis
       originId: data.originId,
       market: "intl",
       stockStatus: "AVAILABLE",
+      listingStatus: "DRAFT",
       isPublished: false,
     },
   });
@@ -91,6 +92,7 @@ export async function quickCreateJewelryForSourcing(formData: FormData): Promise
       metalType: data.metalType,
       market: "intl",
       stockStatus: "AVAILABLE",
+      listingStatus: "DRAFT",
       isPublished: false,
     },
   });

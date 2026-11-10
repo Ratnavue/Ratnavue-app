@@ -8,6 +8,8 @@ import { GemstoneForm } from "@/components/admin/GemstoneForm";
 import { MediaManager } from "@/components/admin/MediaManager";
 import { CertificateManager } from "@/components/admin/CertificateManager";
 import { BackLink } from "@/components/admin/BackLink";
+import { ItemQrPanel } from "@/components/admin/ItemQrPanel";
+import { ListingStatusBadge } from "@/components/admin/ListingStatusField";
 
 export default async function EditGemstonePage({ params }: PageProps<"/admin/gems/[id]">) {
   const { id } = await params;
@@ -26,7 +28,17 @@ export default async function EditGemstonePage({ params }: PageProps<"/admin/gem
   return (
     <div>
       <BackLink href="/admin/gems" label="Back to Gemstones" />
-      <h1 className="font-serif text-3xl text-charcoal">{gem.name}</h1>
+      <div className="flex flex-wrap items-center gap-3">
+        <h1 className="font-serif text-3xl text-charcoal">{gem.name}</h1>
+        <ListingStatusBadge status={gem.listingStatus} />
+      </div>
+
+      <section className="mt-6 max-w-3xl rounded-xl border border-border-subtle bg-surface p-5">
+        <p className="font-serif text-xl text-charcoal">Item Number &amp; QR Code</p>
+        <div className="mt-4">
+          <ItemQrPanel kind="gemstone" id={gem.id} itemNumber={gem.itemNumber} live={gem.listingStatus === "LIVE"} />
+        </div>
+      </section>
 
       <div className="mt-6">
         <GemstoneForm

@@ -2,7 +2,10 @@
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { bulkSetCatalogPublished, type CatalogKind } from "@/actions/catalog-admin";
+import Link from "next/link";
+import { QrCode } from "lucide-react";
+import { bulkSetCatalogStatus, type CatalogKind } from "@/actions/catalog-admin";
+import { LISTING_STATUSES, LISTING_STATUS_LABELS, type ListingStatus } from "@/lib/item-number";
 import { Button } from "@/components/ui/Button";
 
 interface SelectionContextValue {
@@ -55,23 +58,23 @@ export function CatalogRowCheckbox({ id }: { id: string }) {
   );
 }
 
-/** "N selected" + Publish/Unpublish, shown only once something's checked.
- * Doesn't touch isFeatured/stockStatus — those already have their own
- * per-row controls; this is specifically for clearing a batch of sold or
- * otherwise-no-longer-wanted items off the public storefront at once. */
+/** "N selected" + the bulk actions, shown only once something's checked:
+ * move the batch to Draft / Finished / Live (only Live is on the storefront),
+ * or open a printable sheet of their QR labels. Doesn't touch
+ * isFeatured/stockStatus — those already have their own per-row controls. */
 export function CatalogBulkToolbar({ kind }: { kind: CatalogKind }) {
   const { selected, clear } = useSelection();
   const router = useRouter();
-  const [pending, setPending] = useState(false);
+  const [pending, setPending] = useState<ListingStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   if (selected.size === 0) return null;
 
-  async function apply(isPublished: boolean) {
+  async function apply(status: ListingStatus) {
     setError(null);
-    setPending(true);
+    setPending(status);
     try {
-      const result = await bulkSetCatalogPublished(kind, [...selected], isPublished);
+      const result = await bulkSetCatalogStatus(kind, [...selected], status);
       if (!result.ok) {
         setError(result.error);
         return;
@@ -81,20 +84,37 @@ export function CatalogBulkToolbar({ kind }: { kind: CatalogKind }) {
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
-      setPending(false);
+      setPending(null);
     }
   }
+
+  const labelsHref = `/admin/${kind === "gemstone" ? "gems" : "jewelry"}/qr-labels?ids=${[...selected].join(",")}`;
 
   return (
     <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-gold/40 bg-gold/10 px-4 py-2.5">
       <p className="text-sm text-charcoal">{selected.size} selected</p>
-      <Button type="button" size="sm" variant="gold" disabled={pending} onClick={() => apply(false)}>
-        {pending ? "Working..." : "Hide from storefront"}
-      </Button>
-      <Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => apply(true)}>
-        {pending ? "Working..." : "Publish"}
-      </Button>
-      {error && <p className="text-xs text-red-700">{error}</p>}
+      <span className="text-xs text-charcoal/60">Set status:</span>
+      {LISTING_STATUSES.map((status) => (
+        <Button
+          key={status}
+          type="button"
+          size="sm"
+          variant={status === "LIVE" ? "gold" : "outline"}
+          disabled={pending !== null}
+          onClick={() => apply(status)}
+        >
+          {pending === status ? "Working..." : LISTING_STATUS_LABELS[status].label}
+        </Button>
+      ))}
+      <Link
+        href={labelsHref}
+        target="_blank"
+        className="ml-auto inline-flex items-center gap-1.5 text-sm text-charcoal underline decoration-charcoal/30 underline-offset-2 hover:text-gold"
+      >
+        <QrCode className="h-4 w-4" aria-hidden />
+        Print QR labels
+      </Link>
+      {error && <p className="w-full text-xs text-red-700">{error}</p>}
     </div>
   );
 }

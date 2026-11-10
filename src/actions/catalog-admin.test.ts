@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { prismaMock } from "@/test/prisma-mock";
-import { deleteGemstone, deleteJewelry, bulkSetCatalogPublished, createJewelryVariant, updateJewelryVariant, deleteJewelryVariant } from "@/actions/catalog-admin";
+import { deleteGemstone, deleteJewelry, bulkSetCatalogStatus, createJewelryVariant, updateJewelryVariant, deleteJewelryVariant } from "@/actions/catalog-admin";
 
 function formData(fields: Record<string, string>): FormData {
   const fd = new FormData();
@@ -80,33 +80,50 @@ describe("deleteJewelry", () => {
   });
 });
 
-describe("bulkSetCatalogPublished", () => {
+describe("bulkSetCatalogStatus", () => {
   it("refuses an empty selection without touching the database", async () => {
-    const result = await bulkSetCatalogPublished("gemstone", [], false);
+    const result = await bulkSetCatalogStatus("gemstone", [], "DRAFT");
 
     expect(result).toEqual({ ok: false, error: "Nothing selected." });
     expect(prismaMock.gemstone.updateMany).not.toHaveBeenCalled();
   });
 
-  it("hides a batch of gemstones from the storefront", async () => {
+  it("moves a batch of gemstones back to draft, hiding them from the storefront", async () => {
     prismaMock.gemstone.findMany.mockResolvedValue([{ market: "intl" }, { market: "intl" }] as never);
     prismaMock.gemstone.updateMany.mockResolvedValue({ count: 2 });
 
-    const result = await bulkSetCatalogPublished("gemstone", ["gem-1", "gem-2"], false);
+    const result = await bulkSetCatalogStatus("gemstone", ["gem-1", "gem-2"], "DRAFT");
 
     expect(result).toEqual({ ok: true });
-    expect(prismaMock.gemstone.updateMany).toHaveBeenCalledWith({ where: { id: { in: ["gem-1", "gem-2"] } }, data: { isPublished: false } });
+    expect(prismaMock.gemstone.updateMany).toHaveBeenCalledWith({ where: { id: { in: ["gem-1", "gem-2"] } }, data: { listingStatus: "DRAFT", isPublished: false } });
     expect(prismaMock.jewelryPiece.updateMany).not.toHaveBeenCalled();
   });
 
-  it("publishes a batch of jewelry pieces", async () => {
+  it("keeps a finished item off the storefront", async () => {
+    prismaMock.gemstone.findMany.mockResolvedValue([{ market: "intl" }] as never);
+    prismaMock.gemstone.updateMany.mockResolvedValue({ count: 1 });
+
+    const result = await bulkSetCatalogStatus("gemstone", ["gem-1"], "FINISHED");
+
+    expect(result).toEqual({ ok: true });
+    expect(prismaMock.gemstone.updateMany).toHaveBeenCalledWith({ where: { id: { in: ["gem-1"] } }, data: { listingStatus: "FINISHED", isPublished: false } });
+  });
+
+  it("rejects an unknown status", async () => {
+    const result = await bulkSetCatalogStatus("gemstone", ["gem-1"], "ARCHIVED" as never);
+
+    expect(result.ok).toBe(false);
+    expect(prismaMock.gemstone.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("takes a batch of jewelry pieces live", async () => {
     prismaMock.jewelryPiece.findMany.mockResolvedValue([{ market: "intl" }, { market: "intl" }, { market: "intl" }] as never);
     prismaMock.jewelryPiece.updateMany.mockResolvedValue({ count: 3 });
 
-    const result = await bulkSetCatalogPublished("jewelry", ["jew-1", "jew-2", "jew-3"], true);
+    const result = await bulkSetCatalogStatus("jewelry", ["jew-1", "jew-2", "jew-3"], "LIVE");
 
     expect(result).toEqual({ ok: true });
-    expect(prismaMock.jewelryPiece.updateMany).toHaveBeenCalledWith({ where: { id: { in: ["jew-1", "jew-2", "jew-3"] } }, data: { isPublished: true } });
+    expect(prismaMock.jewelryPiece.updateMany).toHaveBeenCalledWith({ where: { id: { in: ["jew-1", "jew-2", "jew-3"] } }, data: { listingStatus: "LIVE", isPublished: true } });
     expect(prismaMock.gemstone.updateMany).not.toHaveBeenCalled();
   });
 });

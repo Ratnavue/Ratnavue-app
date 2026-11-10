@@ -228,6 +228,7 @@ async function main() {
       certLabId: g.certLab ? labBySlug[g.certLab]?.id : undefined,
       certReportNumber: g.certReportNumber,
       stockStatus: "AVAILABLE" as const,
+      listingStatus: "LIVE" as const,
       isPublished: true,
     };
     const gemstone = await prisma.gemstone.upsert({
@@ -294,6 +295,7 @@ async function main() {
       ringSize: j.ringSize,
       styleTags: j.styleTags,
       stockStatus: "AVAILABLE" as const,
+      listingStatus: "LIVE" as const,
       isPublished: true,
     };
     const piece = await prisma.jewelryPiece.upsert({
