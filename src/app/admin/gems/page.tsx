@@ -87,7 +87,7 @@ export default async function AdminGemsPage({ searchParams }: PageProps<"/admin/
       </p>
 
       <div className="mt-4">
-        <AdminSearchBox placeholder="Search gemstones by name or item number..." />
+        <AdminSearchBox placeholder="Name or item number..." />
       </div>
 
       {!scopedMarket && <StoreFilterTabs basePath="/admin/gems" current={store} q={q} status={status} />}

@@ -83,7 +83,7 @@ export default async function AuctionDetailPage({ params }: PageProps<"/auction/
           <span className="inline-block rounded-full bg-charcoal/5 px-3 py-1 text-xs uppercase tracking-wide text-charcoal/60">
             {PUBLIC_AUCTION_STATE_LABELS[state]}
           </span>
-          <h1 className="mt-3 font-serif text-4xl text-charcoal">{label}</h1>
+          <h1 className="mt-3 font-serif text-3xl text-charcoal sm:text-4xl">{label}</h1>
           {catalogHref && (
             <Link href={catalogHref} className="mt-1 inline-block text-sm text-gold-deep underline">
               View full details in the catalog

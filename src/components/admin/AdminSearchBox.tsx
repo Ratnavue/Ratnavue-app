@@ -41,7 +41,7 @@ export function AdminSearchBox({ placeholder = "Search..." }: { placeholder?: st
   }
 
   return (
-    <div className="relative w-full max-w-xs">
+    <div className="relative w-full sm:max-w-xs">
       <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/40" />
       <input
         type="search"

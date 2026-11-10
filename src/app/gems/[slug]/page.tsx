@@ -119,7 +119,7 @@ export default async function GemDetailPage({ params }: PageProps<"/gems/[slug]"
             <SpecialtyBadges specialties={gem.specialties} size="md" />
           </div>
           <div className="mt-2 flex items-start justify-between gap-3">
-            <h1 className="font-serif text-4xl text-charcoal">{gem.name}</h1>
+            <h1 className="font-serif text-3xl text-charcoal sm:text-4xl">{gem.name}</h1>
             <WishlistButton gemstoneId={gem.id} initialSaved={wishlistedIds.has(gem.id)} isAuthenticated={!!session?.user} className="mt-1 shrink-0 bg-ivory-soft" />
           </div>
           <div className="mt-1"><RatingSummaryLine summary={reviewSummary} /></div>

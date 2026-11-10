@@ -83,7 +83,7 @@ export default async function AdminJewelryPage({ searchParams }: PageProps<"/adm
       </p>
 
       <div className="mt-4">
-        <AdminSearchBox placeholder="Search jewelry by name or item number..." />
+        <AdminSearchBox placeholder="Name or item number..." />
       </div>
 
       <StoreFilterTabs basePath="/admin/jewelry" current={store} q={q} status={status} />

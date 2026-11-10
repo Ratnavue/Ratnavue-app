@@ -93,19 +93,21 @@ export function CatalogBulkToolbar({ kind }: { kind: CatalogKind }) {
   return (
     <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-gold/40 bg-gold/10 px-4 py-2.5">
       <p className="text-sm text-charcoal">{selected.size} selected</p>
-      <span className="text-xs text-charcoal/60">Set status:</span>
-      {LISTING_STATUSES.map((status) => (
-        <Button
-          key={status}
-          type="button"
-          size="sm"
-          variant={status === "LIVE" ? "gold" : "outline"}
-          disabled={pending !== null}
-          onClick={() => apply(status)}
-        >
-          {pending === status ? "Working..." : LISTING_STATUS_LABELS[status].label}
-        </Button>
-      ))}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-charcoal/60">Set status:</span>
+        {LISTING_STATUSES.map((status) => (
+          <Button
+            key={status}
+            type="button"
+            size="sm"
+            variant={status === "LIVE" ? "gold" : "outline"}
+            disabled={pending !== null}
+            onClick={() => apply(status)}
+          >
+            {pending === status ? "Working..." : LISTING_STATUS_LABELS[status].label}
+          </Button>
+        ))}
+      </div>
       <Link
         href={labelsHref}
         target="_blank"

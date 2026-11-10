@@ -115,7 +115,7 @@ export default async function JewelryDetailPage({ params }: PageProps<"/jewelry/
             <StockBadge status={piece.stockStatus} />
           </div>
           <div className="mt-2 flex items-start justify-between gap-3">
-            <h1 className="font-serif text-4xl text-charcoal">{piece.name}</h1>
+            <h1 className="font-serif text-3xl text-charcoal sm:text-4xl">{piece.name}</h1>
             <WishlistButton jewelryId={piece.id} initialSaved={wishlistedIds.has(piece.id)} isAuthenticated={!!session?.user} className="mt-1 shrink-0 bg-ivory-soft" />
           </div>
           <div className="mt-1"><RatingSummaryLine summary={reviewSummary} /></div>

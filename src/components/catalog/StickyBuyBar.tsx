@@ -22,7 +22,11 @@ export function StickyBuyBar({ name, priceLabel }: { name: string; priceLabel: s
   useEffect(() => {
     const target = document.getElementById("buy-box");
     if (!target) return;
-    const observer = new IntersectionObserver(([entry]) => setShow(!entry.isIntersecting), {
+    // Shown only once the buy box has scrolled up out of view — not while
+    // it's still below the fold, which on a phone is the moment the page
+    // opens (the bar used to sit over the product title before the shopper
+    // had scrolled at all).
+    const observer = new IntersectionObserver(([entry]) => setShow(!entry.isIntersecting && entry.boundingClientRect.top < 0), {
       rootMargin: "-72px 0px 0px 0px",
     });
     observer.observe(target);
