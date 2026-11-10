@@ -24,6 +24,21 @@ export const PAGE_SEO = {
     title: "Shop All Fine Jewelry",
     description: "Browse every piece of Ceylon gemstone jewelry in stock and filter by piece type, metal, audience and price.",
   },
+  // A single-mineral category (/gems?mineral=sapphire). {mineral} = its name.
+  gemsMineral: {
+    title: "Ceylon {mineral} Gemstones",
+    description: "Natural Ceylon {mineral} gemstones, each listed with its cut, colour, clarity and treatment.",
+  },
+  // A piece-type category (/jewelry?pieceType=RING). {type} = "Rings" etc.
+  jewelryType: {
+    title: "Ceylon Gemstone {type}",
+    description: "Ceylon gemstone {type} — each piece made around its stone, with the stone and metal listed in full.",
+  },
+  // Both (/jewelry?audience=women&pieceType=RING).
+  jewelryAudienceType: {
+    title: "{type} for {audience}",
+    description: "Ceylon gemstone {type} for {audience} — each piece made around its stone, with the stone and metal listed in full.",
+  },
   // {audience} = "Women", "Men", "Couples", "Everyone" style labels.
   jewelryAudience: {
     title: "Fine Jewelry for {audience}",

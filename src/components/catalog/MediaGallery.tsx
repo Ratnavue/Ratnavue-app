@@ -77,7 +77,10 @@ export function MediaGallery({ media, fallbackLabel }: { media: MediaItem[]; fal
           {media.map((item, i) => (
             <button
               key={item.id}
+              type="button"
               onClick={() => setActiveIndex(i)}
+              aria-label={`Show ${item.type === "VIDEO" ? "video" : "photo"} ${i + 1} of ${media.length}`}
+              aria-current={i === activeIndex ? "true" : undefined}
               className={cn(
                 "relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2",
                 i === activeIndex ? "border-gold" : "border-transparent opacity-70"

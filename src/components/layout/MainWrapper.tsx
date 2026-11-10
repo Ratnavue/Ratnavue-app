@@ -70,12 +70,17 @@ export function MainWrapper({ children }: { children: React.ReactNode }) {
     // a line across the loader's logo mid-navigation. Raising <main> keeps the
     // loader above the footer; the Navbar (z-50) and the chat/overlay layers
     // (z-40) still sit above <main>.
-    // marginTop tracks --site-banner-h (see SiteStatusBanner) — 0 when no
-    // banner is showing, so this is a no-op the rest of the time. Applied
-    // uniformly (hero and non-hero pages alike) since it's clearance for
-    // the banner, not the Navbar — NAV_CLEARANCE is the separate, Navbar-only
-    // clearance, and a full-bleed hero page still wants none of that.
-    <main key={pathname} style={{ marginTop: "var(--site-banner-h, 0px)" }} className={cn("animate-page-in relative z-[1] flex-1", !hasFullBleedHero && !isAdmin && NAV_CLEARANCE)}>
+    // min-h-dvh: while a page is still streaming in (loading.tsx's loader
+    // is absolutely positioned, so it adds no height) <main> would otherwise
+    // be nearly empty and the footer would sit in view — then jump away as
+    // the content arrives (CLS up to 0.9 on product pages). With a screen's
+    // height reserved, the footer starts below the fold.
+    //
+    // The site status banner's height is reserved by its own in-flow copy
+    // ahead of <main> (see SiteStatusBanner) — on hero and non-hero pages
+    // alike, since it's clearance for the banner, not the Navbar;
+    // NAV_CLEARANCE is the separate, Navbar-only clearance.
+    <main key={pathname} className={cn("animate-page-in relative z-[1] flex-1", !isAdmin && "min-h-dvh", !hasFullBleedHero && !isAdmin && NAV_CLEARANCE)}>
       {children}
     </main>
   );

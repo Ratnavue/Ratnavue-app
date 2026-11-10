@@ -80,6 +80,7 @@ export function CollectionGrid({ items, theme }: { items: CollectionCardData[]; 
           cohesive toolbar instead of four loosely related buttons. */}
       <div className="mt-5 flex flex-wrap items-center gap-2">
         <Select
+          aria-label="Gemstone"
           value={gemstone}
           onChange={(e) => setGemstone(e.target.value)}
           className={controlClass}
@@ -92,6 +93,7 @@ export function CollectionGrid({ items, theme }: { items: CollectionCardData[]; 
           ))}
         </Select>
         <Select
+          aria-label="Piece type"
           value={type}
           onChange={(e) => setType(e.target.value as typeof type)}
           className={controlClass}
@@ -103,6 +105,7 @@ export function CollectionGrid({ items, theme }: { items: CollectionCardData[]; 
           <option className={optionClass} value="jewelry">Jewelry</option>
         </Select>
         <Select
+          aria-label="Price"
           value={maxPrice}
           onChange={(e) => setMaxPrice(e.target.value)}
           className={controlClass}

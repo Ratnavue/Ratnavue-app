@@ -65,6 +65,7 @@ export async function pageMetadata({
   description,
   noindex = false,
   image,
+  canonicalQuery,
 }: {
   /** A plain string gets the store's suffix ("· Ratnavue" / "· Ratnavue
    * Sri Lanka"); { absolute } is used as-is (the home page). */
@@ -74,8 +75,17 @@ export async function pageMetadata({
   noindex?: boolean;
   /** A page-specific share image (a product's photo); defaults to the brand image. */
   image?: string | null;
+  /** The query parameters that make this URL its own page — a category
+   * (?mineral=sapphire) or a later page of a list (?page=2). The canonical
+   * tag, og:url and both stores' hreflang alternates keep exactly these, in
+   * this order; any other parameter (a sort, a price filter) is dropped, so
+   * those variants consolidate onto this page. Without it the canonical is
+   * the bare path (RootLayout's default). */
+  canonicalQuery?: Record<string, string | undefined>;
 }): Promise<Metadata> {
-  const { url, market } = await currentCanonicalUrl();
+  const { url: baseUrl, market, path } = await currentCanonicalUrl();
+  const qs = canonicalQuery ? buildQuery(canonicalQuery) : "";
+  const url = baseUrl + qs;
   // The Sri Lanka store's copy of a page says so, in both title and
   // description, so it isn't a duplicate of the international one.
   const fullDescription = market === "lk" ? lkDescription(description) : description;
@@ -97,8 +107,37 @@ export async function pageMetadata({
       locale: market === "lk" ? "en_LK" : "en_US",
       images: [image ? { url: image, alt: typeof title === "string" ? title : title.absolute } : DEFAULT_OG_IMAGE],
     },
+    // The root layout's twitter block always carries the brand image, and a
+    // page's own openGraph image doesn't replace it — so a shared product
+    // showed the logo card on X instead of the product. Set per page when
+    // there is a page-specific image.
+    ...(image ? { twitter: { card: "summary_large_image" as const, title: absoluteTitle, description: fullDescription, images: [image] } } : {}),
+    // Replaces RootLayout's alternates (metadata merges shallowly), so it
+    // restates the same hreflang pair — with the same query on both stores.
+    ...(qs
+      ? { alternates: { canonical: url, languages: { "en-LK": SITE_URL + withMarket(path, "lk") + qs, "x-default": SITE_URL + path + qs } } }
+      : {}),
     ...(noindex ? { robots: { index: false, follow: true } } : {}),
   };
+}
+
+/** "?a=1&b=2" from the defined entries, in the order given; "" when none. */
+export function buildQuery(params: Record<string, string | undefined>): string {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) if (value) query.set(key, value);
+  const qs = query.toString();
+  return qs ? `?${qs}` : "";
+}
+
+/** A list page's number from ?page=, or 1. */
+export function pageNumber(value: string | string[] | undefined): number {
+  const n = typeof value === "string" ? Number.parseInt(value, 10) : NaN;
+  return Number.isFinite(n) && n > 1 ? n : 1;
+}
+
+/** "Rings" -> "Rings — Page 2" from page 2 on, so later pages don't share page 1's title. */
+export function withPageSuffix(title: string, page: number): string {
+  return page > 1 ? `${title} — Page ${page}` : title;
 }
 
 /** Organization + WebSite (with sitelinks search) structured data for the home page. */
@@ -144,6 +183,7 @@ export function productJsonLd({
   price,
   currency,
   stockStatus,
+  rating,
 }: {
   name: string;
   description: string | null;
@@ -154,8 +194,14 @@ export function productJsonLd({
   price: number | null;
   currency: string;
   stockStatus: string;
+  /** Approved reviews — only included when there is at least one. */
+  rating?: { average: number | null; count: number };
 }) {
   const absolute = (src: string) => (src.startsWith("http") ? src : SITE_URL + src);
+  const aggregateRating =
+    rating && rating.count > 0 && rating.average != null
+      ? { aggregateRating: { "@type": "AggregateRating", ratingValue: rating.average.toFixed(1), reviewCount: rating.count, bestRating: 5, worstRating: 1 } }
+      : {};
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -166,6 +212,7 @@ export function productJsonLd({
     category,
     brand: { "@type": "Brand", name: SITE_NAME },
     url,
+    ...aggregateRating,
     ...(price != null
       ? {
           offers: {
@@ -183,6 +230,25 @@ export function productJsonLd({
           },
         }
       : {}),
+  };
+}
+
+/**
+ * BreadcrumbList structured data from a page's visible breadcrumb trail
+ * (the same items <Breadcrumbs> renders), so results can show the path
+ * instead of a bare URL. Links get the store's prefix; the last item is the
+ * page itself.
+ */
+export function breadcrumbJsonLd(items: { label: string; href?: string }[], market: Market, currentUrl: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.label,
+      item: item.href ? SITE_URL + withMarket(item.href, market) : currentUrl,
+    })),
   };
 }
 

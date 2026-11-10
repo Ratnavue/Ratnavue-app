@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  * choice in a cookie RootLayout reads, so the next page load is painted in the
  * right theme from the first byte.
  */
-export function ThemeToggle({ className }: { className?: string }) {
+export function ThemeToggle({ className, transparent = false }: { className?: string; /** Over a dark full-bleed hero (the Navbar's transparent state): light ink, like the header's other controls. */ transparent?: boolean }) {
   const t = useTranslations("theme");
   // null until mounted: the server can't know which icon to show without
   // reading the cookie itself, and the attribute RootLayout set is the truth.
@@ -40,7 +40,10 @@ export function ThemeToggle({ className }: { className?: string }) {
       aria-label={label}
       title={label}
       className={cn(
-        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-subtle text-charcoal/85 transition-colors hover:border-gold/60 hover:text-gold-deep",
+        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors",
+        transparent
+          ? "border-cream/30 text-cream/85 hover:border-cream hover:text-cream"
+          : "border-border-subtle text-charcoal/85 hover:border-gold/60 hover:text-gold-deep",
         className,
       )}
     >

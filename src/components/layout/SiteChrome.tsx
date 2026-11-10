@@ -8,6 +8,7 @@ import { NavigationOverlay } from "./NavigationOverlay";
 import { FloatingChatButton } from "./FloatingChatButton";
 import { BackToTop } from "./BackToTop";
 import { SiteStatusBanner } from "./SiteStatusBanner";
+import { MotionProvider } from "@/components/providers/MotionProvider";
 import type { AppLocale } from "@/i18n/request";
 import type { FooterMessages } from "@/lib/i18n-messages";
 import type { CustomLocale } from "@/lib/locales";
@@ -88,7 +89,7 @@ export function SiteChrome({
   if (isAdmin) return <>{children}</>;
 
   return (
-    <>
+    <MotionProvider>
       <NavigationOverlay />
       {siteBannerMessage && <SiteStatusBanner message={siteBannerMessage} />}
       <Navbar
@@ -118,6 +119,6 @@ export function SiteChrome({
       </ViewTransition>
       <BackToTop />
       {user && <FloatingChatButton />}
-    </>
+    </MotionProvider>
   );
 }

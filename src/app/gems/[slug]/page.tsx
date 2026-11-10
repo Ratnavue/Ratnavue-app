@@ -33,7 +33,7 @@ import { getMarket } from "@/lib/market";
 import { getTranslations } from "next-intl/server";
 import { MARKETS } from "@/lib/market-shared";
 import { SpecialtyBadges } from "@/components/catalog/SpecialtyBadges";
-import { currentCanonicalUrl, jsonLdScript, metaDescription, pageMetadata, productJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, currentCanonicalUrl, jsonLdScript, metaDescription, pageMetadata, productJsonLd } from "@/lib/seo";
 
 export async function generateMetadata({ params }: PageProps<"/gems/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -71,21 +71,32 @@ export default async function GemDetailPage({ params }: PageProps<"/gems/[slug]"
   // reusing ProductPrice itself (that component isn't meant for a compact bar).
   const displayPrice = promotion?.promoPrice ?? gem.retailPrice ?? (gem.showPrice ? gem.price : null);
   const stickyPriceLabel = displayPrice != null ? formatPrice(displayPrice, MARKETS[market].currency) : t("requestQuote");
+  // One trail for the visible breadcrumbs and their structured data.
+  const crumbs = [
+    { label: t("home"), href: "/" },
+    { label: t("gems"), href: "/gems" },
+    { label: gem.mineral.name, href: `/gems?mineral=${gem.mineral.slug}` },
+    { label: gem.name },
+  ];
+  const canonicalUrl = (await currentCanonicalUrl()).url;
   const productLd = productJsonLd({
     name: gem.name,
     description: gem.description,
-    url: (await currentCanonicalUrl()).url,
+    url: canonicalUrl,
     images: gem.media.filter((m) => m.type === "IMAGE").map((m) => m.url),
-    sku: gem.slug,
+    // The permanent stock number (also on its QR label), not the URL slug.
+    sku: gem.itemNumber,
     category: `Gemstones > ${gem.mineral.name}`,
     price: displayPrice,
     currency: MARKETS[market].currency,
     stockStatus: gem.stockStatus,
+    rating: reviewSummary,
   });
+  const breadcrumbLd = breadcrumbJsonLd(crumbs, market, canonicalUrl);
 
   return (
     <div className="relative overflow-hidden">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(productLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript([productLd, breadcrumbLd]) }} />
       {/* On a wide desktop viewport, the max-w-6xl content column leaves a
           lot of bare ivory in the side gutters — filled with Sri Lankan
           heritage linework rather than a plain colour wash (see
@@ -93,14 +104,7 @@ export default async function GemDetailPage({ params }: PageProps<"/gems/[slug]"
       <HeritageSideArt side="left" className="absolute left-0 top-0 h-full w-48" />
       <HeritageSideArt side="right" className="absolute right-0 top-0 h-full w-48" />
       <div className="relative mx-auto max-w-6xl px-5 pb-12 pt-10 sm:px-8">
-      <Breadcrumbs
-        items={[
-          { label: t("home"), href: "/" },
-          { label: t("gems"), href: "/gems" },
-          { label: gem.mineral.name, href: `/gems?mineral=${gem.mineral.slug}` },
-          { label: gem.name },
-        ]}
-      />
+      <Breadcrumbs items={crumbs} />
       <div className="grid gap-12 lg:grid-cols-2">
         <Reveal y={16}>
           <MediaGallery media={gem.media} fallbackLabel={gem.name} />

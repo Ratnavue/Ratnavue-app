@@ -5,6 +5,7 @@ import { staffAreaForPath } from "@/lib/staff-permissions";
 import { APP_PATH_HEADER, LK_PREFIX, MARKET_HEADER, isLkPath, stripMarket } from "@/lib/market-shared";
 import { SALES_REF_COOKIE, SALES_REF_COOKIE_MAX_AGE_SECONDS } from "@/lib/sales-referrals-shared";
 import { STORE_CHOICE_COOKIE, countryFromHeaders, decideGeoLanding, isDirectEntry, parseStoreChoice } from "@/lib/geo-landing";
+import { canonicalRedirectOrigin } from "@/lib/canonical-host";
 
 // Deliberately NOT `import { auth } from "@/lib/auth"` — that config pulls in
 // PrismaAdapter, Prisma Client, and the Credentials/Google providers
@@ -62,6 +63,19 @@ async function signMarket(market: string, path: string): Promise<string> {
 
 export default auth(async (req) => {
   const rawPath = req.nextUrl.pathname;
+
+  // The production site's *.vercel.app address -> the real domain, so search
+  // engines stop indexing a duplicate under the name "Vercel" (see
+  // lib/canonical-host.ts). Reads the Host header: Auth.js rewrites
+  // req.nextUrl to AUTH_URL's origin, so nextUrl can't tell them apart.
+  const canonicalOrigin = canonicalRedirectOrigin({
+    host: req.headers.get("host"),
+    canonicalUrl: process.env.AUTH_URL,
+    vercelEnv: process.env.VERCEL_ENV,
+  });
+  if (canonicalOrigin) {
+    return NextResponse.redirect(new URL(rawPath + req.nextUrl.search, canonicalOrigin), 308);
+  }
   // Second pass of a /lk rewrite (see above): no prefix left in the path, but
   // the first pass's signed stamp says it's the Sri Lanka store.
   const incomingSignature = req.headers.get(MARKET_SIG_HEADER);

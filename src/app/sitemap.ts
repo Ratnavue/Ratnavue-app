@@ -3,14 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { getPageVisibilities } from "@/lib/page-visibility";
 import { SUBCULTURE_KEYS } from "@/lib/subculture-collections";
 import { getAllSubcultureContent } from "@/lib/subculture-content";
+import { JEWELRY_AUDIENCES, audienceValuesFor } from "@/lib/jewelry-categories";
 
 const BASE_URL = process.env.AUTH_URL ?? "http://localhost:3000";
 const LK = "/lk";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [gems, jewelry, collectionVisibilities, collectionContent] = await Promise.all([
-    prisma.gemstone.findMany({ where: { isPublished: true }, select: { slug: true, updatedAt: true, market: true } }),
-    prisma.jewelryPiece.findMany({ where: { isPublished: true }, select: { slug: true, updatedAt: true, market: true } }),
+    prisma.gemstone.findMany({ where: { isPublished: true }, select: { slug: true, updatedAt: true, market: true, mineral: { select: { slug: true } } } }),
+    prisma.jewelryPiece.findMany({ where: { isPublished: true }, select: { slug: true, updatedAt: true, market: true, audience: true, pieceType: true } }),
     getPageVisibilities([...SUBCULTURE_KEYS]),
     getAllSubcultureContent(),
   ]);
@@ -71,5 +72,42 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...jewelry.filter((j) => j.market === "lk").map((j) => ({ url: `${BASE_URL}${LK}/jewelry/${j.slug}`, lastModified: j.updatedAt, changeFrequency: "weekly" as const, priority: 0.6 })),
   ];
 
-  return [...staticRoutes, ...gemRoutes, ...jewelryRoutes, ...collectionRoutes, ...lkRoutes];
+  return [...staticRoutes, ...gemRoutes, ...jewelryRoutes, ...collectionRoutes, ...lkRoutes, ...categoryRoutes(gems, jewelry)];
+}
+
+type GemRow = { market: string; updatedAt: Date; mineral: { slug: string } };
+type JewelryRow = { market: string; updatedAt: Date; audience: string; pieceType: string };
+
+/**
+ * The category pages that have their own canonical (see the /gems and
+ * /jewelry generateMetadata): one per mineral, jewelry audience, piece type,
+ * and audience + piece type — on each store, and only where that store
+ * actually has a published item in it (an empty category isn't worth a
+ * crawl). lastModified is the newest item in the category.
+ */
+function categoryRoutes(gems: GemRow[], jewelry: JewelryRow[]): MetadataRoute.Sitemap {
+  const latest = new Map<string, Date>();
+  const note = (url: string, at: Date) => {
+    const prev = latest.get(url);
+    if (!prev || at > prev) latest.set(url, at);
+  };
+  const prefix = (market: string) => (market === "lk" ? LK : "");
+
+  for (const g of gems) note(`${prefix(g.market)}/gems?mineral=${encodeURIComponent(g.mineral.slug)}`, g.updatedAt);
+  for (const j of jewelry) {
+    const base = `${prefix(j.market)}/jewelry`;
+    note(`${base}?pieceType=${j.pieceType}`, j.updatedAt);
+    for (const audience of JEWELRY_AUDIENCES) {
+      if (!(audienceValuesFor(audience) as string[]).includes(j.audience)) continue;
+      note(`${base}?audience=${audience}`, j.updatedAt);
+      note(`${base}?audience=${audience}&pieceType=${j.pieceType}`, j.updatedAt);
+    }
+  }
+  return [...latest].map(([path, lastModified]) => ({
+    // "&" must be escaped in the XML — Next writes the url as given.
+    url: `${BASE_URL}${path}`.replace(/&/g, "&amp;"),
+    lastModified,
+    changeFrequency: "weekly" as const,
+    priority: path.includes("&") ? 0.5 : 0.6,
+  }));
 }

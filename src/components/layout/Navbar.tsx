@@ -4,7 +4,7 @@ import Link from "@/components/ui/MarketLink";
 import { useAppPathname, useMarket } from "@/components/providers/MarketProvider";
 import { withMarket } from "@/lib/market-shared";
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
+import * as m from "motion/react-m";
 import { useTranslations } from "next-intl";
 import { Menu, X, User, ShoppingBag, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -124,6 +124,17 @@ export function Navbar({
   // takes over (it used to switch at 768px, which wrapped the link labels
   // onto two lines).
   const wide = showAuction || showPromotions || showDesignStudio;
+  // Where the desktop link row replaces the hamburger. With the extra links
+  // ("wide") it needs ~1,330px in English, so it switches at 1400px — with
+  // tighter link padding and icon gaps until 2xl, which is what lets the
+  // signed-in account menu fit too (measured: 1,272px of row at 1400px).
+  // It used to wait for 2xl (1536px), so a 1440px laptop got the phone menu.
+  // Measured in English only — other languages' labels run longer, so they
+  // keep the 2xl threshold.
+  const navBreak: "lg" | "1400" | "2xl" = !wide ? "lg" : locale === "en" ? "1400" : "2xl";
+  const showDesktop = { lg: "hidden lg:flex", "1400": "hidden min-[1400px]:flex", "2xl": "hidden 2xl:flex" }[navBreak];
+  const hideDesktop = { lg: "lg:hidden", "1400": "min-[1400px]:hidden", "2xl": "2xl:hidden" }[navBreak];
+  const tight = navBreak === "1400";
   const isHome = pathname === "/";
   const isTransparentRoute =
     TRANSPARENT_NAV_ROUTES.includes(pathname) ||
@@ -220,7 +231,7 @@ export function Navbar({
           )}
         </Link>
 
-        <nav className={cn(wide ? "hidden 2xl:flex" : "hidden lg:flex", "items-center gap-1 xl:gap-2")}>
+        <nav className={cn(showDesktop, "items-center gap-1 xl:gap-2", tight && "max-2xl:gap-1")}>
           {navLinks.map((link) => {
             const active = pathname.startsWith(link.href);
             return (
@@ -229,6 +240,7 @@ export function Navbar({
                 href={link.href}
                 className={cn(
                   "relative whitespace-nowrap rounded-full px-3.5 py-2 text-[15px] transition-colors duration-300 xl:px-4",
+                  tight && "max-2xl:px-3",
                   transparent ? "text-cream/85 hover:text-cream" : "text-charcoal/70 hover:text-charcoal",
                   active && (transparent ? "text-cream" : "font-semibold text-charcoal"),
                 )}
@@ -238,7 +250,7 @@ export function Navbar({
                     across renders and glides it from the previously active
                     link to the new one instead of snapping. */}
                 {active && (
-                  <motion.span
+                  <m.span
                     layoutId="navbar-active-indicator"
                     className={cn("absolute inset-0 rounded-full", transparent ? "bg-cream/15" : "bg-raised")}
                     transition={{ type: "spring", stiffness: 380, damping: 32 }}
@@ -249,7 +261,7 @@ export function Navbar({
           })}
         </nav>
 
-        <div className={cn(wide ? "hidden 2xl:flex" : "hidden lg:flex", "items-center gap-5 xl:gap-6")}>
+        <div className={cn(showDesktop, "items-center gap-5 xl:gap-6", tight && "max-2xl:gap-4")}>
           <HeaderSearch transparent={transparent} />
           <Link
             href={user ? "/account/retail-cart" : "/account/login?callbackUrl=%2Faccount%2Fretail-cart"}
@@ -268,7 +280,7 @@ export function Navbar({
           </Link>
           {user && <NotificationBell transparent={transparent} />}
           {user ? (
-            <AccountMenu user={user} transparent={transparent} />
+            <AccountMenu user={user} transparent={transparent} nameFrom2xl={tight} />
           ) : (
             <Link
               href="/account/login"
@@ -280,12 +292,12 @@ export function Navbar({
               {t("signIn")}
             </Link>
           )}
-          <MarketSwitcher transparent={transparent} />
+          <MarketSwitcher transparent={transparent} compactUntil2xl={tight} />
           <LocaleSwitcher locale={locale} transparent={transparent} customLocales={customLocales} />
-          <ThemeToggle />
+          <ThemeToggle transparent={transparent} />
         </div>
 
-        <div className={cn(wide ? "2xl:hidden" : "lg:hidden", "flex items-center gap-2.5 min-[430px]:gap-4")}>
+        <div className={cn(hideDesktop, "flex items-center gap-2.5 min-[430px]:gap-4")}>
           <Link
             href={user ? "/account/retail-cart" : "/account/login?callbackUrl=%2Faccount%2Fretail-cart"}
             aria-label={t("cart")}
@@ -314,7 +326,7 @@ export function Navbar({
           )}
           <MarketSwitcher transparent={transparent} />
           <LocaleSwitcher locale={locale} transparent={transparent} customLocales={customLocales} />
-          <ThemeToggle className="h-9 w-9 max-[379px]:hidden" />
+          <ThemeToggle transparent={transparent} className="h-9 w-9 max-[379px]:hidden" />
           <button
             className={cn("transition-colors duration-300", transparent ? "text-cream" : "text-charcoal")}
             onClick={() => setOpen((v) => !v)}
@@ -326,7 +338,7 @@ export function Navbar({
       </div>
 
       {open && (
-        <nav className={cn(wide ? "2xl:hidden" : "lg:hidden", "animate-menu-down flex flex-col gap-1 overflow-y-auto border-t border-border-subtle bg-ivory px-5 py-4")}>
+        <nav className={cn(hideDesktop, "animate-menu-down flex flex-col gap-1 overflow-y-auto border-t border-border-subtle bg-ivory px-5 py-4")}>
           <form action={withMarket("/search", market)} method="get" className="mb-2 flex items-center gap-2 border-b border-border-subtle pb-3">
             <Search size={16} className="shrink-0 text-charcoal/65" />
             <input

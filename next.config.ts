@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
   // further wouldn't help there. Product photos/videos don't go through
   // an action at all (see lib/media.ts's direct-upload comment).
   experimental: { serverActions: { bodySizeLimit: "4mb" } },
+  // Anything served on a *.vercel.app address (preview deployments, and the
+  // production one's alias before proxy.ts redirects it) is never indexed —
+  // only the real domain should appear in search. See lib/canonical-host.ts.
+  async headers() {
+    return [{ source: "/:path*", has: [{ type: "host", value: ".*\\.vercel\\.app" }], headers: [{ key: "X-Robots-Tag", value: "noindex" }] }];
+  },
 };
 
 // Resolves src/i18n/request.ts (see its own comment) for both the server

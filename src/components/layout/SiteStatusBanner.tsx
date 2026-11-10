@@ -26,6 +26,13 @@ const DISMISS_KEY = "site-status-banner-dismissed";
  * Navbar's own `top` and MainWrapper's `<main>` margin both read, so the
  * rest of the page shifts down to clear it exactly, and back to 0 the
  * moment it's dismissed or not rendered at all.
+ *
+ * Layout shift: the variable only exists once this has mounted, so on its
+ * own the whole page would render under the banner and then jump down by
+ * its height (a 0.125 CLS on a phone, on every page). An invisible copy of
+ * the banner sits in normal document flow ahead of the page, so the first
+ * paint already reserves its exact height — the page content never moves;
+ * only the fixed Navbar settles under the banner once the variable is set.
  */
 export function SiteStatusBanner({ message }: { message: string }) {
   // Starts false so server and client render the same thing on hydration;
@@ -90,11 +97,17 @@ export function SiteStatusBanner({ message }: { message: string }) {
     });
   }
 
-  return (
-    <div ref={containerRef} className="fixed inset-x-0 top-0 z-[51] bg-night px-4 py-2.5 text-cream">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-4 gap-y-1 pr-8 text-center text-sm">
-        <p>{message}</p>
-        {!feedbackOpen && (
+  // The message row, as both the real banner and its invisible in-flow copy
+  // (same markup, so the same height at every width; the copy is inert).
+  const messageRow = (ghost: boolean) => (
+    <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-4 gap-y-1 pr-8 text-center text-sm">
+      <p>{message}</p>
+      {!feedbackOpen &&
+        (ghost ? (
+          <span className="inline-flex items-center gap-1 text-xs font-medium">
+            <MessageSquarePlus size={13} /> Share feedback
+          </span>
+        ) : (
           <button
             type="button"
             onClick={() => setFeedbackOpen(true)}
@@ -102,8 +115,19 @@ export function SiteStatusBanner({ message }: { message: string }) {
           >
             <MessageSquarePlus size={13} /> Share feedback
           </button>
-        )}
-      </div>
+        ))}
+    </div>
+  );
+
+  return (
+    <>
+    {/* Reserves the banner's collapsed height in the first paint (see the
+        doc comment). The feedback form opening only grows the real banner. */}
+    <div aria-hidden inert className="invisible px-4 py-2.5">
+      {messageRow(true)}
+    </div>
+    <div ref={containerRef} className="fixed inset-x-0 top-0 z-[51] bg-night px-4 py-2.5 text-cream">
+      {messageRow(false)}
 
       {feedbackOpen && !sent && (
         <form action={handleSubmit} className="mx-auto mt-2 flex max-w-md flex-col gap-2 pr-8">
@@ -140,5 +164,6 @@ export function SiteStatusBanner({ message }: { message: string }) {
         <X size={16} />
       </button>
     </div>
+    </>
   );
 }

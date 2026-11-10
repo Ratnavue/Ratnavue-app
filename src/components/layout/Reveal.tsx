@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, type Variants } from "motion/react";
+import * as m from "motion/react-m";
+import type { Variants } from "motion/react";
 import type { ReactNode } from "react";
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
@@ -56,7 +57,7 @@ const variants: Variants = {
  * janky performance and, mid-transition, can look like broken/overlapping
  * layout rather than a deliberate animation. */
 export function Reveal({ children, delay = 0, className, y = 28, as = "div" }: RevealProps) {
-  const Component = motion[as];
+  const Component = m[as];
   return (
     <Component
       className={className}
@@ -74,7 +75,7 @@ export function Reveal({ children, delay = 0, className, y = 28, as = "div" }: R
 /** Wrap a grid/list with this and give each child a Reveal (or RevealItem) to stagger their entrance. */
 export function RevealGroup({ children, className, stagger = 0.08 }: { children: ReactNode; className?: string; stagger?: number }) {
   return (
-    <motion.div
+    <m.div
       className={className}
       initial="hidden"
       whileInView="visible"
@@ -82,14 +83,14 @@ export function RevealGroup({ children, className, stagger = 0.08 }: { children:
       transition={{ staggerChildren: stagger }}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
 export function RevealItem({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <motion.div className={className} variants={variants} transition={{ duration: 0.7, ease: EASE_OUT }}>
+    <m.div className={className} variants={variants} transition={{ duration: 0.7, ease: EASE_OUT }}>
       {children}
-    </motion.div>
+    </m.div>
   );
 }

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "@/components/ui/MarketLink";
 import { Sparkles } from "lucide-react";
 import { getJewelryBySlug, getRelatedJewelry } from "@/lib/catalog";
-import { currentCanonicalUrl, jsonLdScript, metaDescription, pageMetadata, productJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, currentCanonicalUrl, jsonLdScript, metaDescription, pageMetadata, productJsonLd } from "@/lib/seo";
 import { auth } from "@/lib/auth";
 import { getActivePromotion, getActivePromotionMaps } from "@/lib/promotion-items";
 import { StorefrontStockBadge as StockBadge } from "@/components/catalog/StorefrontStockBadge";
@@ -76,33 +76,37 @@ export default async function JewelryDetailPage({ params }: PageProps<"/jewelry/
   // StickyBuyBar's own comment for why this is a plain label.
   const displayPrice = promotion?.promoPrice ?? piece.retailPrice ?? (piece.showPrice ? piece.price : null);
   const stickyPriceLabel = displayPrice != null ? formatPrice(displayPrice, MARKETS[market].currency) : t("requestQuote");
+  // One trail for the visible breadcrumbs and their structured data.
+  const crumbs = [
+    { label: t("home"), href: "/" },
+    { label: t("jewelry"), href: "/jewelry" },
+    { label: AUDIENCE_LABELS[audienceSlug], href: `/jewelry?audience=${audienceSlug}` },
+    { label: pieceTypeLabel, href: `/jewelry?audience=${audienceSlug}&pieceType=${piece.pieceType}` },
+    { label: piece.name },
+  ];
+  const canonicalUrl = (await currentCanonicalUrl()).url;
   const productLd = productJsonLd({
     name: piece.name,
     description: piece.description,
-    url: (await currentCanonicalUrl()).url,
+    url: canonicalUrl,
     images: piece.media.filter((m) => m.type === "IMAGE").map((m) => m.url),
-    sku: piece.slug,
+    // The permanent stock number (also on its QR label), not the URL slug.
+    sku: piece.itemNumber,
     category: "Jewelry",
     price: displayPrice,
     currency: MARKETS[market].currency,
     stockStatus: piece.stockStatus,
+    rating: reviewSummary,
   });
+  const breadcrumbLd = breadcrumbJsonLd(crumbs, market, canonicalUrl);
 
   return (
     <div className="relative overflow-hidden">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(productLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript([productLd, breadcrumbLd]) }} />
       <HeritageSideArt side="left" className="absolute left-0 top-0 h-full w-48" />
       <HeritageSideArt side="right" className="absolute right-0 top-0 h-full w-48" />
       <div className="relative mx-auto max-w-6xl px-5 pb-12 pt-10 sm:px-8">
-      <Breadcrumbs
-        items={[
-          { label: t("home"), href: "/" },
-          { label: t("jewelry"), href: "/jewelry" },
-          { label: AUDIENCE_LABELS[audienceSlug], href: `/jewelry?audience=${audienceSlug}` },
-          { label: pieceTypeLabel, href: `/jewelry?audience=${audienceSlug}&pieceType=${piece.pieceType}` },
-          { label: piece.name },
-        ]}
-      />
+      <Breadcrumbs items={crumbs} />
       <div className="grid gap-12 lg:grid-cols-2">
         <Reveal y={16}>
           <MediaGallery media={piece.media} fallbackLabel={piece.name} />

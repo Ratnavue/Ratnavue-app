@@ -4,7 +4,7 @@ import { MAX_PAGE_DESCRIPTION_LENGTH, lkDescription } from "./seo";
 
 // Long-but-realistic values for the templated entries, so the limits are
 // checked against what a page could actually render.
-const SAMPLE = { audience: "Everyone", label: "Spring Blossom", item: "Natural Blue Sapphire – 2.10 Carat" };
+const SAMPLE = { audience: "Everyone", label: "Spring Blossom", item: "Natural Blue Sapphire – 2.10 Carat", mineral: "Padparadscha Sapphire", type: "Jewelry Sets" };
 const entries = Object.entries(PAGE_SEO).map(([key, v]) => ({ key, title: fill(v.title, SAMPLE), description: fill(v.description, SAMPLE) }));
 
 describe("PAGE_SEO", () => {

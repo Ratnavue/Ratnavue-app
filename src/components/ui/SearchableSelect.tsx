@@ -58,6 +58,7 @@ function flattenOptions(children: ReactNode): FlatOption[] {
  */
 export function Select({
   className, children, value, defaultValue, onChange, name, id, required, disabled, placeholder, listClassName, optionClassName,
+  "aria-label": ariaLabel,
 }: SelectHTMLAttributes<HTMLSelectElement> & {
   placeholder?: string;
   /** Overrides the popup list's own box styling (default: light theme) —
@@ -193,8 +194,13 @@ export function Select({
 
   return (
     <div ref={rootRef} className="relative">
+      {/* The id (and any aria-label) go on this visible combobox, not the
+          hidden <select> below — so a <label htmlFor={id}> names and focuses
+          the control people actually use, for screen readers too. */}
       <input
         ref={inputRef}
+        id={id}
+        aria-label={ariaLabel}
         type="text"
         role="combobox"
         aria-expanded={open}
@@ -233,7 +239,7 @@ export function Select({
           native <select> this replaces. */}
       <select
         name={name}
-        id={id}
+        id={id ? `${id}-native` : undefined}
         required={required}
         disabled={disabled}
         value={currentValue}

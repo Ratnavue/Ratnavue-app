@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
+import { AnimatePresence, useScroll, useTransform } from "motion/react";
+import * as m from "motion/react-m";
 import { cn } from "@/lib/utils";
 
 export interface SlideshowImage {
@@ -34,9 +35,9 @@ export function HeroSlideshow({ images, className }: { images: SlideshowImage[];
 
   return (
     <div ref={sectionRef} className={cn("absolute inset-0 overflow-hidden", className)}>
-      <motion.div className="absolute -inset-y-16 inset-x-0" style={{ y: parallaxY }}>
+      <m.div className="absolute -inset-y-16 inset-x-0" style={{ y: parallaxY }}>
         <AnimatePresence initial={false}>
-          <motion.div
+          <m.div
             key={active.src}
             className="absolute inset-0"
             initial={{ opacity: 0 }}
@@ -44,7 +45,7 @@ export function HeroSlideshow({ images, className }: { images: SlideshowImage[];
             exit={{ opacity: 0 }}
             transition={{ duration: 1.4, ease: [0.4, 0, 0.2, 1] }}
           >
-            <motion.div
+            <m.div
               className="absolute inset-0"
               initial={{ scale: 1 }}
               animate={{ scale: 1.08 }}
@@ -59,10 +60,10 @@ export function HeroSlideshow({ images, className }: { images: SlideshowImage[];
                 className="object-cover opacity-70"
                 style={{ objectPosition: `${active.focusX ?? 50}% 50%` }}
               />
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         </AnimatePresence>
-      </motion.div>
+      </m.div>
 
       {images.length > 1 && (
         <div className="absolute bottom-8 right-5 z-10 flex gap-2 sm:right-8">

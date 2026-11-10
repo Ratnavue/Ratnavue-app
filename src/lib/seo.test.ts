@@ -5,7 +5,7 @@ let market: "intl" | "lk" = "intl";
 vi.mock("next/headers", () => ({ headers: async () => ({ get: (k: string) => headerValues.get(k) ?? null }) }));
 vi.mock("@/lib/market", async (orig) => ({ ...(await orig<typeof import("@/lib/market")>()), getMarket: async () => market }));
 
-const { homeJsonLd, jsonLdScript, metaDescription, pageMetadata, productJsonLd, SITE_URL } = await import("./seo");
+const { breadcrumbJsonLd, buildQuery, homeJsonLd, jsonLdScript, metaDescription, pageMetadata, pageNumber, productJsonLd, withPageSuffix, SITE_URL } = await import("./seo");
 
 beforeEach(() => {
   headerValues.clear();
@@ -112,5 +112,66 @@ describe("homeJsonLd / jsonLdScript", () => {
     const out = jsonLdScript({ description: "</script><script>alert(1)</script>" });
     expect(out).not.toContain("</script>");
     expect(JSON.parse(out).description).toBe("</script><script>alert(1)</script>");
+  });
+});
+
+describe("category canonicals", () => {
+  it("keeps only the given query, in order, on the canonical, og:url and both hreflang links", async () => {
+    headerValues.set("x-app-path", "/gems");
+    const meta = await pageMetadata({ title: "Ceylon Ruby Gemstones", description: "Rubies.", canonicalQuery: { mineral: "ruby", page: "2" } });
+    expect(meta.alternates).toEqual({
+      canonical: `${SITE_URL}/gems?mineral=ruby&page=2`,
+      languages: { "en-LK": `${SITE_URL}/lk/gems?mineral=ruby&page=2`, "x-default": `${SITE_URL}/gems?mineral=ruby&page=2` },
+    });
+    expect(meta.openGraph?.url).toBe(`${SITE_URL}/gems?mineral=ruby&page=2`);
+  });
+
+  it("leaves the canonical to the root layout when there's no query", async () => {
+    headerValues.set("x-app-path", "/gems");
+    const meta = await pageMetadata({ title: "Gems", description: "Gems.", canonicalQuery: { page: undefined } });
+    expect(meta.alternates).toBeUndefined();
+  });
+
+  it("gives a product with its own photo its own X card", async () => {
+    const meta = await pageMetadata({ title: "Blue Sapphire", description: "A stone.", image: "/media/a.webp" });
+    expect(meta.twitter).toMatchObject({ card: "summary_large_image", images: ["/media/a.webp"] });
+    expect((await pageMetadata({ title: "About", description: "Us." })).twitter).toBeUndefined();
+  });
+});
+
+describe("query and paging helpers", () => {
+  it("builds a query from defined values only", () => {
+    expect(buildQuery({ a: "1", b: undefined, c: "x y" })).toBe("?a=1&c=x+y");
+    expect(buildQuery({ a: undefined })).toBe("");
+  });
+
+  it("reads a page number, treating anything odd as page 1", () => {
+    expect(pageNumber("3")).toBe(3);
+    for (const v of [undefined, "", "0", "-2", "abc", ["2"]]) expect(pageNumber(v as never)).toBe(1);
+  });
+
+  it("suffixes later pages only", () => {
+    expect(withPageSuffix("Rings", 1)).toBe("Rings");
+    expect(withPageSuffix("Rings", 2)).toBe("Rings — Page 2");
+  });
+});
+
+describe("breadcrumbJsonLd", () => {
+  it("lists each crumb with an absolute, store-prefixed URL and the page itself last", () => {
+    const ld = breadcrumbJsonLd([{ label: "Home", href: "/" }, { label: "Gems", href: "/gems" }, { label: "Blue Sapphire" }], "lk", "https://x/lk/gems/blue");
+    expect(ld.itemListElement).toEqual([
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/lk` },
+      { "@type": "ListItem", position: 2, name: "Gems", item: `${SITE_URL}/lk/gems` },
+      { "@type": "ListItem", position: 3, name: "Blue Sapphire", item: "https://x/lk/gems/blue" },
+    ]);
+  });
+});
+
+describe("productJsonLd rating", () => {
+  const base = { name: "G", description: null, url: "u", images: [], sku: "G-000001", category: "c", price: null, currency: "USD", stockStatus: "AVAILABLE" };
+
+  it("adds an aggregate rating only when there are reviews", () => {
+    expect(productJsonLd({ ...base, rating: { average: 4.666, count: 3 } })).toMatchObject({ aggregateRating: { ratingValue: "4.7", reviewCount: 3 } });
+    expect(productJsonLd({ ...base, rating: { average: null, count: 0 } })).not.toHaveProperty("aggregateRating");
   });
 });

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { AUDIENCE_SEO_LABELS, PAGE_SEO, fill } from "@/lib/seo-copy";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, pageNumber, withPageSuffix } from "@/lib/seo";
 import type { Metadata } from "next";
 import { getJewelry, getJewelryCategoryData } from "@/lib/catalog";
 import { getActivePromotionMaps } from "@/lib/promotion-items";
@@ -8,7 +8,7 @@ import { getWishlistedIds } from "@/lib/wishlist";
 import { auth } from "@/lib/auth";
 import { getMarket } from "@/lib/market";
 import type { Market } from "@/lib/market-shared";
-import { AUDIENCE_LABELS, isAudienceSlug, pieceTypeLabel, type JewelryAudienceSlug } from "@/lib/jewelry-categories";
+import { AUDIENCE_LABELS, PIECE_TYPE_ORDER, isAudienceSlug, pieceTypeLabel, type JewelryAudienceSlug } from "@/lib/jewelry-categories";
 import { getTranslations } from "next-intl/server";
 import { JewelryFilterBar } from "@/components/catalog/JewelryFilterBar";
 import { JewelryResults } from "@/components/catalog/JewelryResults";
@@ -20,16 +20,55 @@ import { Pagination } from "@/components/ui/Pagination";
 export async function generateMetadata({ searchParams }: PageProps<"/jewelry">): Promise<Metadata> {
   const sp = await searchParams;
   const audiences = pickAll(sp, "audience").filter(isAudienceSlug);
+  const types = pickAll(sp, "pieceType").filter((t) => (PIECE_TYPE_ORDER as readonly string[]).includes(t));
   const isList = LISTING_PARAMS.some((key) => sp[key] !== undefined) || audiences.length > 1;
-  if (isList) return pageMetadata(PAGE_SEO.jewelryAll);
-  if (audiences.length === 1) {
-    const audience = AUDIENCE_SEO_LABELS[audiences[0]];
+  const audience = audiences.length === 1 ? audiences[0] : undefined;
+  const audienceLabel = audience ? AUDIENCE_SEO_LABELS[audience] : undefined;
+
+  // The audience landing (/jewelry?audience=women) is its own page.
+  if (!isList && audience && audienceLabel) {
     return pageMetadata({
-      title: fill(PAGE_SEO.jewelryAudience.title, { audience }),
-      description: fill(PAGE_SEO.jewelryAudience.description, { audience: audience.toLowerCase() }),
+      title: fill(PAGE_SEO.jewelryAudience.title, { audience: audienceLabel }),
+      description: fill(PAGE_SEO.jewelryAudience.description, { audience: audienceLabel.toLowerCase() }),
+      canonicalQuery: { audience },
     });
   }
-  return pageMetadata(PAGE_SEO.jewelry);
+  if (!isList) return pageMetadata(PAGE_SEO.jewelry);
+
+  // As /gems: a piece-type category (with or without an audience — the
+  // audience landing's tiles link to /jewelry?audience=women&pieceType=RING),
+  // the full list, and each later page keep their own canonical; any other
+  // filter, search or sort consolidates onto one of those.
+  const page = pageNumber(sp.page);
+  const type = types.length === 1 && pickAll(sp, "pieceType").length === 1 ? types[0] : undefined;
+  const refined =
+    LISTING_PARAMS.some((key) => !["pieceType", "page", "view"].includes(key) && sp[key] !== undefined) ||
+    audiences.length > 1 ||
+    pickAll(sp, "pieceType").length > 1;
+  const paged = refined ? undefined : page > 1 ? String(page) : undefined;
+  if (type) {
+    const typeLabel = pieceTypeLabel(type, "plural");
+    const values = { type: typeLabel, audience: (audienceLabel ?? "").toLowerCase() };
+    const copy = audienceLabel ? PAGE_SEO.jewelryAudienceType : PAGE_SEO.jewelryType;
+    return pageMetadata({
+      title: withPageSuffix(fill(copy.title, { type: typeLabel, audience: audienceLabel ?? "" }), refined ? 1 : page),
+      description: fill(copy.description, { ...values, type: typeLabel.toLowerCase() }),
+      canonicalQuery: { audience, pieceType: type, page: paged },
+    });
+  }
+  if (audience && audienceLabel) {
+    // An audience's full list (/jewelry?audience=women&view=all).
+    return pageMetadata({
+      title: withPageSuffix(`All ${fill(PAGE_SEO.jewelryAudience.title, { audience: audienceLabel })}`, refined ? 1 : page),
+      description: PAGE_SEO.jewelryAll.description,
+      canonicalQuery: { audience, view: "all", page: paged },
+    });
+  }
+  return pageMetadata({
+    title: withPageSuffix(PAGE_SEO.jewelryAll.title, refined ? 1 : page),
+    description: PAGE_SEO.jewelryAll.description,
+    canonicalQuery: { view: "all", page: paged },
+  });
 }
 
 type SearchParams = Record<string, string | string[] | undefined>;

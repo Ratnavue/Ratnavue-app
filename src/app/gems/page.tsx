@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { PAGE_SEO } from "@/lib/seo-copy";
-import { pageMetadata } from "@/lib/seo";
+import { PAGE_SEO, fill } from "@/lib/seo-copy";
+import { pageMetadata, pageNumber, withPageSuffix } from "@/lib/seo";
 import type { Metadata } from "next";
 import { getGemstones, getGemCategories, getMasterData, type GemColorFamily } from "@/lib/catalog";
 import { getActivePromotionMaps } from "@/lib/promotion-items";
@@ -21,9 +21,30 @@ import type { StylizedGemShape } from "@/components/gem-visualizer/StylizedGem";
 export async function generateMetadata({ searchParams }: PageProps<"/gems">): Promise<Metadata> {
   const sp = await searchParams;
   const isLanding = !LISTING_PARAMS.some((key) => sp[key] !== undefined);
-  // The filtered list's canonical is /gems (filter variants consolidate),
-  // but its own title/description still differ from the landing grid's.
-  return pageMetadata(isLanding ? PAGE_SEO.gems : PAGE_SEO.gemsAll);
+  if (isLanding) return pageMetadata(PAGE_SEO.gems);
+
+  // Pages worth ranking on their own get their own canonical: a single-
+  // mineral category (the landing tiles link to /gems?mineral=sapphire), the
+  // full list (/gems?view=all), and each later page of either. Any other
+  // filter, search or sort is a variant of one of those and consolidates
+  // onto it (its page 1).
+  const page = pageNumber(sp.page);
+  const mineralSlugs = pickAll(sp, "mineral");
+  const mineral = mineralSlugs.length === 1 ? (await getMasterData()).minerals.find((m) => m.slug === mineralSlugs[0]) : undefined;
+  const refined = LISTING_PARAMS.some((key) => !["mineral", "page", "view"].includes(key) && sp[key] !== undefined) || mineralSlugs.length > 1;
+  const paged = refined ? undefined : page > 1 ? String(page) : undefined;
+  if (mineral) {
+    return pageMetadata({
+      title: withPageSuffix(fill(PAGE_SEO.gemsMineral.title, { mineral: mineral.name }), refined ? 1 : page),
+      description: fill(PAGE_SEO.gemsMineral.description, { mineral: mineral.name }),
+      canonicalQuery: { mineral: mineral.slug, page: paged },
+    });
+  }
+  return pageMetadata({
+    title: withPageSuffix(PAGE_SEO.gemsAll.title, refined ? 1 : page),
+    description: PAGE_SEO.gemsAll.description,
+    canonicalQuery: { view: "all", page: paged },
+  });
 }
 
 type SearchParams = Record<string, string | string[] | undefined>;

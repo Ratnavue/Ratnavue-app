@@ -27,6 +27,7 @@ export function AccountMenu({
   user,
   transparent,
   compact = false,
+  nameFrom2xl = false,
 }: {
   user: { name?: string | null; hasAdminAccess?: boolean };
   transparent: boolean;
@@ -34,6 +35,10 @@ export function AccountMenu({
    * already packing cart/bell/store/language/hamburger into one line
    * with real width constraints the desktop row doesn't have. */
   compact?: boolean;
+  /** Show the first name only from 2xl — the desktop header's tight
+   * 1400–1535px range has no room for a long name. The name stays the
+   * button's accessible label either way. */
+  nameFrom2xl?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -53,16 +58,16 @@ export function AccountMenu({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        aria-label={compact ? (user.name?.split(" ")[0] ?? "Account") : undefined}
+        aria-label={compact || nameFrom2xl ? (user.name?.split(" ")[0] ?? "Account") : undefined}
         className={cn(
-          "flex items-center gap-2 text-sm transition-colors duration-300",
+          "flex items-center gap-2 whitespace-nowrap text-sm transition-colors duration-300",
           transparent ? "text-cream/85 hover:text-cream" : "text-charcoal/80 hover:text-charcoal",
         )}
       >
         <User size={compact ? 21 : 16} />
         {!compact && (
           <>
-            {user.name?.split(" ")[0] ?? "Account"}
+            <span className={cn("max-w-[8rem] truncate", nameFrom2xl && "hidden 2xl:inline")}>{user.name?.split(" ")[0] ?? "Account"}</span>
             <ChevronDown size={14} className={cn("transition-transform", open && "rotate-180")} />
           </>
         )}

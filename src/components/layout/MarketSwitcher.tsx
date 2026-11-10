@@ -36,7 +36,15 @@ function goTo(target: Market, href: string) {
  * the other market lingers. Direct visits land by location (see
  * lib/geo-landing.ts); choosing here overrides that for good.
  */
-export function MarketSwitcher({ transparent = false }: { transparent?: boolean }) {
+export function MarketSwitcher({
+  transparent = false,
+  compactUntil2xl = false,
+}: {
+  transparent?: boolean;
+  /** Keep the short form ("USD" + pin) up to 2xl — for the desktop header's
+   * tight 1400–1535px range, where the full store name doesn't fit. */
+  compactUntil2xl?: boolean;
+}) {
   const t = useTranslations("market");
   const market = useMarket();
   const hrefFor = useSwitchHref();
@@ -60,17 +68,17 @@ export function MarketSwitcher({ transparent = false }: { transparent?: boolean 
         aria-label={t("switchLabel")}
         aria-expanded={open}
         className={cn(
-          "flex items-center gap-1.5 text-sm transition-colors duration-300",
+          "flex items-center gap-1.5 whitespace-nowrap text-sm transition-colors duration-300",
           transparent ? "text-cream/85 hover:text-cream" : "text-charcoal/80 hover:text-charcoal",
         )}
       >
-        <MapPin size={15} className="xl:hidden" />
+        <MapPin size={15} className={compactUntil2xl ? "2xl:hidden" : "xl:hidden"} />
         {/* Icon only on narrow phones (a signed-in header also carries the bell). */}
         <span className="max-[429px]:hidden">{t(`short.${market}`)}</span>
         {/* Room for the full store name only on wide screens; the code alone
             keeps the nav from wrapping below that. */}
-        <span className="hidden xl:inline">· {t(`name.${market}`)}</span>
-        <ChevronDown size={13} className={cn("transition-transform max-[479px]:hidden xl:hidden", open && "rotate-180")} />
+        <span className={compactUntil2xl ? "hidden 2xl:inline" : "hidden xl:inline"}>· {t(`name.${market}`)}</span>
+        <ChevronDown size={13} className={cn("transition-transform max-[479px]:hidden", compactUntil2xl ? "2xl:hidden" : "xl:hidden", open && "rotate-180")} />
       </button>
 
       {open && (
