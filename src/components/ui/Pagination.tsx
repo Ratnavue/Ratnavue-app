@@ -75,7 +75,7 @@ export function Pagination({
             aria-current={p === currentPage ? "page" : undefined}
             className={cn(
               linkBase,
-              p === currentPage ? "bg-gold font-semibold text-night" : "text-charcoal/70 hover:bg-charcoal/5 hover:text-charcoal"
+              p === currentPage ? "bg-action text-action-ink font-semibold" : "text-charcoal/70 hover:bg-charcoal/5 hover:text-charcoal"
             )}
           >
             {p}

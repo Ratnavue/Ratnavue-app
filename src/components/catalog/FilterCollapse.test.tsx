@@ -5,9 +5,9 @@ import { FilterCollapse } from "./FilterCollapse";
 
 vi.mock("next-intl", () => ({ useTranslations: () => (key: string) => ({ showFilters: "Show filters", hideFilters: "Hide filters" })[key] ?? key }));
 
-// jsdom loads no stylesheet, so Tailwind's "hidden" can't be checked with
-// toBeVisible — assert on the panel's class instead.
-const panel = () => screen.getByLabelText("Mineral").closest("div")!;
+// jsdom loads no stylesheet, so Tailwind's "invisible" can't be checked with
+// toBeVisible — assert on the panel's state and class instead.
+const panel = () => screen.getByLabelText("Mineral").closest("[data-state]")!;
 
 function renderCollapse(activeCount = 0) {
   return render(
@@ -27,7 +27,7 @@ describe("FilterCollapse", () => {
     renderCollapse();
     const button = screen.getByRole("button", { name: /show filters/i });
     expect(button).toHaveAttribute("aria-expanded", "false");
-    expect(panel()).toHaveClass("hidden");
+    expect(panel()).toHaveClass("invisible");
   });
 
   it("shows the filters when the button is clicked, and hides them again", async () => {
@@ -35,11 +35,11 @@ describe("FilterCollapse", () => {
     renderCollapse();
 
     await user.click(screen.getByRole("button", { name: /show filters/i }));
-    expect(panel()).not.toHaveClass("hidden");
+    expect(panel()).not.toHaveClass("invisible");
     expect(screen.getByRole("button", { name: /hide filters/i })).toHaveAttribute("aria-expanded", "true");
 
     await user.click(screen.getByRole("button", { name: /hide filters/i }));
-    expect(panel()).toHaveClass("hidden");
+    expect(panel()).toHaveClass("invisible");
   });
 
   it("keeps collapsed inputs in the form, so chosen filters still submit", () => {

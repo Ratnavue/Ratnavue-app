@@ -180,7 +180,7 @@ export function Navbar({
         // A themed solid bar with a hairline (the colours are CSS variables,
         // so this follows the dark/light theme with no JS); fully clear only
         // while floating over a full-bleed hero.
-        "border-b transition-[background-color,border-color] duration-500",
+        "site-header border-b transition-[background-color,border-color] duration-500",
         transparent ? "border-transparent bg-transparent" : "border-border-subtle bg-ivory/95",
         // top tracks --site-banner-h (see SiteStatusBanner) rather than a
         // bare 0 — when the site status banner is showing, the fixed nav
@@ -261,7 +261,7 @@ export function Navbar({
           >
             <ShoppingBag size={19} />
             {cartItemCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-medium text-night">
+              <span key={cartItemCount} className="animate-badge-bump absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-medium text-night">
                 {cartItemCount > 99 ? "99+" : cartItemCount}
               </span>
             )}
@@ -293,7 +293,7 @@ export function Navbar({
           >
             <ShoppingBag size={21} />
             {cartItemCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-medium text-night">
+              <span key={cartItemCount} className="animate-badge-bump absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-medium text-night">
                 {cartItemCount > 99 ? "99+" : cartItemCount}
               </span>
             )}
@@ -326,7 +326,7 @@ export function Navbar({
       </div>
 
       {open && (
-        <nav className={cn(wide ? "2xl:hidden" : "lg:hidden", "flex flex-col gap-1 overflow-y-auto border-t border-border-subtle bg-ivory px-5 py-4")}>
+        <nav className={cn(wide ? "2xl:hidden" : "lg:hidden", "animate-menu-down flex flex-col gap-1 overflow-y-auto border-t border-border-subtle bg-ivory px-5 py-4")}>
           <form action={withMarket("/search", market)} method="get" className="mb-2 flex items-center gap-2 border-b border-border-subtle pb-3">
             <Search size={16} className="shrink-0 text-charcoal/65" />
             <input
@@ -335,12 +335,13 @@ export function Navbar({
               className="w-full bg-transparent text-sm text-charcoal outline-none placeholder:text-charcoal/65"
             />
           </form>
-          {navLinks.map((link) => (
+          {navLinks.map((link, i) => (
             <Link
               key={link.href}
               href={link.href}
+              style={{ animationDelay: `${60 + i * 35}ms` }}
               className={cn(
-                "py-3 text-sm text-charcoal/80",
+                "animate-menu-down py-3 text-sm text-charcoal/80",
                 pathname.startsWith(link.href) && "font-medium text-charcoal"
               )}
               onClick={() => setOpen(false)}

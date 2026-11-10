@@ -69,7 +69,7 @@ export function AccountMenu({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-border-subtle bg-surface py-1.5 shadow-lg">
+        <div className="animate-pop-in absolute right-0 top-full mt-2 w-56 rounded-lg border border-border-subtle bg-surface py-1.5 shadow-lg">
           {ACCOUNT_MENU_LINKS.map((link) => {
             const active = pathname === link.href;
             // Already there — showing it as a plain (non-Link) element

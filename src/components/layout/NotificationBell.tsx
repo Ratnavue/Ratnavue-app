@@ -151,7 +151,7 @@ export function NotificationBell({ transparent, size = 19 }: { transparent: bool
       >
         <Bell size={size} />
         {unreadCount > 0 && (
-          <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-medium text-night">
+          <span key={unreadCount} className="animate-badge-bump absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-medium text-night">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -160,7 +160,7 @@ export function NotificationBell({ transparent, size = 19 }: { transparent: bool
       {open && panel && (
         <div
           style={{ top: panel.top, left: panel.left, width: panel.width }}
-          className="fixed z-50 rounded-xl border border-border-subtle bg-surface p-2 text-left shadow-lg"
+          className="animate-pop-in fixed z-50 rounded-xl border border-border-subtle bg-surface p-2 text-left shadow-lg"
         >
           <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-2 py-1.5">
             <p className="text-xs font-medium uppercase tracking-wide text-charcoal/65">Notifications</p>

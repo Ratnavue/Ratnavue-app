@@ -90,7 +90,7 @@ export function LocaleSwitcher({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-10 mt-2 w-40 rounded-lg border border-border-subtle bg-surface py-1.5 shadow-lg">
+        <div className="animate-pop-in absolute right-0 top-full z-10 mt-2 w-40 rounded-lg border border-border-subtle bg-surface py-1.5 shadow-lg">
           {allLanguages.map(({ code, name }) => (
             <button
               key={code}

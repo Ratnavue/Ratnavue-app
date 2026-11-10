@@ -41,13 +41,13 @@ export function Modal({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-charcoal/50 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
+      <div className="animate-fade-in absolute inset-0 bg-charcoal/50 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
         className={cn(
-          "relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-xl border border-border-subtle bg-surface p-5 shadow-2xl sm:p-6",
+          "animate-dialog-in relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-xl border border-border-subtle bg-surface p-5 shadow-2xl sm:p-6",
           className,
         )}
       >

@@ -74,7 +74,7 @@ export function MarketSwitcher({ transparent = false }: { transparent?: boolean 
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-10 mt-2 w-52 rounded-lg border border-border-subtle bg-surface py-1.5 shadow-lg">
+        <div className="animate-pop-in absolute right-0 top-full z-10 mt-2 w-52 rounded-lg border border-border-subtle bg-surface py-1.5 shadow-lg">
           {MARKET_ORDER.map((m) => (
             <a
               key={m}
@@ -128,7 +128,7 @@ export function MarketSwitcherInline({ className, variant = "pills" }: { classNa
               variant === "pills"
                 ? cn(
                     "rounded-full border px-4 py-1.5 text-sm transition-colors",
-                    m === market ? "border-gold bg-gold text-night" : "border-border-subtle text-charcoal/75 hover:border-charcoal/40",
+                    m === market ? "border-action bg-action text-action-ink" : "border-border-subtle text-charcoal/75 hover:border-charcoal/40",
                   )
                 : cn("transition-colors hover:text-gold-deep", m === market ? "font-medium text-gold-deep" : "text-charcoal/85"),
             )}

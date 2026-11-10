@@ -27,7 +27,7 @@ export function WishlistButton({ gemstoneId, jewelryId, initialSaved, isAuthenti
   const market = useMarket();
 
   const baseClass = cn(
-    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/90 text-charcoal/60 shadow-sm backdrop-blur-sm transition-colors hover:text-red-500",
+    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/90 text-charcoal/60 shadow-sm backdrop-blur-sm transition-[color,transform] hover:scale-110 hover:text-red-500 active:scale-95",
     className,
   );
 
@@ -76,7 +76,7 @@ export function WishlistButton({ gemstoneId, jewelryId, initialSaved, isAuthenti
       aria-label={saved ? "Remove from wishlist" : "Save to wishlist"}
       aria-pressed={saved}
     >
-      <Heart size={16} className={saved ? "fill-red-500 text-red-500" : ""} />
+      <Heart key={saved ? "saved" : "unsaved"} size={16} className={saved ? "animate-heart-pop fill-red-500 text-red-500" : ""} />
     </button>
   );
 }

@@ -31,11 +31,11 @@ export function AddToCartButton({ gemstoneId, jewelryId, jewelryVariantId }: { g
   return (
     <div>
       <Button type="button" variant="primary" size="lg" disabled={pending} onClick={handleClick} className="flex items-center gap-2">
-        {added ? <Check size={18} /> : <ShoppingBag size={18} />}
+        {added ? <Check size={18} className="animate-heart-pop" /> : <ShoppingBag size={18} />}
         {pending ? t("adding") : added ? t("added") : t("addToCart")}
       </Button>
       {added && (
-        <p className="mt-2 text-sm text-charcoal/70">
+        <p className="animate-fade-in mt-2 text-sm text-charcoal/70">
           {t.rich("addedNote", {
             link: (chunks) => <Link href="/account/retail-cart" className="text-gold-deep underline hover:text-charcoal">{chunks}</Link>,
           })}

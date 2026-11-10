@@ -48,7 +48,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     // data-theme="light": the back office stays on the light palette even
     // after a client-side hop from a storefront page in the dark theme (see
     // lib/theme.ts's resolveTheme, which covers full page loads).
-    <div data-theme="light" className="flex min-h-[calc(100vh-1px)] flex-col bg-ivory-soft print:block print:bg-white lg:flex-row">
+    <div data-theme="light" className="admin-shell flex min-h-[calc(100vh-1px)] flex-col bg-ivory-soft print:block print:bg-white lg:flex-row">
       <AdminSidebar role={session.user.role} staffPermissions={session.user.staffPermissions} />
       {/* relative: lets AdminPageLoader (the Suspense fallback — see
           admin/loading.tsx) cover this box exactly via `absolute inset-0`

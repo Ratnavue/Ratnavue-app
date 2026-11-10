@@ -7,11 +7,14 @@ import { useMarket } from "@/components/providers/MarketProvider";
 import { withMarket } from "@/lib/market-shared";
 
 const VARIANTS = {
-  // Gold is the one primary action colour across both themes (the mockup's
-  // "Sign in", "View all gemstones", "Request a quote"), always with dark
-  // night text — 9.0:1 on the dark theme's gold, 8.0:1 on the light one's.
-  primary: "bg-gold font-semibold text-night hover:bg-gold-soft",
-  gold: "bg-gold font-semibold text-night hover:bg-gold-soft",
+  // The main action colour, per theme (--color-action in globals.css):
+  // navy with cream text by day, gold with night text at night. "gold" is
+  // the older name for the same button and is kept as an alias.
+  primary: "bg-action font-semibold text-action-ink hover:bg-action-hover",
+  gold: "bg-action font-semibold text-action-ink hover:bg-action-hover",
+  // Literally gold in both themes — for pages with their own art direction
+  // (the subculture collections) rather than the site theme.
+  accent: "bg-gold font-semibold text-night hover:bg-gold-soft",
   outline: "border border-charcoal/30 text-charcoal hover:border-charcoal bg-transparent",
   "outline-light": "border border-cream/40 text-cream hover:border-cream hover:bg-cream/10 bg-transparent",
   ghost: "text-charcoal hover:bg-charcoal/5",
@@ -32,7 +35,7 @@ type Variant = keyof typeof VARIANTS;
 type Size = keyof typeof SIZES;
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-full font-sans tracking-wide transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:pointer-events-none disabled:hover:translate-y-0";
+  "inline-flex items-center justify-center gap-2 rounded-full font-sans tracking-wide transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none disabled:hover:translate-y-0";
 
 export function Button({
   variant = "primary",

@@ -56,7 +56,7 @@ export interface SubcultureDef {
   dividerClass: string;
   cardBorderClass: string;
   cardGlowClass: string;
-  buttonVariant: "gold" | "outline-light";
+  buttonVariant: "accent" | "outline-light";
 
   /** Extra `next/font` display face loaded for this collection's headline
    * only (see src/app/collections/layout.tsx) — undefined keeps the
@@ -139,7 +139,7 @@ export const SUBCULTURE_COLLECTIONS: Record<SubcultureKey, SubcultureDef> = {
     dividerClass: "bg-[#a3283f]/50",
     cardBorderClass: "border-[#3d151d] hover:border-[#a3283f]/60",
     cardGlowClass: "shadow-[0_0_50px_-10px_rgba(163,40,63,0.4)]",
-    buttonVariant: "gold",
+    buttonVariant: "accent",
     headingFontVar: "--font-cinzel",
     decor: "vampire",
     particles: { char: "·", colorClassName: "text-[#a3283f]", count: 20, direction: "rise", sizeRange: [4, 10], durationRange: [10, 18], opacity: 0.5 },
@@ -183,7 +183,7 @@ export const SUBCULTURE_COLLECTIONS: Record<SubcultureKey, SubcultureDef> = {
     dividerClass: "bg-gold/40",
     cardBorderClass: "border-[#3a2c1c] hover:border-gold/50",
     cardGlowClass: "shadow-[0_0_36px_-14px_rgba(179,145,90,0.35)]",
-    buttonVariant: "gold",
+    buttonVariant: "accent",
     headingFontVar: "--font-courier-prime",
     decor: "dark-academia",
     particles: { char: "·", colorClassName: "text-gold-soft", count: 10, direction: "rise", sizeRange: [3, 6], durationRange: [20, 30], opacity: 0.3 },

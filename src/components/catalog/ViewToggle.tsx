@@ -19,7 +19,7 @@ export function ViewToggle({ view, onChange }: { view: CatalogView; onChange: (v
           onClick={() => onChange(value)}
           className={cn(
             "flex items-center justify-center rounded-full p-2 transition-colors",
-            view === value ? "bg-gold text-night" : "text-charcoal/65 hover:text-charcoal"
+            view === value ? "bg-action text-action-ink" : "text-charcoal/65 hover:text-charcoal"
           )}
         >
           <Icon size={16} />

@@ -115,7 +115,7 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
   }, [onClose]);
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-night/90 p-4 sm:p-10" onClick={onClose}>
+    <div className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center bg-night/90 p-4 sm:p-10" onClick={onClose}>
       <button
         type="button"
         onClick={onClose}
@@ -128,7 +128,7 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
       >
         <X size={22} />
       </button>
-      <div className="relative h-full w-full max-w-4xl">
+      <div className="animate-dialog-in relative h-full w-full max-w-4xl">
         <Image src={src} alt={alt} fill className="object-contain" sizes="100vw" onClick={(e) => e.stopPropagation()} />
       </div>
     </div>,

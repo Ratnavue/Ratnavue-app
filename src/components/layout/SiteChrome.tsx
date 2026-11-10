@@ -1,5 +1,6 @@
 "use client";
 
+import { ViewTransition } from "react";
 import { useAppPathname } from "@/components/providers/MarketProvider";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
@@ -100,8 +101,21 @@ export function SiteChrome({
         locale={locale}
         customLocales={customLocales}
       />
-      {children}
-      <Footer messages={footerMessages} paymentMethodsLive={lkPaymentMethodsLive} />
+      {/* Page transitions: the page and its footer sit in one <ViewTransition>
+          keyed on the pathname, so a navigation (a React transition)
+          unmounts the old pair and mounts the new one inside a browser view
+          transition — the old page fades out ("page-exit") and the new one
+          rises in ("page-enter"); see globals.css. The footer moves with the
+          page so the new page's footer never shows over the outgoing one.
+          update="none": a Suspense reveal or router.refresh() within one
+          page isn't a page change and doesn't animate. Browsers without the
+          API fall back to MainWrapper's .animate-page-in. */}
+      <ViewTransition key={pathname} enter="page-enter" exit="page-exit" update="none" default="none">
+        <div className="flex flex-1 flex-col">
+          {children}
+          <Footer messages={footerMessages} paymentMethodsLive={lkPaymentMethodsLive} />
+        </div>
+      </ViewTransition>
       <BackToTop />
       {user && <FloatingChatButton />}
     </>
